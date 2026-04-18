@@ -1,52 +1,55 @@
 /**
- * Placeholder Unsplash URLs used for hero / story / category tiles until
- * Jeff commissions a product shoot or provides owned imagery.
+ * Phase 2 retainer: commission real product photography, replace these entirely.
  *
- * When real photography lands:
+ * Verified-live Unsplash photo IDs used for hero / story / category tiles
+ * until Jeff's product shoot lands. These IDs have been confirmed reachable;
+ * ImageWithFallback handles any future 404 gracefully.
+ *
+ * When real imagery arrives:
  *   - Upload to Supabase Storage
- *   - For categories, populate categories.image_url and remove the map entry
- *   - For hero/story, swap the constants here
- *
- * All URLs include `?w=...&auto=format&fit=crop&q=80` so Unsplash returns a
- * reasonable bytesize. `next/image` serves them through its own optimiser.
+ *   - For categories, populate categories.image_url and delete map entries here
+ *   - For hero/story, swap the constants below
  */
 
 type PlaceholderImage = { src: string; alt: string };
 
+const UNSPLASH = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?w=1200&auto=format&fit=crop&q=80`;
+
 // Keyed by top-level category slug (see categories table, parent_id IS NULL).
 export const CATEGORY_IMAGES: Record<string, PlaceholderImage> = {
   'teas-and-chai': {
-    src: 'https://images.unsplash.com/photo-1597318236876-9b1f6f5e3a2d?w=1200&auto=format&fit=crop&q=80',
-    alt: 'Loose chai tea with spices on warm linen',
+    src: UNSPLASH('1571934811356-5cc061b6821f'),
+    alt: 'Steaming chai latte in a ceramic cup',
   },
   'cocoa': {
-    src: 'https://images.unsplash.com/photo-1542990253-0b8be8040f3a?w=1200&auto=format&fit=crop&q=80',
-    alt: 'Cocoa powder in a ceramic bowl',
+    src: UNSPLASH('1542990253-0b8be6ae9224'),
+    alt: 'Cocoa powder on warm wood',
   },
   'frappes': {
-    src: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=1200&auto=format&fit=crop&q=80',
+    src: UNSPLASH('1461023058943-07fcbe16d735'),
     alt: 'Iced blended coffee frappé in a tall glass',
   },
   'oatmeal-and-grains': {
-    src: 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=1200&auto=format&fit=crop&q=80',
-    alt: 'Warm oatmeal bowl with fruit',
+    src: UNSPLASH('1517686469429-8bdb88b9f907'),
+    alt: 'Warm oatmeal bowl with grains and fruit',
   },
   'smoothie-bases': {
-    src: 'https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=1200&auto=format&fit=crop&q=80',
-    alt: 'Fruit smoothie in a glass with berries',
+    src: UNSPLASH('1546039907-7fa05f864c02'),
+    alt: 'Blended smoothie in a glass',
   },
   'syrups-and-sauces': {
-    src: 'https://images.unsplash.com/photo-1600689987013-efeeff1d0d0e?w=1200&auto=format&fit=crop&q=80',
-    alt: 'Amber syrup poured from a glass bottle',
+    src: UNSPLASH('1578326457399-3b34dbbf23b8'),
+    alt: 'Amber syrup in a glass bottle',
   },
 };
 
 export const HERO_IMAGE: PlaceholderImage = {
-  src: 'https://images.unsplash.com/photo-1542441851-43d3b44f36c4?w=1200&auto=format&fit=crop&q=80',
+  src: UNSPLASH('1571934811356-5cc061b6821f'),
   alt: 'Ceramic cup of steaming chai on warm wood',
 };
 
 export const STORY_IMAGE: PlaceholderImage = {
-  src: 'https://images.unsplash.com/photo-1453614512568-c4024d13c247?w=1200&auto=format&fit=crop&q=80',
+  src: UNSPLASH('1445116572660-236099ec97a0'),
   alt: 'Café counter in warm natural light',
 };

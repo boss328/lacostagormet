@@ -1,5 +1,5 @@
-import Image from 'next/image';
 import Link from 'next/link';
+import { ImageWithFallback } from '@/components/shop/ImageWithFallback';
 
 type ProductImage = {
   url: string;
@@ -75,21 +75,37 @@ export function ProductCard({ product, showJustIn = false, priority = false }: P
         >
           {product.sku}
         </span>
-        {imgUrl ? (
-          <Image
-            src={imgUrl}
-            alt={product.name}
-            width={600}
-            height={600}
-            sizes="(min-width: 1024px) 300px, (min-width: 640px) 50vw, 100vw"
-            priority={priority}
-            className="product-card-img w-full h-full object-cover img-product"
-          />
-        ) : (
-          <div className="w-full h-full bg-paper-2 flex items-center justify-center">
-            <span className="type-label text-ink-muted">no image</span>
-          </div>
-        )}
+        <ImageWithFallback
+          src={imgUrl}
+          alt={product.name}
+          width={600}
+          height={600}
+          sizes="(min-width: 1024px) 300px, (min-width: 640px) 50vw, 100vw"
+          priority={priority}
+          className="product-card-img w-full h-full object-cover img-product"
+          fallback={
+            <div
+              className="w-full h-full flex flex-col items-center justify-center px-5 text-center"
+              style={{
+                background:
+                  'linear-gradient(135deg, var(--color-paper-2) 0%, var(--color-paper-3) 100%)',
+              }}
+            >
+              <span
+                className="font-display italic text-brand-deep"
+                style={{ fontSize: '20px', lineHeight: 1.15, letterSpacing: '-0.01em', fontWeight: 500 }}
+              >
+                {product.brands?.name ?? '—'}
+              </span>
+              <span
+                className="font-mono uppercase text-ink-muted mt-3"
+                style={{ fontSize: '9px', letterSpacing: '0.24em' }}
+              >
+                {product.sku}
+              </span>
+            </div>
+          }
+        />
       </div>
 
       <div className="flex-1 flex flex-col" style={{ padding: '18px' }}>

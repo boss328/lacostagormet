@@ -1,5 +1,5 @@
-import Image from 'next/image';
 import Link from 'next/link';
+import { ImageWithFallback } from '@/components/shop/ImageWithFallback';
 
 export type CategoryTileData = {
   id: string;
@@ -23,13 +23,35 @@ export function CategoryTile({ category, image, index }: CategoryTileProps) {
   return (
     <Link href={`/shop/${category.slug}`} className="category-tile group">
       <div className="relative overflow-hidden img-overlay-radial" style={{ height: '160px' }}>
-        <Image
+        <ImageWithFallback
           src={image.src}
           alt={image.alt}
           width={600}
           height={600}
           sizes="(min-width: 1024px) 220px, (min-width: 640px) 33vw, 50vw"
           className="category-tile-img w-full h-full object-cover"
+          fallback={
+            <div
+              className="w-full h-full flex flex-col items-center justify-center px-4 text-center"
+              style={{
+                background:
+                  'linear-gradient(135deg, var(--color-paper-2) 0%, var(--color-paper-3) 100%)',
+              }}
+            >
+              <span
+                className="font-display italic text-brand-deep"
+                style={{ fontSize: '20px', lineHeight: 1.1, letterSpacing: '-0.01em', fontWeight: 500 }}
+              >
+                {category.name}
+              </span>
+              <span
+                className="font-mono uppercase text-ink-muted mt-2"
+                style={{ fontSize: '9px', letterSpacing: '0.24em' }}
+              >
+                {category.itemCount} {category.itemCount === 1 ? 'item' : 'items'}
+              </span>
+            </div>
+          }
         />
         <div
           className="absolute inset-0 pointer-events-none"
