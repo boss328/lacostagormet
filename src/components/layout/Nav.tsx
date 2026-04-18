@@ -3,10 +3,10 @@ import { Menu, Search, ShoppingBag, User } from 'lucide-react';
 
 const NAV_LINKS: Array<{ href: string; label: string }> = [
   { href: '/shop/teas-and-chai', label: 'Teas' },
-  { href: '/shop/cocoa-and-hot-drinks', label: 'Cocoa' },
-  { href: '/shop/frappes-and-smoothies', label: 'Frappés' },
+  { href: '/shop/cocoa', label: 'Cocoa' },
+  { href: '/shop/frappes', label: 'Frappés' },
   { href: '/shop/syrups-and-sauces', label: 'Syrups' },
-  { href: '/shop/smoothies', label: 'Smoothies' },
+  { href: '/shop/smoothie-bases', label: 'Smoothies' },
   { href: '/brand', label: 'Brands' },
   { href: '/for-business', label: 'For Business' },
 ];
