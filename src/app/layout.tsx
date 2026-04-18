@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { TopRail } from "@/components/layout/TopRail";
+import { Nav } from "@/components/layout/Nav";
+import { Footer } from "@/components/layout/Footer";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -34,7 +37,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${fraunces.variable} ${jetbrainsMono.variable}`}>
-      <body>{children}</body>
+      <body className="bg-paper text-ink-2 font-display antialiased min-h-screen flex flex-col">
+        <TopRail />
+        <Nav />
+        <div className="flex-1">{children}</div>
+        <Footer />
+      </body>
     </html>
   );
 }

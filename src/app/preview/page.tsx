@@ -1,13 +1,24 @@
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/design-system/Button';
 import { SectionHead } from '@/components/design-system/SectionHead';
+import { Ticker } from '@/components/layout/Ticker';
 
 export default function PreviewPage() {
   if (process.env.NODE_ENV === 'production') notFound();
 
   return (
-    <main className="min-h-screen bg-paper px-8 py-24">
-      <div className="max-w-content mx-auto">
+    <main className="bg-paper">
+      {/* Full-bleed ticker demo — sits flush against viewport edges */}
+      <Ticker
+        items={[
+          'Free shipping over $70 · continental U.S.',
+          'Volume pricing at $400 & $700',
+          'Family-owned since 2003',
+          'Mon–Fri · 9 to 5 PT',
+        ]}
+      />
+
+      <div className="max-w-content mx-auto px-8 py-20 max-sm:px-5">
         <p className="type-label text-accent mb-10">§ 0 · DEV-ONLY PREVIEW</p>
 
         <SectionHead
