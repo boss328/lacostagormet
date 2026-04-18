@@ -22,7 +22,7 @@ const config: Config = {
         "brand-darker": "var(--color-brand-darker)",
         accent:         "var(--color-accent)",
         gold:           "var(--color-gold)",
-        "gold-bright": "var(--color-gold-bright)",
+        "gold-bright":  "var(--color-gold-bright)",
         forest:         "var(--color-forest)",
       },
       borderColor: {
@@ -30,12 +30,30 @@ const config: Config = {
         "rule-strong": "var(--rule-strong)",
       },
       fontFamily: {
-        display: ["var(--font-display)", "Georgia", "serif"],
-        mono:    ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+        display: ["var(--font-display)", "serif"],
+        mono:    ["var(--font-mono)", "monospace"],
+      },
+      fontSize: {
+        "display-1": ["92px", { lineHeight: "0.93", letterSpacing: "-0.032em" }],
+        "display-2": ["48px", { lineHeight: "1.02", letterSpacing: "-0.028em" }],
+        "display-3": ["62px", { lineHeight: "1.02", letterSpacing: "-0.028em" }],
+        brand:       ["22px", { lineHeight: "1.1" }],
+        price:       ["22px", { lineHeight: "1" }],
+        product:     ["15px", { lineHeight: "1.4" }],
+        body:        ["17px", { lineHeight: "1.65" }],
+        label:       ["11px", { lineHeight: "1.2", letterSpacing: "0.22em" }],
+        "label-sm":  ["10px", { lineHeight: "1.2", letterSpacing: "0.26em" }],
+        numeral:     ["36px", { lineHeight: "1" }],
+      },
+      letterSpacing: {
+        accent:        "-0.02em",
+        label:         "0.22em",
+        "label-tight": "0.18em",
+        "label-wide":  "0.26em",
       },
       transitionTimingFunction: {
-        "out-expo":  "cubic-bezier(0.2, 0.8, 0.2, 1)",
-        "smooth":    "cubic-bezier(0.6, 0, 0.3, 1)",
+        "out-expo": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        smooth:     "cubic-bezier(0.6, 0, 0.3, 1)",
       },
       maxWidth: {
         content: "1280px",
