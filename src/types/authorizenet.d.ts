@@ -92,10 +92,78 @@ declare module 'authorizenet' {
       VOIDTRANSACTION: string;
       REFUNDTRANSACTION: string;
     };
+
+    // --- Lookup / reporting API (used by scripts/backfill-order-payment.ts) ---
+
+    interface SdkCreditCard {
+      getCardNumber?(): string;
+      getCardType?(): string;
+      getExpirationDate?(): string;
+    }
+    interface SdkPayment {
+      getCreditCard?(): SdkCreditCard | null;
+    }
+    interface SdkTransactionDetails {
+      getResponseCode?(): string;
+      getAuthCode?(): string;
+      getTransId?(): string;
+      getRefId?(): string;
+      getInvoiceNumber?(): string;
+      getAuthAmount?(): string;
+      getSettleAmount?(): string;
+      getAVSResponse?(): string;
+      getCardCodeResponse?(): string;
+      getPayment?(): SdkPayment | null;
+      getMessages?(): SdkMessageList;
+    }
+
+    class TransactionListSorting {
+      setOrderBy(field: string): void;
+      setOrderDescending(desc: boolean): void;
+    }
+
+    class GetUnsettledTransactionListRequest {
+      setMerchantAuthentication(v: MerchantAuthenticationType): void;
+      setSorting(v: TransactionListSorting): void;
+      getJSON(): unknown;
+    }
+    class GetUnsettledTransactionListResponse {
+      constructor(raw: unknown);
+      getMessages?(): SdkMessageList;
+      getTransactions?(): { getTransaction?(): SdkTransactionDetails[] };
+    }
+
+    class GetTransactionDetailsRequest {
+      setMerchantAuthentication(v: MerchantAuthenticationType): void;
+      setTransId(id: string): void;
+      getJSON(): unknown;
+    }
+    class GetTransactionDetailsResponse {
+      constructor(raw: unknown);
+      getMessages?(): SdkMessageList;
+      getTransaction?(): SdkTransactionDetails | null;
+    }
+
+    const TransactionListOrderFieldEnum: {
+      ID: string;
+      SUBMITTIMEUTC: string;
+    };
   }
 
   namespace APIControllers {
     class CreateTransactionController {
+      constructor(request: unknown);
+      setEnvironment(endpoint: string): void;
+      execute(cb: () => void): void;
+      getResponse(): unknown;
+    }
+    class GetUnsettledTransactionListController {
+      constructor(request: unknown);
+      setEnvironment(endpoint: string): void;
+      execute(cb: () => void): void;
+      getResponse(): unknown;
+    }
+    class GetTransactionDetailsController {
       constructor(request: unknown);
       setEnvironment(endpoint: string): void;
       execute(cb: () => void): void;
