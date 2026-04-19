@@ -39,12 +39,19 @@ export function Footer() {
         >
           {/* Brand block */}
           <div>
-            <p
-              className="font-display italic leading-none text-paper"
-              style={{ fontSize: '32px', letterSpacing: '-0.01em' }}
-            >
-              La Costa Gourmet
-            </p>
+            {/* Logo on dark — invert + drop opacity slightly so the warm cream reads as paper-on-ink */}
+            <img
+              src="/brand/logo.png"
+              alt="La Costa Gourmet"
+              width={220}
+              height={101}
+              style={{
+                width: 220,
+                height: 'auto',
+                filter: 'invert(1) brightness(1.05)',
+                opacity: 0.94,
+              }}
+            />
             <p className="type-label-sm text-gold-bright mt-4">
               Est. 2003 · Carlsbad, CA
             </p>
@@ -52,10 +59,10 @@ export function Footer() {
               className="not-italic font-display text-[13px] leading-[1.6] text-paper/70 mt-5 italic"
               style={{ fontStyle: 'italic' }}
             >
-              6965 El Camino Real, Ste. 105–427<br />
-              Carlsbad, California 92009<br />
-              <a href="tel:+17605551234" className="hover:text-gold-bright transition-colors duration-200">
-                (760) 555&ndash;1234
+              6209 Paseo Privado<br />
+              Carlsbad, CA 92009<br />
+              <a href="tel:+17609311028" className="hover:text-gold-bright transition-colors duration-200">
+                (760) 931&ndash;1028
               </a>
             </address>
           </div>

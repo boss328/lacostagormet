@@ -18,23 +18,23 @@ export function AdminTopRail() {
     >
       <div className="max-w-[1600px] mx-auto grid items-center gap-6 px-6 py-3 max-sm:px-4 max-sm:grid-cols-[1fr_auto] lg:grid-cols-[auto_1fr_auto]">
         <Link href="/admin" className="flex items-center gap-4 shrink-0">
-          <span
-            className="font-display italic text-cream"
+          <img
+            src="/brand/logo.png"
+            alt="La Costa Gourmet"
+            width={170}
+            height={78}
+            className="h-10 max-sm:h-8"
             style={{
-              fontSize: '22px',
-              lineHeight: 1,
-              letterSpacing: '-0.015em',
-              fontWeight: 500,
+              width: 'auto',
+              filter: 'invert(1) brightness(1.05)',
+              opacity: 0.96,
             }}
-          >
-            La Costa <em className="type-accent-gold">Command</em>
-          </span>
-          <span className="h-5 w-px bg-gold-bright/25 max-sm:hidden" aria-hidden="true" />
+          />
           <span
-            className="font-mono uppercase text-gold-bright max-sm:hidden"
+            className="font-mono uppercase text-gold-bright"
             style={{ fontSize: '10px', letterSpacing: '0.26em' }}
           >
-            § Est. MMIII
+            Command
           </span>
         </Link>
 

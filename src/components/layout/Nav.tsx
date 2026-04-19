@@ -16,14 +16,16 @@ export function Nav() {
   return (
     <nav className="bg-cream border-b border-rule px-8 max-sm:px-5 pt-6 pb-5">
       <div className="max-w-content mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-10 max-lg:grid-cols-[auto_auto] max-lg:justify-between">
-        {/* Wordmark + tagline */}
+        {/* Logo wordmark + tagline */}
         <Link href="/" className="flex items-center gap-4 group">
-          <span
-            className="font-display italic leading-none text-brand-deep tracking-[-0.01em]"
-            style={{ fontSize: '30px' }}
-          >
-            La Costa Gourmet
-          </span>
+          <img
+            src="/brand/logo.png"
+            alt="La Costa Gourmet"
+            width={210}
+            height={97}
+            className="h-12 max-sm:h-9"
+            style={{ width: 'auto' }}
+          />
           <span className="h-7 w-px bg-rule max-sm:hidden" aria-hidden="true" />
           <span className="type-label-sm text-ink-muted max-w-[180px] leading-tight max-sm:hidden">
             Purveyors of specialty café provisions
