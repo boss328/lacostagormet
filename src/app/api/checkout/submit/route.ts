@@ -13,12 +13,13 @@ import {
 } from '@/lib/checkout/pricing';
 import { cartHash } from '@/lib/checkout/cart-hash';
 import { chargeCard, type ChargeResult } from '@/lib/authnet/server';
+import { safeJson } from '@/lib/authnet/safe-json';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 type SubmitResponse =
-  | { success: true; orderNumber: string; status: string }
+  | { success: true; orderNumber: string; status: string; warning?: string }
   | { success: false; errorMessage: string };
 
 type ProductRow = {
@@ -38,11 +39,36 @@ type OrderRow = {
   total: number | string;
 };
 
+type AdminClient = ReturnType<typeof createAdminClient>;
+
+type DbOp<T> =
+  | { ok: true; value: T }
+  | { ok: false; errorCode: string | null; errorMessage: string };
+
 const GENERIC_CART_ERROR =
   'One or more items in your cart are no longer available. Please review your cart and try again.';
 const GENERIC_SERVER_ERROR =
   'Something went wrong. Your card was not charged. Please try again.';
 
+/**
+ * POST /api/checkout/submit
+ *
+ * Failure-mode contract (the fix for the Phase 4 silent bug):
+ *   - Auth.net DECLINED / ERROR / NETWORK: no money moved, return failure
+ *     to the client. No order status transition beyond what already happened.
+ *   - Auth.net APPROVED + payments INSERT FAILED: money moved. Return
+ *     success with warning:"payment_record_failed". Order stays status=
+ *     'pending' so admin can see the exception row via payment_audit_log.
+ *     Never rollback, never auto-void.
+ *   - Auth.net APPROVED + payments INSERT OK + orders UPDATE FAILED:
+ *     money moved, audit trail intact. Return success with warning:
+ *     "status_update_failed". Reconciler (Phase 7) repairs the status.
+ *   - Auth.net APPROVED + all writes OK: return plain success.
+ *
+ * The audit entry is the minimum viable record. If audit_log INSERT
+ * itself fails we console.error and proceed — the charge still happened
+ * and the customer still gets their order number.
+ */
 export async function POST(req: NextRequest) {
   try {
     let payload: CheckoutSubmitPayload;
@@ -51,10 +77,7 @@ export async function POST(req: NextRequest) {
       payload = checkoutSubmitSchema.parse(body);
     } catch (parseErr) {
       console.error('[checkout] validation failed', parseErr);
-      return json(400, {
-        success: false,
-        errorMessage: 'Invalid checkout request.',
-      });
+      return json(400, { success: false, errorMessage: 'Invalid checkout request.' });
     }
 
     const clientIp = extractIp(req);
@@ -78,9 +101,7 @@ export async function POST(req: NextRequest) {
     for (const p of (products ?? []) as ProductRow[]) {
       if (p.is_active) productsById.set(p.id, p);
     }
-
-    const missing = payload.items.find((i) => !productsById.has(i.product_id));
-    if (missing) {
+    if (payload.items.find((i) => !productsById.has(i.product_id))) {
       return json(400, { success: false, errorMessage: GENERIC_CART_ERROR });
     }
 
@@ -113,7 +134,6 @@ export async function POST(req: NextRequest) {
     const total = round2(subtotal + shippingCost + tax);
 
     if (!centsEqual(subtotal, payload.clientSubtotal)) {
-      // Don't abort — just log. Server total is canonical.
       void admin.from('audit_log').insert({
         entity_type: 'order',
         entity_id: null,
@@ -130,7 +150,7 @@ export async function POST(req: NextRequest) {
     }
 
     // -------------------------------------------------------------------------
-    // 3. Idempotency — look up a recent order with the same cart + IP.
+    // 3. Idempotency — recent order with same cart + IP.
     // -------------------------------------------------------------------------
     const hash = cartHash(
       lineItems.map((l) => ({
@@ -156,30 +176,22 @@ export async function POST(req: NextRequest) {
     }
 
     const prior: OrderRow | null = (recent?.[0] as OrderRow | undefined) ?? null;
-
     if (prior) {
-      if (prior.status === 'paid') {
+      if (prior.status === 'paid')
         return json(200, { success: true, orderNumber: prior.order_number, status: 'paid' });
-      }
-      if (prior.status === 'payment_held') {
+      if (prior.status === 'payment_held')
         return json(200, {
           success: true,
           orderNumber: prior.order_number,
           status: 'payment_held',
         });
-      }
-      if (prior.status === 'pending') {
-        return json(200, {
-          success: true,
-          orderNumber: prior.order_number,
-          status: 'pending',
-        });
-      }
-      // status === 'cancelled' → fall through and create a fresh order.
+      if (prior.status === 'pending')
+        return json(200, { success: true, orderNumber: prior.order_number, status: 'pending' });
+      // 'cancelled' → fall through and create fresh.
     }
 
     // -------------------------------------------------------------------------
-    // 4. Create orders row + order_items rows.
+    // 4. Create orders + order_items rows.
     // -------------------------------------------------------------------------
     const shipAddr = payload.shippingAddress;
     const addressJson = {
@@ -215,7 +227,6 @@ export async function POST(req: NextRequest) {
       console.error('[checkout] order insert', orderErr);
       return json(500, { success: false, errorMessage: GENERIC_SERVER_ERROR });
     }
-
     const order = createdOrder as OrderRow;
 
     const { error: itemsErr } = await admin.from('order_items').insert(
@@ -234,8 +245,7 @@ export async function POST(req: NextRequest) {
 
     if (itemsErr) {
       console.error('[checkout] order_items insert', itemsErr);
-      // Clean up the orphaned order row so the cart-hash lookup doesn't
-      // re-use it on retry.
+      // Safe pre-charge rollback: no money has moved yet.
       await admin.from('orders').delete().eq('id', order.id);
       return json(500, { success: false, errorMessage: GENERIC_SERVER_ERROR });
     }
@@ -252,30 +262,92 @@ export async function POST(req: NextRequest) {
       shippingAddress: shipAddr,
     });
 
-    if (charge.outcome === 'error' || charge.outcome === 'network_error') {
-      console.error('[checkout] auth.net charge failed', {
-        orderNumber: order.order_number,
-        outcome: charge.outcome,
-        responseCode: charge.responseCode,
-        responseReason: charge.responseReason,
+    const amountCents = Math.round(total * 100);
+
+    // Non-approval outcomes: no money moved (declined/network) or held
+    // (money held in Auth.net's system pending review). Audit + return.
+    if (charge.outcome !== 'approved' && charge.outcome !== 'held_for_review') {
+      await writeAudit(admin, {
+        orderId: order.id,
+        eventType:
+          charge.outcome === 'declined'
+            ? 'auth_net_declined'
+            : charge.outcome === 'network_error'
+              ? 'auth_net_network_error'
+              : 'auth_net_error',
+        transactionId: charge.transactionId,
+        amountCents,
+        rawResponse: charge.rawResponse,
+        errorDetail: charge.responseReason ?? null,
       });
+      // Order stays status='pending'; admin can see the audit row. We don't
+      // auto-cancel because we might want to retry within the cart_hash
+      // window (cancelled orders fall through to a fresh attempt).
+      const updateRes = await dbUpdateOrderStatus(admin, order.id, 'cancelled');
+      if (!updateRes.ok) {
+        console.error('[checkout] post-decline status update failed', updateRes.errorMessage);
+      }
+      return json(200, { success: false, errorMessage: charge.customerMessage });
     }
 
-    await persistPayment(admin, order.id, total, charge);
-    await updateOrderStatus(admin, order.id, charge);
+    // -------------------------------------------------------------------------
+    // 6. Approved / held: MONEY HAS MOVED (or been held at Auth.net).
+    //    Write payments row + audit row. Never fail the client from here.
+    // -------------------------------------------------------------------------
+    const paymentInsert = await dbInsertPayment(admin, order.id, total, charge);
+    const nextStatus = charge.outcome === 'approved' ? 'paid' : 'payment_held';
 
-    if (charge.outcome === 'approved' || charge.outcome === 'held_for_review') {
+    if (!paymentInsert.ok) {
+      // Leave order at 'pending' so the admin sees a loud exception state.
+      await writeAudit(admin, {
+        orderId: order.id,
+        eventType: 'payment_insert_failed',
+        transactionId: charge.transactionId,
+        amountCents,
+        rawResponse: charge.rawResponse,
+        errorDetail: paymentInsert.errorMessage,
+      });
       return json(200, {
         success: true,
         orderNumber: order.order_number,
-        status: charge.outcome === 'approved' ? 'paid' : 'payment_held',
+        status: 'pending',
+        warning: 'payment_record_failed',
       });
     }
 
-    // Declined / network error — tell the client, include the customer message.
+    // Payments row written. Try to flip status.
+    const statusUpdate = await dbUpdateOrderStatus(admin, order.id, nextStatus);
+    if (!statusUpdate.ok) {
+      await writeAudit(admin, {
+        orderId: order.id,
+        eventType: 'status_update_failed',
+        transactionId: charge.transactionId,
+        amountCents,
+        rawResponse: charge.rawResponse,
+        errorDetail: `intended='${nextStatus}'; ${statusUpdate.errorMessage}`,
+      });
+      return json(200, {
+        success: true,
+        orderNumber: order.order_number,
+        status: nextStatus, // client-visible claim; reconciler will repair DB
+        warning: 'status_update_failed',
+      });
+    }
+
+    // Happy path audit entry.
+    await writeAudit(admin, {
+      orderId: order.id,
+      eventType: 'payment_inserted',
+      transactionId: charge.transactionId,
+      amountCents,
+      rawResponse: charge.rawResponse,
+      errorDetail: null,
+    });
+
     return json(200, {
-      success: false,
-      errorMessage: charge.customerMessage,
+      success: true,
+      orderNumber: order.order_number,
+      status: nextStatus,
     });
   } catch (error) {
     console.error('[checkout] uncaught', error);
@@ -287,29 +359,15 @@ export async function POST(req: NextRequest) {
 }
 
 // ---------------------------------------------------------------------------
-// helpers
+// DB helpers — return a DbOp<T> so callers can branch on failure.
 // ---------------------------------------------------------------------------
 
-function json(status: number, body: SubmitResponse): NextResponse {
-  return NextResponse.json(body, { status });
-}
-
-function extractIp(req: NextRequest): string {
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  const realIp = req.headers.get('x-real-ip');
-  if (realIp) return realIp;
-  return req.ip ?? 'unknown';
-}
-
-type AdminClient = ReturnType<typeof createAdminClient>;
-
-async function persistPayment(
+async function dbInsertPayment(
   admin: AdminClient,
   orderId: string,
   amount: number,
   charge: ChargeResult,
-): Promise<void> {
+): Promise<DbOp<true>> {
   const paymentStatus =
     charge.outcome === 'approved'
       ? 'succeeded'
@@ -335,37 +393,72 @@ async function persistPayment(
   });
 
   if (error) {
-    console.error('[checkout] payments insert', error);
+    console.error('[checkout] payments insert failed', error);
+    return { ok: false, errorCode: error.code ?? null, errorMessage: error.message ?? 'unknown' };
   }
+  return { ok: true, value: true };
 }
 
-async function updateOrderStatus(
+async function dbUpdateOrderStatus(
   admin: AdminClient,
   orderId: string,
-  charge: ChargeResult,
-): Promise<void> {
-  const nextStatus =
-    charge.outcome === 'approved'
-      ? 'paid'
-      : charge.outcome === 'held_for_review'
-        ? 'payment_held'
-        : 'cancelled';
-
+  nextStatus: 'paid' | 'payment_held' | 'cancelled' | 'pending',
+): Promise<DbOp<true>> {
   const { error } = await admin
     .from('orders')
     .update({ status: nextStatus })
     .eq('id', orderId);
-
   if (error) {
-    console.error('[checkout] order status update', error);
+    console.error('[checkout] order status update failed', error);
+    return { ok: false, errorCode: error.code ?? null, errorMessage: error.message ?? 'unknown' };
+  }
+  return { ok: true, value: true };
+}
+
+type AuditInput = {
+  orderId: string;
+  eventType: string;
+  transactionId: string | null;
+  amountCents: number | null;
+  rawResponse: unknown;
+  errorDetail: string | null;
+};
+
+async function writeAudit(admin: AdminClient, input: AuditInput): Promise<void> {
+  try {
+    const { error } = await admin.from('payment_audit_log').insert({
+      order_id: input.orderId,
+      event_type: input.eventType,
+      transaction_id: input.transactionId,
+      amount_cents: input.amountCents,
+      raw_response: safeJson(input.rawResponse),
+      error_detail: input.errorDetail,
+      source: 'checkout_api',
+    });
+    if (error) {
+      console.error('[checkout] payment_audit_log insert failed', error, {
+        orderId: input.orderId,
+        eventType: input.eventType,
+      });
+    }
+  } catch (e) {
+    // Last-resort catch — audit must never throw out of the checkout handler.
+    console.error('[checkout] payment_audit_log threw', e);
   }
 }
 
-function safeJson(v: unknown): unknown {
-  try {
-    JSON.stringify(v);
-    return v;
-  } catch {
-    return { note: 'raw response not JSON-serialisable' };
-  }
+// ---------------------------------------------------------------------------
+// Primitive helpers
+// ---------------------------------------------------------------------------
+
+function json(status: number, body: SubmitResponse): NextResponse {
+  return NextResponse.json(body, { status });
+}
+
+function extractIp(req: NextRequest): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  const realIp = req.headers.get('x-real-ip');
+  if (realIp) return realIp;
+  return req.ip ?? 'unknown';
 }
