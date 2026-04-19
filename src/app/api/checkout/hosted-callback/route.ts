@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { fetchTransactionDetails } from '@/lib/authnet/hosted';
 import { safeJson } from '@/lib/authnet/safe-json';
+import { autoDraftVendorPosForOrder } from '@/lib/admin/vendor-po';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -236,6 +237,11 @@ async function handle(req: NextRequest): Promise<NextResponse> {
     raw_response: safeJson(tx.raw),
     source: 'hosted_callback',
   });
+
+  // Fire-and-forget: auto-draft vendor POs for this order. Customer redirect
+  // never waits — even if drafting takes a few seconds, the success page
+  // renders immediately. Errors are swallowed inside the function.
+  void autoDraftVendorPosForOrder(orderRow.id);
 
   return redirectTo(origin, `/order/${orderRow.order_number}`);
 }
