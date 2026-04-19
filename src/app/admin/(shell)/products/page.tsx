@@ -2,6 +2,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { bcImage } from '@/lib/bcImage';
+import { parseRange, resolveRange } from '@/lib/admin/range';
+import { loadProductsSection } from '@/lib/admin/section-analytics';
+import { SectionAnalytics, HeadlineStat } from '@/components/admin/section/SectionAnalytics';
+import { ProductsCharts } from '@/components/admin/section/ProductsCharts';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,32 +55,39 @@ export default async function AdminProductsPage({
   searchParams: Record<string, string | string[] | undefined>;
 }) {
   const search = typeof searchParams.q === 'string' ? searchParams.q : undefined;
+  const rangeKey = parseRange(searchParams.range);
+  const range = resolveRange(rangeKey);
   const admin = createAdminClient();
 
-  let q = admin
-    .from('products')
-    .select(
-      'id, sku, name, retail_price, wholesale_cost, is_active, stock_status, brand_id, brands(name, slug), product_images(url, is_primary, display_order)',
-      { count: 'exact' },
-    );
-  if (search) q = q.or(`sku.ilike.%${search}%,name.ilike.%${search}%`);
-  q = q.order('name', { ascending: true }).limit(200);
+  const [{ data, count }, section] = await Promise.all([
+    (async () => {
+      let q = admin
+        .from('products')
+        .select(
+          'id, sku, name, retail_price, wholesale_cost, is_active, stock_status, brand_id, brands(name, slug), product_images(url, is_primary, display_order)',
+          { count: 'exact' },
+        );
+      if (search) q = q.or(`sku.ilike.%${search}%,name.ilike.%${search}%`);
+      q = q.order('name', { ascending: true }).limit(200);
+      return q;
+    })(),
+    loadProductsSection(range),
+  ]);
 
-  const { data, count } = await q;
   const rows = (data ?? []) as unknown as ProductRow[];
 
   return (
     <>
-      <header className="mb-6">
-        <p className="type-label text-accent mb-3">§ Products</p>
+      <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
+        <p className="type-label text-accent mb-3">§ IV. Products</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
             className="font-display text-ink"
-            style={{ fontSize: '36px', lineHeight: 1, letterSpacing: '-0.025em' }}
+            style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em', fontWeight: 400 }}
           >
             The <em className="type-accent">catalog</em>.
           </h1>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             <Link
               href={buildHref('/api/admin/products/export', { q: search })}
               className="type-label-sm text-ink hover:text-brand-deep transition-colors duration-200"
@@ -90,7 +101,50 @@ export default async function AdminProductsPage({
         </div>
       </header>
 
-      <form method="GET" action="/admin/products" className="flex items-center gap-3 mb-5 flex-wrap">
+      <SectionAnalytics
+        range={rangeKey}
+        eyebrow="Products Analytics"
+        headline={
+          <div className="grid gap-6 lg:grid-cols-4 max-sm:grid-cols-2">
+            <HeadlineStat
+              label="Active products"
+              value={section.headline.activeCount.toLocaleString()}
+              sub="of total"
+            />
+            <HeadlineStat
+              label={`Top sellers — ${range.short}`}
+              value={section.topSellers.length.toLocaleString()}
+              sub="distinct SKUs"
+            />
+            <HeadlineStat
+              label="Out of stock"
+              value={section.headline.outOfStockCount.toLocaleString()}
+              sub="needs attention"
+              delta={section.headline.outOfStockCount > 0 ? { label: 'alert', sign: 'neg' } : null}
+            />
+            <HeadlineStat
+              label="Never ordered"
+              value={section.neverOrdered.length === 25 ? '25+' : section.neverOrdered.length.toLocaleString()}
+              sub="lifetime"
+            />
+          </div>
+        }
+        charts={
+          <ProductsCharts
+            topSellers={section.topSellers}
+            marginBuckets={section.marginBuckets}
+            neverOrdered={section.neverOrdered}
+            brandPerformance={section.brandPerformance}
+          />
+        }
+      />
+
+      <form
+        method="GET"
+        action="/admin/products"
+        className="flex items-center gap-3 mb-6 flex-wrap"
+      >
+        {rangeKey !== 'all' && <input type="hidden" name="range" value={rangeKey} />}
         <input
           type="search"
           name="q"
@@ -99,16 +153,16 @@ export default async function AdminProductsPage({
           className="bg-cream text-ink font-display flex-1 min-w-[240px]"
           style={{
             border: '1px solid var(--rule-strong)',
-            padding: '9px 14px',
+            padding: '10px 14px',
             fontSize: '14px',
-            minHeight: 38,
+            minHeight: 40,
           }}
         />
         <button
           type="submit"
           className="type-label-sm text-ink"
           style={{
-            padding: '9px 16px',
+            padding: '10px 18px',
             border: '1px solid var(--color-ink)',
             background: 'var(--color-cream)',
           }}
@@ -116,7 +170,12 @@ export default async function AdminProductsPage({
           Search
         </button>
         {search && (
-          <Link href="/admin/products" className="type-label-sm text-ink-muted hover:text-accent">
+          <Link
+            href={buildHref('/admin/products', {
+              range: rangeKey === 'all' ? undefined : rangeKey,
+            })}
+            className="type-label-sm text-ink-muted hover:text-accent"
+          >
             Clear
           </Link>
         )}
@@ -124,7 +183,7 @@ export default async function AdminProductsPage({
 
       <div style={{ border: '1px solid var(--rule)', background: 'var(--color-cream)' }}>
         <div
-          className="grid items-center gap-4 px-4 py-3 bg-paper-2"
+          className="grid items-center gap-4 px-5 py-4 bg-paper-2"
           style={{
             gridTemplateColumns: '48px 1fr minmax(140px,auto) minmax(80px,auto) minmax(80px,auto) minmax(60px,auto) auto auto',
             borderBottom: '1px solid var(--rule-strong)',
@@ -148,11 +207,11 @@ export default async function AdminProductsPage({
             <Link
               key={p.id}
               href={`/admin/products/${p.id}`}
-              className="grid items-center gap-4 px-4 py-3 hover:bg-paper-2 transition-colors duration-150"
+              className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream"
               style={{
                 gridTemplateColumns: '48px 1fr minmax(140px,auto) minmax(80px,auto) minmax(80px,auto) minmax(60px,auto) auto auto',
                 borderBottom: '1px solid var(--rule)',
-                minHeight: 56,
+                minHeight: 64,
               }}
             >
               <div

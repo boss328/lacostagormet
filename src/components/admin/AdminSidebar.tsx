@@ -12,11 +12,13 @@ import { usePathname } from 'next/navigation';
 type NavItem = { href: string; label: string; numeral: string; shortcut: string };
 
 const NAV: NavItem[] = [
-  { href: '/admin',           label: 'Dashboard', numeral: 'I',   shortcut: 'g d' },
-  { href: '/admin/orders',    label: 'Orders',    numeral: 'II',  shortcut: 'g o' },
-  { href: '/admin/customers', label: 'Customers', numeral: 'III', shortcut: 'g c' },
-  { href: '/admin/products',  label: 'Products',  numeral: 'IV',  shortcut: 'g p' },
-  { href: '/admin/imports',   label: 'Imports',   numeral: 'V',   shortcut: 'g i' },
+  { href: '/admin',                 label: 'Dashboard',       numeral: 'I',    shortcut: 'g d' },
+  { href: '/admin/orders',          label: 'Orders',          numeral: 'II',   shortcut: 'g o' },
+  { href: '/admin/customers',       label: 'Customers',       numeral: 'III',  shortcut: 'g c' },
+  { href: '/admin/products',        label: 'Products',        numeral: 'IV',   shortcut: 'g p' },
+  { href: '/admin/vendors',         label: 'Vendors',         numeral: 'V',    shortcut: 'g v' },
+  { href: '/admin/purchase-orders', label: 'Purchase Orders', numeral: 'VI',   shortcut: 'g u' },
+  { href: '/admin/imports',         label: 'Imports',         numeral: 'VII',  shortcut: 'g i' },
 ];
 
 export function AdminSidebar() {
@@ -83,8 +85,15 @@ export function AdminSidebar() {
           );
         })}
       </nav>
+      <Link
+        href="/admin/settings"
+        className="type-data-mono text-ink-muted hover:text-brand-deep mt-6 block"
+        style={{ paddingLeft: 4 }}
+      >
+        Settings →
+      </Link>
       <p
-        className="type-data-mono text-ink-muted mt-6"
+        className="type-data-mono text-ink-muted mt-3"
         style={{ paddingLeft: 4, lineHeight: 1.5 }}
       >
         Press <span className="text-ink">?</span> for the full shortcut list.

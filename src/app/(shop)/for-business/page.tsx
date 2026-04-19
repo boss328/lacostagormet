@@ -453,13 +453,13 @@ export default function ForBusinessPage() {
             >
               <p className="type-label text-accent mb-6">§ Or call directly</p>
 
-              {/* TODO: replace with Jeff's real phone */}
-              <p
-                className="font-display italic text-brand-deep mb-4"
+              <a
+                href="tel:+17609311028"
+                className="font-display italic text-brand-deep mb-4 hover:opacity-80 transition-opacity"
                 style={{ fontSize: '34px', lineHeight: 1, letterSpacing: '-0.025em', fontWeight: 500 }}
               >
-                (760) XXX-XXXX
-              </p>
+                (760) 931-1028
+              </a>
 
               <p className="type-label-sm text-ink-muted mb-8">
                 Monday thru Friday · 9–5 Pacific
@@ -470,7 +470,7 @@ export default function ForBusinessPage() {
                 style={{ borderTop: '1px solid var(--rule)' }}
               >
                 <ContactLine label="Email" value="info@lacostagourmet.com" href="mailto:info@lacostagourmet.com" />
-                <ContactLine label="Warehouse" value="Carlsbad, California 92009" />
+                <ContactLine label="Warehouse" value="6209 Paseo Privado, Carlsbad, CA 92009" />
                 <ContactLine label="Established" value="Anno 2003" />
               </div>
             </aside>

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import {
   loadDashSummary,
-  loadRevenueSeries,
+  loadRevenueSeriesForRange,
   loadTopProducts,
   loadLtvBuckets,
   loadStockAlerts,
@@ -9,6 +9,8 @@ import {
   loadBrandBreakdown,
   loadStateBreakdown,
 } from '@/lib/admin/analytics';
+import { parseRange, resolveRange } from '@/lib/admin/range';
+import { RangePills } from '@/components/admin/RangePills';
 import { RevenueOverTime } from '@/components/admin/charts/RevenueOverTime';
 import { TopProducts } from '@/components/admin/charts/TopProducts';
 import { LtvHistogram } from '@/components/admin/charts/LtvHistogram';
@@ -24,18 +26,29 @@ function fmtMoney(v: number): string {
   return `$${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+const HERITAGE_YEARS = new Date().getFullYear() - 2003;
+
 /**
  * Admin dashboard — editorial command center.
  *
- * 8 analytics widgets load in parallel. Page is a server component so
- * every render fetches fresh data; client-side auto-refresh can come in
- * a follow-up (for now the shell supports hard-refresh + fast revalidation).
+ * Heritage strip leads (lifetime totals — what 22 years built).
+ * Range pills then scope the live widgets that follow. Revenue,
+ * AOV, top products, brands, geo all respect ?range=.
+ * LTV + cohort retention stay lifetime — they're inherently
+ * lifetime metrics and labeled as such.
  */
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined>;
+}) {
+  const rangeKey = parseRange(searchParams.range);
+  const range = resolveRange(rangeKey);
+
   const [summary, revenue, topProducts, ltv, stock, cohorts, brands, states] =
     await Promise.all([
       loadDashSummary(),
-      loadRevenueSeries(90),
+      loadRevenueSeriesForRange(range),
       loadTopProducts(20),
       loadLtvBuckets(),
       loadStockAlerts(),
@@ -49,7 +62,7 @@ export default async function AdminDashboardPage() {
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
         <div className="flex items-baseline justify-between gap-8 flex-wrap">
           <div className="min-w-0">
-            <p className="type-label text-accent mb-3">§ Dashboard — Est. MMIII</p>
+            <p className="type-label text-accent mb-3">§ I. Dashboard — Est. MMIII</p>
             <h1
               className="font-display text-ink"
               style={{
@@ -105,8 +118,45 @@ export default async function AdminDashboardPage() {
         </div>
       </header>
 
+      {/* HERITAGE — all-time totals, the bedrock the rest of the dashboard sits on */}
+      <section
+        className="mb-8 px-6 py-5"
+        style={{
+          border: '1px solid var(--rule-strong)',
+          background: 'var(--color-cream)',
+        }}
+      >
+        <div className="flex items-baseline justify-between gap-6 mb-4 flex-wrap">
+          <div>
+            <p className="type-label text-ink-muted mb-1">§ Heritage</p>
+            <p
+              className="font-display italic text-brand-deep"
+              style={{ fontSize: '20px', lineHeight: 1, fontWeight: 500, letterSpacing: '-0.018em' }}
+            >
+              Est. MMIII — {HERITAGE_YEARS} years of history.
+            </p>
+          </div>
+          <p className="type-data-mono text-ink-muted">All-time, since 2003</p>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-4 max-sm:grid-cols-2">
+          <HeritageTile label="Revenue — all-time" value={fmtMoney(summary.lifetimeRevenue)} />
+          <HeritageTile label="Orders — all-time" value={summary.orderCount.toLocaleString()} />
+          <HeritageTile label="Customers — on file" value={summary.customerCount.toLocaleString()} />
+          <HeritageTile label="AOV — last 30 days" value={fmtMoney(summary.aovLast30d)} />
+        </div>
+      </section>
+
+      {/* TIME-RANGE STRIP */}
+      <div className="flex items-baseline gap-4 flex-wrap mb-5">
+        <p className="type-label text-ink-muted">§ Range</p>
+        <RangePills active={rangeKey} />
+        <span className="type-data-mono text-ink-muted">
+          Showing {range.short} · {range.grain} aggregation
+        </span>
+      </div>
+
       <section className="mb-6">
-        <RevenueOverTime series={revenue} />
+        <RevenueOverTime series={revenue} label={range.short} />
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.1fr_1fr] mb-6">
@@ -133,6 +183,20 @@ export default async function AdminDashboardPage() {
         (30d) · {fmtMoney(summary.aovLast30d)}
       </p>
     </>
+  );
+}
+
+function HeritageTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="type-label-sm text-ink-muted mb-2">{label}</p>
+      <p
+        className="font-display italic text-brand-deep"
+        style={{ fontSize: '28px', lineHeight: 1, fontWeight: 500, letterSpacing: '-0.022em' }}
+      >
+        {value}
+      </p>
+    </div>
   );
 }
 

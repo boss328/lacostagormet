@@ -26,6 +26,8 @@ type GotoTarget =
   | { key: 'o'; path: '/admin/orders' }
   | { key: 'c'; path: '/admin/customers' }
   | { key: 'p'; path: '/admin/products' }
+  | { key: 'v'; path: '/admin/vendors' }
+  | { key: 'u'; path: '/admin/purchase-orders' }
   | { key: 'i'; path: '/admin/imports' };
 
 const GOTO_MAP: Record<string, string> = {
@@ -33,6 +35,8 @@ const GOTO_MAP: Record<string, string> = {
   o: '/admin/orders',
   c: '/admin/customers',
   p: '/admin/products',
+  v: '/admin/vendors',
+  u: '/admin/purchase-orders',
   i: '/admin/imports',
 };
 
@@ -134,6 +138,8 @@ export function AdminShortcuts() {
           <Row keys="g o" label="Go to Orders" />
           <Row keys="g c" label="Go to Customers" />
           <Row keys="g p" label="Go to Products" />
+          <Row keys="g v" label="Go to Vendors" />
+          <Row keys="g u" label="Go to Purchase Orders" />
           <Row keys="g i" label="Go to Imports" />
           <Row keys="?" label="Toggle this help" />
           <Row keys="Esc" label="Close open modal" />

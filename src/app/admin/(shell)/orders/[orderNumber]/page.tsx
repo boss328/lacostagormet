@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { AdminOrderStatusButtons } from '@/components/admin/AdminOrderStatusButtons';
+import { OrderVendorPos } from '@/components/admin/orders/OrderVendorPos';
+import { STATUS_LABEL, STATUS_COLOR, type VendorOrderStatus } from '@/lib/admin/vendor-po';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,7 +68,7 @@ export default async function AdminOrderDetailPage({
   if (!order) notFound();
   const o = order as OrderRow;
 
-  const [{ data: items }, { data: payments }, { data: audit }] = await Promise.all([
+  const [{ data: items }, { data: payments }, { data: audit }, { data: vendorPosData }] = await Promise.all([
     admin
       .from('order_items')
       .select('product_sku, product_name, quantity, unit_price, line_subtotal')
@@ -83,7 +85,24 @@ export default async function AdminOrderDetailPage({
       .select('event_type, transaction_id, error_detail, source, created_at')
       .eq('order_id', o.id)
       .order('created_at', { ascending: true }),
+    admin
+      .from('vendor_orders')
+      .select(
+        'id, status, email_subject, total_wholesale, vendor:vendors(name, contact_email), warehouse:vendor_warehouses(label)',
+      )
+      .eq('order_id', o.id)
+      .order('created_at', { ascending: true }),
   ]);
+
+  type VendorPo = {
+    id: string;
+    status: VendorOrderStatus;
+    email_subject: string | null;
+    total_wholesale: number | string | null;
+    vendor: { name: string; contact_email: string | null } | null;
+    warehouse: { label: string } | null;
+  };
+  const vendorPos = (vendorPosData ?? []) as unknown as VendorPo[];
 
   const itemRows = (items ?? []) as OrderItemRow[];
   const paymentRows = (payments ?? []) as PaymentRow[];
@@ -187,6 +206,31 @@ export default async function AdminOrderDetailPage({
                 {fmtMoney(o.total)}
               </span>
             </div>
+          </div>
+
+          <div className="mt-8">
+            <div
+              className="flex items-baseline justify-between pb-3 mb-2"
+              style={{ borderBottom: '1px solid var(--rule-strong)' }}
+            >
+              <span className="type-label text-ink">§&nbsp;&nbsp;Vendor POs</span>
+              <span className="type-data-mono text-ink-muted">
+                {vendorPos.length} {vendorPos.length === 1 ? 'PO' : 'POs'}
+              </span>
+            </div>
+            <OrderVendorPos
+              pos={vendorPos.map((p) => ({
+                id: p.id,
+                status: p.status,
+                statusLabel: STATUS_LABEL[p.status],
+                statusColor: STATUS_COLOR[p.status],
+                vendorName: p.vendor?.name ?? '—',
+                vendorEmail: p.vendor?.contact_email ?? null,
+                warehouseLabel: p.warehouse?.label ?? null,
+                wholesale: p.total_wholesale != null ? Number(p.total_wholesale) : null,
+                subject: p.email_subject,
+              }))}
+            />
           </div>
         </div>
 

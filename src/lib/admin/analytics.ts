@@ -1,5 +1,6 @@
 import 'server-only';
 import { createAdminClient } from '@/lib/supabase/admin';
+import type { Range } from '@/lib/admin/range';
 
 /**
  * Dashboard analytics queries. Keep each function narrow + parallelisable —
@@ -156,6 +157,52 @@ export async function loadRevenueSeries(days = 90): Promise<RevenuePoint[]> {
     revenue: round2(v.revenue),
     orders: v.orders,
   }));
+}
+
+/**
+ * Range-aware revenue series. Auto-buckets to grain (day / week / month).
+ * For all-time, fetches every paid/payment_held order. For windowed ranges,
+ * filters to range.since / range.until.
+ */
+export async function loadRevenueSeriesForRange(range: Range): Promise<RevenuePoint[]> {
+  const admin = createAdminClient();
+  const all: Array<{ total: number | string; created_at: string }> = [];
+  const pageSize = 1000;
+  for (let from = 0; ; from += pageSize) {
+    let q = admin
+      .from('orders')
+      .select('total, created_at')
+      .in('status', ['paid', 'payment_held'])
+      .order('created_at', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (range.since) q = q.gte('created_at', range.since);
+    if (range.until) q = q.lt('created_at', range.until);
+    const { data } = await q;
+    const rows = data ?? [];
+    all.push(...(rows as typeof all));
+    if (rows.length < pageSize) break;
+  }
+
+  const bucketKey = (iso: string) => {
+    if (range.grain === 'day') return iso.slice(0, 10);
+    if (range.grain === 'month') return iso.slice(0, 7);
+    const d = new Date(iso);
+    const day = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() - (day - 1));
+    return d.toISOString().slice(0, 10);
+  };
+
+  const map = new Map<string, { revenue: number; orders: number }>();
+  for (const row of all) {
+    const k = bucketKey(row.created_at);
+    const prev = map.get(k) ?? { revenue: 0, orders: 0 };
+    prev.revenue += Number(row.total ?? 0);
+    prev.orders += 1;
+    map.set(k, prev);
+  }
+  return Array.from(map.entries())
+    .map(([date, v]) => ({ date, revenue: round2(v.revenue), orders: v.orders }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 /** Top products by revenue from order_items joined to products metadata. */
