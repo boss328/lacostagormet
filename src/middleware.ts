@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { ADMIN_COOKIE, computeAdminCookieToken } from '@/lib/admin/auth-cookie';
+// RESTORE-START — uncomment when re-enabling the admin gate below
+// import { ADMIN_COOKIE, computeAdminCookieToken } from '@/lib/admin/auth-cookie';
+// RESTORE-END
 
 /**
  * Route guards:
@@ -23,6 +25,19 @@ import { ADMIN_COOKIE, computeAdminCookieToken } from '@/lib/admin/auth-cookie';
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // ╔══════════════════════════════════════════════════════════════════╗
+  // ║ TEMP STAGING SHORTCUT — RESTORE BEFORE PROD LAUNCH               ║
+  // ║                                                                  ║
+  // ║ The admin gate is commented out so Jeff can demo without a       ║
+  // ║ working cookie round-trip on Vercel. Anyone with the /admin URL  ║
+  // ║ can reach the dashboard, including unauthenticated visitors.     ║
+  // ║                                                                  ║
+  // ║ TO RESTORE: uncomment the block below. Do NOT delete this        ║
+  // ║ marker — the restore PR should remove the entire frame.          ║
+  // ║                                                                  ║
+  // ║ Disabled: 2026-04-19 (commit body explains the cookie issue)     ║
+  // ╚══════════════════════════════════════════════════════════════════╝
+  /* RESTORE-START
   if (pathname.startsWith('/admin')) {
     // Whitelist the login surfaces — both slashed and non-slashed forms,
     // because middleware runs before Next normalises the trailing slash.
@@ -62,6 +77,7 @@ export async function middleware(req: NextRequest) {
     }
     return NextResponse.next();
   }
+  RESTORE-END */
 
   if (pathname.startsWith('/account')) {
     const res = NextResponse.next();
