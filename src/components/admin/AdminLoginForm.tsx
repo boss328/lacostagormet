@@ -17,7 +17,11 @@ export function AdminLoginForm({ redirectTo, error }: AdminLoginFormProps) {
         Phase 6 gate — temporary password. Phase 7 swaps in role-based auth.
       </p>
 
-      <form method="post" action="/api/admin/login" className="flex flex-col gap-5">
+      {/* Action carries the trailing slash directly — with trailingSlash:true
+          in next.config.mjs, posting to /api/admin/login (no slash) would
+          force Vercel's edge to issue a 308. POST→308→re-POST chains are
+          fragile on edge networks; writing the slash inline skips the dance. */}
+      <form method="post" action="/api/admin/login/" className="flex flex-col gap-5">
         <input type="hidden" name="redirect" value={redirectTo} />
         <div className="flex flex-col gap-2">
           <label htmlFor="password" className="type-label-sm text-ink">

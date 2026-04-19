@@ -10,7 +10,8 @@ export default function AdminLoginPage({
 }: {
   searchParams: Record<string, string | string[] | undefined>;
 }) {
-  const redirect = typeof searchParams.redirect === 'string' ? searchParams.redirect : '/admin';
+  // Default redirect carries trailing slash to match trailingSlash:true.
+  const redirect = typeof searchParams.redirect === 'string' ? searchParams.redirect : '/admin/';
   const error = typeof searchParams.error === 'string' ? searchParams.error : null;
   return (
     <section className="max-w-content mx-auto px-8 py-24 max-sm:px-5 max-sm:py-16">
