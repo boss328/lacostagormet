@@ -33,6 +33,18 @@ function pickPrimary(
   return p?.url ?? null;
 }
 
+function margin(retail: number, cost: number | null): string {
+  if (cost === null || retail <= 0) return '—';
+  return `${Math.round(((retail - cost) / retail) * 100)}%`;
+}
+
+function buildHref(base: string, params: Record<string, string | undefined>): string {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v) qs.set(k, v);
+  const s = qs.toString();
+  return s ? `${base}?${s}` : base;
+}
+
 export default async function AdminProductsPage({
   searchParams,
 }: {
@@ -55,15 +67,30 @@ export default async function AdminProductsPage({
 
   return (
     <>
-      <header className="mb-8">
+      <header className="mb-6">
         <p className="type-label text-accent mb-3">§ Products</p>
-        <h1 className="type-display-2">Catalog.</h1>
-        <p className="type-data-mono text-ink-muted mt-3">
-          {(count ?? 0).toLocaleString()} {count === 1 ? 'product' : 'products'}
-        </p>
+        <div className="flex items-baseline justify-between gap-6 flex-wrap">
+          <h1
+            className="font-display text-ink"
+            style={{ fontSize: '36px', lineHeight: 1, letterSpacing: '-0.025em' }}
+          >
+            The <em className="type-accent">catalog</em>.
+          </h1>
+          <div className="flex items-center gap-4">
+            <Link
+              href={buildHref('/api/admin/products/export', { q: search })}
+              className="type-label-sm text-ink hover:text-brand-deep transition-colors duration-200"
+            >
+              Export CSV →
+            </Link>
+            <span className="type-data-mono text-ink-muted">
+              {(count ?? 0).toLocaleString()} active + inactive
+            </span>
+          </div>
+        </div>
       </header>
 
-      <form method="GET" action="/admin/products" className="flex items-center gap-4 mb-6 flex-wrap">
+      <form method="GET" action="/admin/products" className="flex items-center gap-3 mb-5 flex-wrap">
         <input
           type="search"
           name="q"
@@ -72,20 +99,24 @@ export default async function AdminProductsPage({
           className="bg-cream text-ink font-display flex-1 min-w-[240px]"
           style={{
             border: '1px solid var(--rule-strong)',
-            padding: '10px 14px',
+            padding: '9px 14px',
             fontSize: '14px',
-            minHeight: 44,
+            minHeight: 38,
           }}
         />
-        <button type="submit" className="btn btn-solid" style={{ padding: '12px 22px' }}>
-          <span>Search</span>
-          <span className="btn-arrow" aria-hidden="true">→</span>
+        <button
+          type="submit"
+          className="type-label-sm text-ink"
+          style={{
+            padding: '9px 16px',
+            border: '1px solid var(--color-ink)',
+            background: 'var(--color-cream)',
+          }}
+        >
+          Search
         </button>
         {search && (
-          <Link
-            href="/admin/products"
-            className="type-label text-ink-muted hover:text-accent transition-colors duration-200"
-          >
+          <Link href="/admin/products" className="type-label-sm text-ink-muted hover:text-accent">
             Clear
           </Link>
         )}
@@ -95,7 +126,7 @@ export default async function AdminProductsPage({
         <div
           className="grid items-center gap-4 px-4 py-3 bg-paper-2"
           style={{
-            gridTemplateColumns: '60px 1fr minmax(140px,auto) minmax(120px,auto) auto auto auto',
+            gridTemplateColumns: '48px 1fr minmax(140px,auto) minmax(80px,auto) minmax(80px,auto) minmax(60px,auto) auto auto',
             borderBottom: '1px solid var(--rule-strong)',
           }}
         >
@@ -104,28 +135,31 @@ export default async function AdminProductsPage({
           <span className="type-label-sm text-ink">Brand</span>
           <span className="type-label-sm text-ink text-right">Retail</span>
           <span className="type-label-sm text-ink text-right">Cost</span>
+          <span className="type-label-sm text-ink text-right">Margin</span>
           <span className="type-label-sm text-ink">Stock</span>
           <span className="type-label-sm text-ink">Active</span>
         </div>
         {rows.map((p) => {
           const url = pickPrimary(p.product_images);
           const thumb = url ? bcImage(url, 'card') : null;
+          const retail = Number(p.retail_price);
+          const cost = p.wholesale_cost != null ? Number(p.wholesale_cost) : null;
           return (
             <Link
               key={p.id}
               href={`/admin/products/${p.id}`}
-              className="grid items-center gap-4 px-4 py-3 hover:bg-paper-2 transition-colors duration-200"
+              className="grid items-center gap-4 px-4 py-3 hover:bg-paper-2 transition-colors duration-150"
               style={{
-                gridTemplateColumns: '60px 1fr minmax(140px,auto) minmax(120px,auto) auto auto auto',
+                gridTemplateColumns: '48px 1fr minmax(140px,auto) minmax(80px,auto) minmax(80px,auto) minmax(60px,auto) auto auto',
                 borderBottom: '1px solid var(--rule)',
-                minHeight: 64,
+                minHeight: 56,
               }}
             >
               <div
                 className="relative overflow-hidden"
                 style={{
-                  width: 48,
-                  height: 48,
+                  width: 40,
+                  height: 40,
                   border: '1px solid var(--rule)',
                   background:
                     'radial-gradient(ellipse at center, var(--color-cream) 0%, var(--color-paper-2) 115%)',
@@ -135,8 +169,8 @@ export default async function AdminProductsPage({
                   <Image
                     src={thumb}
                     alt=""
-                    width={96}
-                    height={96}
+                    width={80}
+                    height={80}
                     className="w-full h-full object-contain img-product"
                   />
                 ) : (
@@ -147,16 +181,30 @@ export default async function AdminProductsPage({
               </div>
               <div className="min-w-0">
                 <p className="type-data-mono text-ink-muted truncate">{p.sku}</p>
-                <p className="font-display text-ink truncate" style={{ fontSize: '14px' }}>
+                <p
+                  className="font-display text-ink truncate"
+                  style={{ fontSize: '13.5px' }}
+                >
                   {p.name}
                 </p>
               </div>
               <span className="font-display text-ink truncate">{p.brands?.name ?? '—'}</span>
-              <span className="font-display text-ink text-right" style={{ fontSize: '14px' }}>
+              <span
+                className="font-display text-ink text-right"
+                style={{ fontSize: '13.5px' }}
+              >
                 {fmt(p.retail_price)}
               </span>
               <span className="type-data-mono text-ink-muted text-right">
-                {p.wholesale_cost != null ? fmt(p.wholesale_cost) : '—'}
+                {cost !== null ? fmt(cost) : '—'}
+              </span>
+              <span
+                className="type-data-mono text-right"
+                style={{
+                  color: cost !== null ? 'var(--color-forest)' : 'var(--color-ink-muted)',
+                }}
+              >
+                {margin(retail, cost)}
               </span>
               <span className="type-data-mono text-ink-muted">
                 {p.stock_status.replace(/_/g, ' ')}

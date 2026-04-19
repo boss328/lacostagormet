@@ -15,6 +15,13 @@ type CustomerRow = {
   created_at: string;
 };
 
+function buildHref(base: string, params: Record<string, string | undefined>): string {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v) qs.set(k, v);
+  const s = qs.toString();
+  return s ? `${base}?${s}` : base;
+}
+
 export default async function AdminCustomersPage({
   searchParams,
 }: {
@@ -27,11 +34,14 @@ export default async function AdminCustomersPage({
   const admin = createAdminClient();
   let q = admin
     .from('customers')
-    .select('id, email, first_name, last_name, company_name, migrated_from_bc, created_at', {
-      count: 'exact',
-    });
+    .select(
+      'id, email, first_name, last_name, company_name, migrated_from_bc, created_at',
+      { count: 'exact' },
+    );
   if (search) {
-    q = q.or(`email.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%`);
+    q = q.or(
+      `email.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%`,
+    );
   }
   q = q.order('created_at', { ascending: false }).range(offset, offset + PAGE_SIZE - 1);
 
@@ -42,15 +52,30 @@ export default async function AdminCustomersPage({
 
   return (
     <>
-      <header className="mb-8">
+      <header className="mb-6">
         <p className="type-label text-accent mb-3">§ Customers</p>
-        <h1 className="type-display-2">Customer list.</h1>
-        <p className="type-data-mono text-ink-muted mt-3">
-          {total.toLocaleString()} {total === 1 ? 'customer' : 'customers'} on file
-        </p>
+        <div className="flex items-baseline justify-between gap-6 flex-wrap">
+          <h1
+            className="font-display text-ink"
+            style={{ fontSize: '36px', lineHeight: 1, letterSpacing: '-0.025em' }}
+          >
+            The <em className="type-accent">rolodex</em>.
+          </h1>
+          <div className="flex items-center gap-4">
+            <Link
+              href={buildHref('/api/admin/customers/export', { q: search })}
+              className="type-label-sm text-ink hover:text-brand-deep transition-colors duration-200"
+            >
+              Export CSV →
+            </Link>
+            <span className="type-data-mono text-ink-muted">
+              {total.toLocaleString()} on file
+            </span>
+          </div>
+        </div>
       </header>
 
-      <form method="GET" action="/admin/customers" className="flex items-center gap-4 mb-6 flex-wrap">
+      <form method="GET" action="/admin/customers" className="flex items-center gap-3 mb-5 flex-wrap">
         <input
           type="search"
           name="q"
@@ -59,20 +84,24 @@ export default async function AdminCustomersPage({
           className="bg-cream text-ink font-display flex-1 min-w-[240px]"
           style={{
             border: '1px solid var(--rule-strong)',
-            padding: '10px 14px',
+            padding: '9px 14px',
             fontSize: '14px',
-            minHeight: 44,
+            minHeight: 38,
           }}
         />
-        <button type="submit" className="btn btn-solid" style={{ padding: '12px 22px' }}>
-          <span>Search</span>
-          <span className="btn-arrow" aria-hidden="true">→</span>
+        <button
+          type="submit"
+          className="type-label-sm text-ink"
+          style={{
+            padding: '9px 16px',
+            border: '1px solid var(--color-ink)',
+            background: 'var(--color-cream)',
+          }}
+        >
+          Search
         </button>
         {search && (
-          <Link
-            href="/admin/customers"
-            className="type-label text-ink-muted hover:text-accent transition-colors duration-200"
-          >
+          <Link href="/admin/customers" className="type-label-sm text-ink-muted hover:text-accent">
             Clear
           </Link>
         )}
@@ -95,7 +124,8 @@ export default async function AdminCustomersPage({
           <div
             className="grid items-center gap-4 px-4 py-3 bg-paper-2"
             style={{
-              gridTemplateColumns: 'minmax(260px,1.2fr) minmax(160px,1fr) minmax(160px,1fr) auto auto',
+              gridTemplateColumns:
+                'minmax(260px,1.2fr) minmax(160px,1fr) minmax(160px,1fr) auto auto',
               borderBottom: '1px solid var(--rule-strong)',
             }}
           >
@@ -109,9 +139,10 @@ export default async function AdminCustomersPage({
             <Link
               key={c.id}
               href={`/admin/customers/${c.id}`}
-              className="grid items-center gap-4 px-4 py-3 hover:bg-paper-2 transition-colors duration-200"
+              className="grid items-center gap-4 px-4 py-3 hover:bg-paper-2 transition-colors duration-150"
               style={{
-                gridTemplateColumns: 'minmax(260px,1.2fr) minmax(160px,1fr) minmax(160px,1fr) auto auto',
+                gridTemplateColumns:
+                  'minmax(260px,1.2fr) minmax(160px,1fr) minmax(160px,1fr) auto auto',
                 borderBottom: '1px solid var(--rule)',
                 minHeight: 48,
               }}
@@ -123,7 +154,14 @@ export default async function AdminCustomersPage({
               <span className="font-display text-ink-muted truncate">
                 {c.company_name || '—'}
               </span>
-              <span className="type-data-mono text-ink-muted">
+              <span
+                className="type-label-sm"
+                style={{
+                  padding: '3px 8px',
+                  background: c.migrated_from_bc ? 'var(--color-gold)' : 'var(--color-forest)',
+                  color: 'var(--color-cream)',
+                }}
+              >
                 {c.migrated_from_bc ? 'BC' : 'new'}
               </span>
               <span className="type-data-mono text-ink-muted">
@@ -138,10 +176,13 @@ export default async function AdminCustomersPage({
         <div className="flex items-center justify-between pt-6">
           {page > 1 ? (
             <Link
-              href={`/admin/customers?${new URLSearchParams({ ...(search ? { q: search } : {}), ...(page > 2 ? { page: String(page - 1) } : {}) }).toString()}`}
-              className="type-label text-ink hover:text-brand-deep transition-colors duration-200"
+              href={buildHref('/admin/customers', {
+                q: search,
+                page: page > 2 ? String(page - 1) : undefined,
+              })}
+              className="type-label-sm text-ink hover:text-brand-deep"
             >
-              ←&nbsp;Newer
+              ← Newer
             </Link>
           ) : (
             <span />
@@ -151,10 +192,13 @@ export default async function AdminCustomersPage({
           </span>
           {page < pageCount ? (
             <Link
-              href={`/admin/customers?${new URLSearchParams({ ...(search ? { q: search } : {}), page: String(page + 1) }).toString()}`}
-              className="type-label text-ink hover:text-brand-deep transition-colors duration-200"
+              href={buildHref('/admin/customers', {
+                q: search,
+                page: String(page + 1),
+              })}
+              className="type-label-sm text-ink hover:text-brand-deep"
             >
-              Older&nbsp;→
+              Older →
             </Link>
           ) : (
             <span />

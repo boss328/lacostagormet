@@ -66,7 +66,7 @@ export default async function AdminOrderDetailPage({
   if (!order) notFound();
   const o = order as OrderRow;
 
-  const [{ data: items }, { data: payments }] = await Promise.all([
+  const [{ data: items }, { data: payments }, { data: audit }] = await Promise.all([
     admin
       .from('order_items')
       .select('product_sku, product_name, quantity, unit_price, line_subtotal')
@@ -78,10 +78,22 @@ export default async function AdminOrderDetailPage({
       )
       .eq('order_id', o.id)
       .order('created_at', { ascending: false }),
+    admin
+      .from('payment_audit_log')
+      .select('event_type, transaction_id, error_detail, source, created_at')
+      .eq('order_id', o.id)
+      .order('created_at', { ascending: true }),
   ]);
 
   const itemRows = (items ?? []) as OrderItemRow[];
   const paymentRows = (payments ?? []) as PaymentRow[];
+  const auditRows = (audit ?? []) as Array<{
+    event_type: string;
+    transaction_id: string | null;
+    error_detail: string | null;
+    source: string;
+    created_at: string;
+  }>;
 
   return (
     <>
@@ -256,6 +268,49 @@ export default async function AdminOrderDetailPage({
               >
                 {o.admin_notes}
               </p>
+            </div>
+          )}
+
+          {auditRows.length > 0 && (
+            <div
+              className="bg-paper-2"
+              style={{ border: '1px solid var(--rule)', padding: '18px 20px' }}
+            >
+              <p className="type-label-sm text-ink mb-3">§&nbsp;&nbsp;Audit trail</p>
+              <ol className="flex flex-col">
+                {auditRows.map((a, i) => (
+                  <li
+                    key={i}
+                    className="flex items-baseline gap-3 py-1.5"
+                    style={{
+                      borderBottom: i < auditRows.length - 1 ? '1px dashed var(--rule)' : 'none',
+                    }}
+                  >
+                    <span
+                      className="type-data-mono shrink-0"
+                      style={{
+                        color:
+                          a.event_type.includes('failed') || a.event_type.includes('declined')
+                            ? 'var(--color-accent)'
+                            : a.event_type === 'payment_inserted'
+                              ? 'var(--color-forest)'
+                              : 'var(--color-ink-muted)',
+                      }}
+                    >
+                      {a.event_type}
+                    </span>
+                    <span className="type-data-mono text-ink-muted flex-1 truncate">
+                      {new Date(a.created_at).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                      {a.error_detail ? ` · ${a.error_detail}` : ''}
+                    </span>
+                  </li>
+                ))}
+              </ol>
             </div>
           )}
         </aside>
