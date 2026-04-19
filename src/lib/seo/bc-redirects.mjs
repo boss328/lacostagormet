@@ -15,7 +15,7 @@
 
 export const bcRedirects = [
   // ───── Top-level pages ─────
-  { source: '/blog/', destination: '/blog', permanent: true },
+  { source: '/blog/', destination: '/', permanent: true },
   { source: '/contact-us/', destination: '/contact', permanent: true },
 
   // ───── Brand index ─────

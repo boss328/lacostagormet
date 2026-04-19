@@ -14,6 +14,7 @@ const nextConfig = {
   // makes self-hosted dev / preview environments behave the same.
   compress: true,
   poweredByHeader: false,
+  trailingSlash: true,
 
   images: {
     // AVIF first, then WebP — Next picks the smallest format the
