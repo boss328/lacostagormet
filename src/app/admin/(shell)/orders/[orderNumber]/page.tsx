@@ -117,7 +117,7 @@ export default async function AdminOrderDetailPage({
   return (
     <>
       <Link
-        href="/admin/orders"
+        href="/admin/orders/"
         className="type-label text-ink-muted hover:text-brand-deep transition-colors duration-200 inline-block mb-5"
       >
         ←&nbsp;All orders

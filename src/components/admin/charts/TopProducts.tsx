@@ -112,7 +112,7 @@ export function TopProducts({ products }: { products: TopProduct[] }) {
       </div>
       {sorted.length > 10 && (
         <p className="type-data-mono text-ink-muted mt-3 text-right">
-          + {sorted.length - 10} more — <Link href="/admin/products" className="hover:text-brand-deep">view all</Link>
+          + {sorted.length - 10} more — <Link href="/admin/products/" className="hover:text-brand-deep">view all</Link>
         </p>
       )}
     </WidgetFrame>

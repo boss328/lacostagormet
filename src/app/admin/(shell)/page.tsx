@@ -111,13 +111,13 @@ export default async function AdminDashboardPage({
               label="Pending ship"
               value={summary.unfulfilledCount.toLocaleString()}
               delta="needs action"
-              href="/admin/orders?status=paid&fulfillment=unfulfilled"
+              href="/admin/orders/?status=paid&fulfillment=unfulfilled"
             />
             <TinyStat
               label="Customers"
               value={summary.customerCount.toLocaleString()}
               delta="on file"
-              href="/admin/customers"
+              href="/admin/customers/"
             />
           </div>
         </div>

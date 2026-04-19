@@ -6,7 +6,7 @@ export default function NewVendorPage() {
   return (
     <>
       <Link
-        href="/admin/vendors"
+        href="/admin/vendors/"
         className="type-label text-ink-muted hover:text-brand-deep transition-colors duration-200 inline-block mb-5"
       >
         ← All vendors
@@ -54,7 +54,7 @@ export default function NewVendorPage() {
             Create vendor →
           </button>
           <Link
-            href="/admin/vendors"
+            href="/admin/vendors/"
             className="type-label-sm text-ink-muted hover:text-accent self-center"
           >
             Cancel

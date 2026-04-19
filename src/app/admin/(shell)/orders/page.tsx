@@ -205,7 +205,7 @@ export default async function AdminOrdersPage({
           return (
             <Link
               key={f.key}
-              href={buildHref('/admin/orders', {
+              href={buildHref('/admin/orders/', {
                 view: f.key === 'all' ? undefined : f.key,
                 q: search,
                 range: rangeKey === 'all' ? undefined : rangeKey,
@@ -227,7 +227,7 @@ export default async function AdminOrdersPage({
 
       <form
         method="GET"
-        action="/admin/orders"
+        action="/admin/orders/"
         className="flex items-center gap-3 mb-6 flex-wrap"
       >
         {filterKey !== 'all' && <input type="hidden" name="view" value={filterKey} />}
@@ -258,7 +258,7 @@ export default async function AdminOrdersPage({
         </button>
         {search && (
           <Link
-            href={buildHref('/admin/orders', {
+            href={buildHref('/admin/orders/', {
               view: filterKey === 'all' ? undefined : filterKey,
               range: rangeKey === 'all' ? undefined : rangeKey,
             })}
@@ -301,7 +301,7 @@ export default async function AdminOrdersPage({
           {rows.map((o) => (
             <Link
               key={o.order_number}
-              href={`/admin/orders/${o.order_number}`}
+              href={`/admin/orders/${o.order_number}/`}
               className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream"
               style={{
                 gridTemplateColumns:
@@ -342,7 +342,7 @@ export default async function AdminOrdersPage({
         <div className="flex items-center justify-between pt-6">
           {page > 1 ? (
             <Link
-              href={buildHref('/admin/orders', {
+              href={buildHref('/admin/orders/', {
                 view: filterKey === 'all' ? undefined : filterKey,
                 q: search,
                 range: rangeKey === 'all' ? undefined : rangeKey,
@@ -360,7 +360,7 @@ export default async function AdminOrdersPage({
           </span>
           {page < pageCount ? (
             <Link
-              href={buildHref('/admin/orders', {
+              href={buildHref('/admin/orders/', {
                 view: filterKey === 'all' ? undefined : filterKey,
                 q: search,
                 range: rangeKey === 'all' ? undefined : rangeKey,

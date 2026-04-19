@@ -87,7 +87,7 @@ export default async function PoDetailPage({ params }: { params: { id: string } 
   return (
     <>
       <Link
-        href="/admin/purchase-orders"
+        href="/admin/purchase-orders/"
         className="type-label text-ink-muted hover:text-brand-deep transition-colors duration-200 inline-block mb-5"
       >
         ← All POs
@@ -137,7 +137,7 @@ export default async function PoDetailPage({ params }: { params: { id: string } 
               className="font-display italic text-brand-deep mb-2"
               style={{ fontSize: '20px', fontWeight: 500 }}
             >
-              <Link href={`/admin/orders/${po.order?.order_number}`} className="hover:opacity-80">
+              <Link href={`/admin/orders/${po.order?.order_number}/`} className="hover:opacity-80">
                 {po.order?.order_number}
               </Link>
             </p>
@@ -152,7 +152,7 @@ export default async function PoDetailPage({ params }: { params: { id: string } 
               className="font-display italic text-brand-deep mb-2"
               style={{ fontSize: '18px', fontWeight: 500 }}
             >
-              <Link href={`/admin/vendors/${po.vendor?.id}`} className="hover:opacity-80">
+              <Link href={`/admin/vendors/${po.vendor?.id}/`} className="hover:opacity-80">
                 {po.vendor?.name ?? 'unassigned'}
               </Link>
             </p>

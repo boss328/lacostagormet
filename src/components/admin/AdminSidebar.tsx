@@ -11,15 +11,20 @@ import { usePathname } from 'next/navigation';
 
 type NavItem = { href: string; label: string; numeral: string; shortcut: string };
 
+// Every href carries a trailing slash because next.config.mjs sets
+// trailingSlash: true. Without it, each Link click triggers a 308 from
+// Vercel's edge — and on the in-flight 308 the lcg_admin cookie wasn't
+// reliably surviving the hop on Vercel's network, causing the user to
+// bounce back to /admin/login on every nav click. See commit body.
 const NAV: NavItem[] = [
-  { href: '/admin',                 label: 'Dashboard',       numeral: 'I',     shortcut: 'g d' },
-  { href: '/admin/orders',          label: 'Orders',          numeral: 'II',    shortcut: 'g o' },
-  { href: '/admin/customers',       label: 'Customers',       numeral: 'III',   shortcut: 'g c' },
-  { href: '/admin/products',        label: 'Products',        numeral: 'IV',    shortcut: 'g p' },
-  { href: '/admin/vendors',         label: 'Vendors',         numeral: 'V',     shortcut: 'g v' },
-  { href: '/admin/purchase-orders', label: 'Purchase Orders', numeral: 'VI',    shortcut: 'g u' },
-  { href: '/admin/inquiries',       label: 'Inquiries',       numeral: 'VII',   shortcut: 'g n' },
-  { href: '/admin/imports',         label: 'Imports',         numeral: 'VIII',  shortcut: 'g i' },
+  { href: '/admin/',                 label: 'Dashboard',       numeral: 'I',     shortcut: 'g d' },
+  { href: '/admin/orders/',          label: 'Orders',          numeral: 'II',    shortcut: 'g o' },
+  { href: '/admin/customers/',       label: 'Customers',       numeral: 'III',   shortcut: 'g c' },
+  { href: '/admin/products/',        label: 'Products',        numeral: 'IV',    shortcut: 'g p' },
+  { href: '/admin/vendors/',         label: 'Vendors',         numeral: 'V',     shortcut: 'g v' },
+  { href: '/admin/purchase-orders/', label: 'Purchase Orders', numeral: 'VI',    shortcut: 'g u' },
+  { href: '/admin/inquiries/',       label: 'Inquiries',       numeral: 'VII',   shortcut: 'g n' },
+  { href: '/admin/imports/',         label: 'Imports',         numeral: 'VIII',  shortcut: 'g i' },
 ];
 
 export function AdminSidebar() {
@@ -34,9 +39,12 @@ export function AdminSidebar() {
       </p>
       <nav className="flex flex-col">
         {NAV.map((item) => {
+          // Dashboard is exact-match only — startsWith would mark it
+          // active on every admin route. All other items match their
+          // subtree via startsWith.
           const active =
-            item.href === '/admin'
-              ? pathname === '/admin'
+            item.href === '/admin/'
+              ? pathname === '/admin/' || pathname === '/admin'
               : pathname.startsWith(item.href);
           return (
             <Link
@@ -87,7 +95,7 @@ export function AdminSidebar() {
         })}
       </nav>
       <Link
-        href="/admin/settings"
+        href="/admin/settings/"
         className="type-data-mono text-ink-muted hover:text-brand-deep mt-6 block"
         style={{ paddingLeft: 4 }}
       >

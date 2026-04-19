@@ -99,7 +99,7 @@ export default function AdminImportsPage() {
         {IMPORTS.map((i) => (
           <Link
             key={i.slug}
-            href={`/admin/imports/${i.slug}`}
+            href={`/admin/imports/${i.slug}/`}
             className="bg-cream flex flex-col gap-3 transition-colors duration-200 hover:bg-paper-2"
             style={{
               border: '1px solid var(--rule-strong)',

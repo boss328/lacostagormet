@@ -29,13 +29,14 @@ type Result = {
   hint?: string;
 };
 
+// Trailing slashes match trailingSlash:true — see AdminSidebar comment.
 const ACTIONS: Result[] = [
-  { id: 'nav-dash',      group: 'action', label: 'Go to Dashboard', href: '/admin',           hint: 'g d' },
-  { id: 'nav-orders',    group: 'action', label: 'Go to Orders',    href: '/admin/orders',    hint: 'g o' },
-  { id: 'nav-customers', group: 'action', label: 'Go to Customers', href: '/admin/customers', hint: 'g c' },
-  { id: 'nav-products',  group: 'action', label: 'Go to Products',  href: '/admin/products',  hint: 'g p' },
-  { id: 'nav-imports',   group: 'action', label: 'Go to Imports',   href: '/admin/imports',   hint: 'g i' },
-  { id: 'nav-store',     group: 'action', label: 'Open storefront', href: '/',                hint: '↗' },
+  { id: 'nav-dash',      group: 'action', label: 'Go to Dashboard', href: '/admin/',           hint: 'g d' },
+  { id: 'nav-orders',    group: 'action', label: 'Go to Orders',    href: '/admin/orders/',    hint: 'g o' },
+  { id: 'nav-customers', group: 'action', label: 'Go to Customers', href: '/admin/customers/', hint: 'g c' },
+  { id: 'nav-products',  group: 'action', label: 'Go to Products',  href: '/admin/products/',  hint: 'g p' },
+  { id: 'nav-imports',   group: 'action', label: 'Go to Imports',   href: '/admin/imports/',   hint: 'g i' },
+  { id: 'nav-store',     group: 'action', label: 'Open storefront', href: '/',                 hint: '↗' },
 ];
 
 export function CommandPalette() {

@@ -19,7 +19,7 @@ export function AdminTopRail() {
       }}
     >
       <div className="max-w-[1600px] mx-auto grid items-center gap-6 px-6 py-3 max-sm:px-4 max-sm:grid-cols-[1fr_auto] lg:grid-cols-[auto_1fr_auto]">
-        <Link href="/admin" className="flex items-center gap-4 shrink-0">
+        <Link href="/admin/" className="flex items-center gap-4 shrink-0">
           <Image
             src={logo}
             alt="La Costa Gourmet"

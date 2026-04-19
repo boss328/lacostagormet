@@ -99,7 +99,7 @@ export function OrderVendorPos({ pos }: { pos: Po[] }) {
             <span />
           )}
           <Link
-            href={`/admin/purchase-orders/${p.id}`}
+            href={`/admin/purchase-orders/${p.id}/`}
             className="type-label-sm text-ink hover:text-brand-deep"
           >
             View →

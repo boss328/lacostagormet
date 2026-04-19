@@ -81,7 +81,7 @@ export default async function AdminCustomerDetailPage({
   return (
     <>
       <Link
-        href="/admin/customers"
+        href="/admin/customers/"
         className="type-label text-ink-muted hover:text-brand-deep transition-colors duration-200 inline-block mb-5"
       >
         ←&nbsp;All customers
@@ -160,7 +160,7 @@ export default async function AdminCustomerDetailPage({
               {orders.map((o) => (
                 <Link
                   key={o.order_number}
-                  href={`/admin/orders/${o.order_number}`}
+                  href={`/admin/orders/${o.order_number}/`}
                   className="flex items-baseline justify-between gap-3 py-2 hover:bg-paper-2 transition-colors duration-200"
                   style={{ borderBottom: '1px solid var(--rule)', paddingLeft: 6, paddingRight: 6 }}
                 >

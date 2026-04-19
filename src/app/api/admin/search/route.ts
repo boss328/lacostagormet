@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
       group: 'order',
       label: o.order_number,
       sublabel: `${o.customer_email} · ${o.status} · $${Number(o.total).toFixed(2)}`,
-      href: `/admin/orders/${o.order_number}`,
+      href: `/admin/orders/${o.order_number}/`,
     });
   }
 
@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
       group: 'customer',
       label: name || c.email,
       sublabel: name ? c.email : undefined,
-      href: `/admin/customers/${c.id}`,
+      href: `/admin/customers/${c.id}/`,
     });
   }
 
@@ -100,7 +100,7 @@ export async function GET(req: NextRequest) {
       group: 'product',
       label: p.name,
       sublabel: `${p.sku} · $${Number(p.retail_price).toFixed(2)}`,
-      href: `/admin/products/${p.id}`,
+      href: `/admin/products/${p.id}/`,
     });
   }
 

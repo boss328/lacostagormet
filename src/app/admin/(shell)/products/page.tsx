@@ -141,7 +141,7 @@ export default async function AdminProductsPage({
 
       <form
         method="GET"
-        action="/admin/products"
+        action="/admin/products/"
         className="flex items-center gap-3 mb-6 flex-wrap"
       >
         {rangeKey !== 'all' && <input type="hidden" name="range" value={rangeKey} />}
@@ -171,7 +171,7 @@ export default async function AdminProductsPage({
         </button>
         {search && (
           <Link
-            href={buildHref('/admin/products', {
+            href={buildHref('/admin/products/', {
               range: rangeKey === 'all' ? undefined : rangeKey,
             })}
             className="type-label-sm text-ink-muted hover:text-accent"
@@ -206,7 +206,7 @@ export default async function AdminProductsPage({
           return (
             <Link
               key={p.id}
-              href={`/admin/products/${p.id}`}
+              href={`/admin/products/${p.id}/`}
               className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream"
               style={{
                 gridTemplateColumns: '48px 1fr minmax(140px,auto) minmax(80px,auto) minmax(80px,auto) minmax(60px,auto) auto auto',

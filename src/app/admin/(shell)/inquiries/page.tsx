@@ -92,7 +92,7 @@ export default async function AdminInquiriesPage({
           return (
             <Link
               key={s.key}
-              href={buildHref('/admin/inquiries', {
+              href={buildHref('/admin/inquiries/', {
                 status: s.key === 'new' ? undefined : s.key,
               })}
               className="type-label-sm transition-colors duration-200"

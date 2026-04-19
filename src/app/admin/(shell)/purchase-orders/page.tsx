@@ -93,7 +93,7 @@ export default async function PurchaseOrdersPage({
           return (
             <Link
               key={s.key}
-              href={buildHref('/admin/purchase-orders', { status: s.key === 'pending' ? undefined : s.key })}
+              href={buildHref('/admin/purchase-orders/', { status: s.key === 'pending' ? undefined : s.key })}
               className="type-label-sm transition-colors duration-200"
               style={{
                 padding: '6px 11px',
@@ -139,7 +139,7 @@ export default async function PurchaseOrdersPage({
           {enriched.map((p) => (
             <Link
               key={p.id}
-              href={`/admin/purchase-orders/${p.id}`}
+              href={`/admin/purchase-orders/${p.id}/`}
               className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream"
               style={{
                 gridTemplateColumns:

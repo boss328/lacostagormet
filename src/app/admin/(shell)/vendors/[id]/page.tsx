@@ -96,7 +96,7 @@ export default async function VendorDetailPage({
   return (
     <>
       <Link
-        href="/admin/vendors"
+        href="/admin/vendors/"
         className="type-label text-ink-muted hover:text-brand-deep transition-colors duration-200 inline-block mb-5"
       >
         ← All vendors
@@ -149,7 +149,7 @@ export default async function VendorDetailPage({
               >
                 <span className="type-data-mono text-ink-muted">{p.sku}</span>
                 <Link
-                  href={`/admin/products/${p.id}`}
+                  href={`/admin/products/${p.id}/`}
                   className="font-display text-ink hover:text-brand-deep truncate"
                   style={{ fontSize: '14px' }}
                 >
@@ -196,7 +196,7 @@ export default async function VendorDetailPage({
                   {new Date(p.created_at).toLocaleDateString('en-US')}
                 </span>
                 <Link
-                  href={`/admin/purchase-orders/${p.id}`}
+                  href={`/admin/purchase-orders/${p.id}/`}
                   className="font-display italic text-brand-deep hover:opacity-80 truncate"
                   style={{ fontSize: '14.5px', fontWeight: 500 }}
                 >

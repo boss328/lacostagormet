@@ -18,7 +18,7 @@ export default function ImportWizardStub({ params }: { params: { slug: string } 
   return (
     <>
       <Link
-        href="/admin/imports"
+        href="/admin/imports/"
         className="type-label-sm text-ink-muted hover:text-brand-deep transition-colors duration-200 inline-block mb-5"
       >
         ← All imports

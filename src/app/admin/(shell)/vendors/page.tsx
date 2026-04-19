@@ -76,7 +76,7 @@ export default async function AdminVendorsPage({
           </h1>
           <div className="flex items-center gap-5">
             <Link
-              href="/admin/vendors/new"
+              href="/admin/vendors/new/"
               className="type-label-sm text-cream"
               style={{ padding: '10px 18px', background: 'var(--color-ink)' }}
             >
@@ -89,7 +89,7 @@ export default async function AdminVendorsPage({
         </div>
       </header>
 
-      <form method="GET" action="/admin/vendors" className="flex items-center gap-3 mb-6 flex-wrap">
+      <form method="GET" action="/admin/vendors/" className="flex items-center gap-3 mb-6 flex-wrap">
         <input
           type="search"
           name="q"
@@ -106,7 +106,7 @@ export default async function AdminVendorsPage({
           Search
         </button>
         {search && (
-          <Link href="/admin/vendors" className="type-label-sm text-ink-muted hover:text-accent">Clear</Link>
+          <Link href="/admin/vendors/" className="type-label-sm text-ink-muted hover:text-accent">Clear</Link>
         )}
       </form>
 
@@ -141,7 +141,7 @@ export default async function AdminVendorsPage({
           {enriched.map((v) => (
             <Link
               key={v.id}
-              href={`/admin/vendors/${v.id}`}
+              href={`/admin/vendors/${v.id}/`}
               className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream"
               style={{
                 gridTemplateColumns: 'minmax(200px,1.4fr) minmax(220px,1fr) auto auto auto auto',

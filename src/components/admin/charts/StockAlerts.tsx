@@ -25,7 +25,7 @@ export function StockAlerts({ alerts }: { alerts: StockAlert[] }) {
           {alerts.slice(0, 10).map((p) => (
             <Link
               key={p.id}
-              href={`/admin/products/${p.id}`}
+              href={`/admin/products/${p.id}/`}
               className="flex items-baseline justify-between gap-3 py-2 px-1 hover:bg-paper-2 transition-colors duration-150"
               style={{ borderBottom: '1px solid var(--rule)' }}
             >

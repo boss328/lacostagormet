@@ -21,25 +21,26 @@ import { useEffect, useRef, useState } from 'react';
  * Alt for browser + palette shortcuts).
  */
 
+// Trailing slashes match trailingSlash:true — see AdminSidebar comment.
 type GotoTarget =
-  | { key: 'd'; path: '/admin' }
-  | { key: 'o'; path: '/admin/orders' }
-  | { key: 'c'; path: '/admin/customers' }
-  | { key: 'p'; path: '/admin/products' }
-  | { key: 'v'; path: '/admin/vendors' }
-  | { key: 'u'; path: '/admin/purchase-orders' }
-  | { key: 'n'; path: '/admin/inquiries' }
-  | { key: 'i'; path: '/admin/imports' };
+  | { key: 'd'; path: '/admin/' }
+  | { key: 'o'; path: '/admin/orders/' }
+  | { key: 'c'; path: '/admin/customers/' }
+  | { key: 'p'; path: '/admin/products/' }
+  | { key: 'v'; path: '/admin/vendors/' }
+  | { key: 'u'; path: '/admin/purchase-orders/' }
+  | { key: 'n'; path: '/admin/inquiries/' }
+  | { key: 'i'; path: '/admin/imports/' };
 
 const GOTO_MAP: Record<string, string> = {
-  d: '/admin',
-  o: '/admin/orders',
-  c: '/admin/customers',
-  p: '/admin/products',
-  v: '/admin/vendors',
-  u: '/admin/purchase-orders',
-  n: '/admin/inquiries',
-  i: '/admin/imports',
+  d: '/admin/',
+  o: '/admin/orders/',
+  c: '/admin/customers/',
+  p: '/admin/products/',
+  v: '/admin/vendors/',
+  u: '/admin/purchase-orders/',
+  n: '/admin/inquiries/',
+  i: '/admin/imports/',
 };
 
 function isEditable(target: EventTarget | null): boolean {

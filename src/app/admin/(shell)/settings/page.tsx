@@ -32,7 +32,7 @@ export default async function SettingsPage() {
   return (
     <>
       <Link
-        href="/admin"
+        href="/admin/"
         className="type-label text-ink-muted hover:text-brand-deep transition-colors duration-200 inline-block mb-5"
       >
         ← Dashboard

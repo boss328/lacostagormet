@@ -133,7 +133,7 @@ export default async function AdminCustomersPage({
 
       <form
         method="GET"
-        action="/admin/customers"
+        action="/admin/customers/"
         className="flex items-center gap-3 mb-6 flex-wrap"
       >
         {rangeKey !== 'all' && <input type="hidden" name="range" value={rangeKey} />}
@@ -163,7 +163,7 @@ export default async function AdminCustomersPage({
         </button>
         {search && (
           <Link
-            href={buildHref('/admin/customers', {
+            href={buildHref('/admin/customers/', {
               range: rangeKey === 'all' ? undefined : rangeKey,
             })}
             className="type-label-sm text-ink-muted hover:text-accent"
@@ -204,7 +204,7 @@ export default async function AdminCustomersPage({
           {rows.map((c) => (
             <Link
               key={c.id}
-              href={`/admin/customers/${c.id}`}
+              href={`/admin/customers/${c.id}/`}
               className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream"
               style={{
                 gridTemplateColumns:
@@ -242,7 +242,7 @@ export default async function AdminCustomersPage({
         <div className="flex items-center justify-between pt-6">
           {page > 1 ? (
             <Link
-              href={buildHref('/admin/customers', {
+              href={buildHref('/admin/customers/', {
                 q: search,
                 range: rangeKey === 'all' ? undefined : rangeKey,
                 page: page > 2 ? String(page - 1) : undefined,
@@ -259,7 +259,7 @@ export default async function AdminCustomersPage({
           </span>
           {page < pageCount ? (
             <Link
-              href={buildHref('/admin/customers', {
+              href={buildHref('/admin/customers/', {
                 q: search,
                 range: rangeKey === 'all' ? undefined : rangeKey,
                 page: String(page + 1),

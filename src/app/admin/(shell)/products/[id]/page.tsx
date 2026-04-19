@@ -53,7 +53,7 @@ export default async function AdminProductDetailPage({
   return (
     <>
       <Link
-        href="/admin/products"
+        href="/admin/products/"
         className="type-label text-ink-muted hover:text-brand-deep transition-colors duration-200 inline-block mb-5"
       >
         ←&nbsp;All products
