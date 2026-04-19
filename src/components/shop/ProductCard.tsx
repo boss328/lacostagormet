@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ImageWithFallback } from '@/components/shop/ImageWithFallback';
+import { bcImage } from '@/lib/bcImage';
 
 type ProductImage = {
   url: string;
@@ -41,8 +42,7 @@ function splitPrice(v: number | string): { dollars: string; cents: string } {
 
 export function ProductCard({ product, showJustIn = false, priority = false }: ProductCardProps) {
   const img = pickPrimary(product.product_images);
-  const cdnBase = process.env.NEXT_PUBLIC_BC_CDN_BASE ?? '';
-  const imgUrl = img ? `${cdnBase}${img.url}` : null;
+  const imgUrl = img ? bcImage(img.url, 'card') : null;
   const { dollars, cents } = splitPrice(product.retail_price);
 
   return (

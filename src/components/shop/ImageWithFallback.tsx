@@ -1,7 +1,5 @@
-'use client';
-
 import Image, { type ImageProps } from 'next/image';
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 type Props = Omit<ImageProps, 'src'> & {
   src: string | null | undefined;
@@ -9,26 +7,11 @@ type Props = Omit<ImageProps, 'src'> & {
 };
 
 /**
- * Wraps next/image with an `onError` swap. Renders `fallback` when:
- *   - `src` is null/empty (no image on the product/category row), or
- *   - the image load fails at runtime (e.g. BC CDN URLs that don't resolve
- *     from the CSV-derived path — see 08.2 progress for context).
- *
- * Server-side render always emits the <Image> when `src` is truthy; fallback
- * takes over on the client if onError fires.
+ * Renders `fallback` when `src` is null/empty (products without images,
+ * category tiles without seeded imagery). Real BC CDN URLs are verified
+ * at migration time, so runtime 404 handling isn't needed.
  */
 export function ImageWithFallback({ src, fallback, ...imageProps }: Props) {
-  const [errored, setErrored] = useState(false);
-
-  if (!src || errored) {
-    return <>{fallback}</>;
-  }
-
-  return (
-    <Image
-      {...imageProps}
-      src={src}
-      onError={() => setErrored(true)}
-    />
-  );
+  if (!src) return <>{fallback}</>;
+  return <Image {...imageProps} src={src} />;
 }
