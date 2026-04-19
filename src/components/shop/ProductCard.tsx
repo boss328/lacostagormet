@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ImageWithFallback } from '@/components/shop/ImageWithFallback';
 import { bcImage } from '@/lib/bcImage';
+import { formatPackSize } from '@/lib/pack-size';
 
 type ProductImage = {
   url: string;
@@ -47,7 +48,13 @@ export function ProductCard({ product, showJustIn = false, priority = false }: P
 
   return (
     <Link href={`/product/${product.slug}`} className="product-card group">
-      <div className="relative aspect-square bg-ink overflow-hidden img-overlay-radial">
+      <div
+        className="relative aspect-square overflow-hidden"
+        style={{
+          background:
+            'radial-gradient(ellipse at center, var(--color-cream) 0%, var(--color-paper-2) 115%)',
+        }}
+      >
         {showJustIn && (
           <span
             className="absolute top-3.5 left-3.5 z-10 bg-accent text-cream font-mono uppercase"
@@ -75,37 +82,33 @@ export function ProductCard({ product, showJustIn = false, priority = false }: P
         >
           {product.sku}
         </span>
-        <ImageWithFallback
-          src={imgUrl}
-          alt={product.name}
-          width={600}
-          height={600}
-          sizes="(min-width: 1024px) 300px, (min-width: 640px) 50vw, 100vw"
-          priority={priority}
-          className="product-card-img w-full h-full object-cover img-product"
-          fallback={
-            <div
-              className="w-full h-full flex flex-col items-center justify-center px-5 text-center"
-              style={{
-                background:
-                  'linear-gradient(135deg, var(--color-paper-2) 0%, var(--color-paper-3) 100%)',
-              }}
-            >
-              <span
-                className="font-display italic text-brand-deep"
-                style={{ fontSize: '20px', lineHeight: 1.15, letterSpacing: '-0.01em', fontWeight: 500 }}
-              >
-                {product.brands?.name ?? '—'}
-              </span>
-              <span
-                className="font-mono uppercase text-ink-muted mt-3"
-                style={{ fontSize: '9px', letterSpacing: '0.24em' }}
-              >
-                {product.sku}
-              </span>
-            </div>
-          }
-        />
+        <div className="absolute inset-0" style={{ padding: '18px' }}>
+          <ImageWithFallback
+            src={imgUrl}
+            alt={product.name}
+            width={600}
+            height={600}
+            sizes="(min-width: 1024px) 300px, (min-width: 640px) 50vw, 100vw"
+            priority={priority}
+            className="product-card-img w-full h-full object-contain img-product"
+            fallback={
+              <div className="w-full h-full flex flex-col items-center justify-center text-center">
+                <span
+                  className="font-display italic text-brand-deep"
+                  style={{ fontSize: '20px', lineHeight: 1.15, letterSpacing: '-0.01em', fontWeight: 500 }}
+                >
+                  {product.brands?.name ?? '—'}
+                </span>
+                <span
+                  className="font-mono uppercase text-ink-muted mt-3"
+                  style={{ fontSize: '9px', letterSpacing: '0.24em' }}
+                >
+                  {product.sku}
+                </span>
+              </div>
+            }
+          />
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col" style={{ padding: '18px' }}>
@@ -113,11 +116,11 @@ export function ProductCard({ product, showJustIn = false, priority = false }: P
           className="flex items-baseline justify-between gap-3 pb-2 mb-2.5"
           style={{ borderBottom: '1px solid var(--rule)' }}
         >
-          <span className="type-label-sm text-ink-muted truncate">
+          <span className="type-label-sm text-ink-muted truncate min-w-0">
             {product.brands?.name ?? '—'}
           </span>
-          <span className="type-label-sm text-brand whitespace-nowrap">
-            {product.pack_size ?? '—'}
+          <span className="type-label-sm text-brand truncate min-w-0">
+            {formatPackSize(product.pack_size) ?? '—'}
           </span>
         </div>
         <p className="type-product flex-1 mb-4">{product.name}</p>
