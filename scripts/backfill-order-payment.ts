@@ -90,12 +90,55 @@ function authnetContext() {
   return { merchantAuth, endpoint };
 }
 
-async function findTransactionIdByRefId(orderNumber: string): Promise<string | null> {
-  const { merchantAuth, endpoint } = authnetContext();
+type RawTxn = {
+  transId?: string;
+  refId?: string;
+  invoiceNumber?: string;
+  submitTimeUTC?: string;
+};
 
-  // getUnsettledTransactionList and getSettledBatchListRequest scan recent
-  // transactions. For sandbox testing with one order, the unsettled list is
-  // the fastest hit.
+async function findTransactionIdByRefId(orderNumber: string): Promise<string | null> {
+  // Scan the unsettled list first (recent / same-day charges), then fall
+  // back to recent settled batches. We parse the raw JSON directly
+  // because the SDK's getter-wrapper shape varies across response types
+  // and the raw payload is simpler to reason about.
+  const unsettled = await listUnsettledTransactions();
+  console.log(`  unsettled transactions: ${unsettled.length}`);
+  if (unsettled.length > 0) {
+    console.log('  sample (first 3):');
+    for (const t of unsettled.slice(0, 3)) {
+      console.log(`    transId=${t.transId ?? '?'} invoice=${t.invoiceNumber ?? '?'} refId=${t.refId ?? '?'}`);
+    }
+  }
+  const hit = unsettled.find((t) => matches(t, orderNumber));
+  if (hit?.transId) return hit.transId;
+
+  // Not in unsettled — check settled batches from the last 30 days.
+  const batches = await listSettledBatches();
+  console.log(`  settled batches: ${batches.length}`);
+  for (const batchId of batches) {
+    const txns = await listTransactionsInBatch(batchId);
+    if (txns.length > 0) {
+      console.log(`  batch ${batchId}: ${txns.length} tx — first 2 refIds:`);
+      for (const t of txns.slice(0, 2)) {
+        console.log(`    transId=${t.transId ?? '?'} invoice=${t.invoiceNumber ?? '?'} refId=${t.refId ?? '?'}`);
+      }
+    }
+    const found = txns.find((t) => matches(t, orderNumber));
+    if (found?.transId) return found.transId;
+  }
+  return null;
+}
+
+function matches(t: RawTxn, orderNumber: string): boolean {
+  return (
+    t.refId === orderNumber ||
+    t.invoiceNumber === orderNumber
+  );
+}
+
+async function listUnsettledTransactions(): Promise<RawTxn[]> {
+  const { merchantAuth, endpoint } = authnetContext();
   const req = new APIContracts.GetUnsettledTransactionListRequest();
   req.setMerchantAuthentication(merchantAuth);
   const sorting = new APIContracts.TransactionListSorting();
@@ -105,8 +148,117 @@ async function findTransactionIdByRefId(orderNumber: string): Promise<string | n
 
   const ctrl = new APIControllers.GetUnsettledTransactionListController(req.getJSON());
   ctrl.setEnvironment(endpoint);
+  const raw = await execPromise(ctrl);
+  const r = raw as { messages?: { resultCode?: string }; transactions?: { transaction?: RawTxn[] } };
+  if (r?.messages?.resultCode !== 'Ok') {
+    console.error('[backfill] unsettled-list non-Ok:', safeJson(raw));
+    return [];
+  }
+  return r.transactions?.transaction ?? [];
+}
 
-  const apiResponse = await new Promise<unknown>((resolve, reject) => {
+async function listSettledBatches(): Promise<string[]> {
+  const { merchantAuth, endpoint } = authnetContext();
+  // Reach through the SDK's bare bones — GetSettledBatchList isn't in our
+  // narrow ambient type. Cast the APIContracts namespace to any here so
+  // we can use it without widening the .d.ts file further.
+  const contracts = APIContracts as unknown as {
+    GetSettledBatchListRequest: new () => {
+      setMerchantAuthentication: (v: unknown) => void;
+      setIncludeStatistics: (v: boolean) => void;
+      setFirstSettlementDate: (v: string) => void;
+      setLastSettlementDate: (v: string) => void;
+      getJSON(): unknown;
+    };
+  };
+  const controllers = APIControllers as unknown as {
+    GetSettledBatchListController: new (json: unknown) => {
+      setEnvironment: (e: string) => void;
+      execute: (cb: () => void) => void;
+      getResponse: () => unknown;
+    };
+  };
+
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const fmt = (d: Date) => d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+
+  const req = new contracts.GetSettledBatchListRequest();
+  req.setMerchantAuthentication(merchantAuth);
+  req.setIncludeStatistics(false);
+  req.setFirstSettlementDate(fmt(thirtyDaysAgo));
+  req.setLastSettlementDate(fmt(now));
+
+  const ctrl = new controllers.GetSettledBatchListController(req.getJSON());
+  ctrl.setEnvironment(endpoint);
+  const raw = (await new Promise<unknown>((resolve, reject) => {
+    try {
+      ctrl.execute(() => {
+        try { resolve(ctrl.getResponse()); } catch (e) { reject(e); }
+      });
+    } catch (e) {
+      reject(e);
+    }
+  })) as {
+    messages?: { resultCode?: string };
+    batchList?: { batch?: Array<{ batchId?: string }> };
+  };
+
+  if (raw?.messages?.resultCode !== 'Ok') {
+    console.error('[backfill] settled-batch-list non-Ok:', safeJson(raw));
+    return [];
+  }
+  const batches = raw.batchList?.batch ?? [];
+  return batches.map((b) => b.batchId ?? '').filter(Boolean);
+}
+
+async function listTransactionsInBatch(batchId: string): Promise<RawTxn[]> {
+  const { merchantAuth, endpoint } = authnetContext();
+  const contracts = APIContracts as unknown as {
+    GetTransactionListRequest: new () => {
+      setMerchantAuthentication: (v: unknown) => void;
+      setBatchId: (id: string) => void;
+      getJSON(): unknown;
+    };
+  };
+  const controllers = APIControllers as unknown as {
+    GetTransactionListController: new (json: unknown) => {
+      setEnvironment: (e: string) => void;
+      execute: (cb: () => void) => void;
+      getResponse: () => unknown;
+    };
+  };
+  const req = new contracts.GetTransactionListRequest();
+  req.setMerchantAuthentication(merchantAuth);
+  req.setBatchId(batchId);
+
+  const ctrl = new controllers.GetTransactionListController(req.getJSON());
+  ctrl.setEnvironment(endpoint);
+  const raw = (await new Promise<unknown>((resolve, reject) => {
+    try {
+      ctrl.execute(() => {
+        try { resolve(ctrl.getResponse()); } catch (e) { reject(e); }
+      });
+    } catch (e) {
+      reject(e);
+    }
+  })) as {
+    messages?: { resultCode?: string };
+    transactions?: { transaction?: RawTxn[] };
+  };
+
+  if (raw?.messages?.resultCode !== 'Ok') {
+    console.error(`[backfill] tx-list batch=${batchId} non-Ok:`, safeJson(raw));
+    return [];
+  }
+  return raw.transactions?.transaction ?? [];
+}
+
+async function execPromise(ctrl: {
+  execute: (cb: () => void) => void;
+  getResponse: () => unknown;
+}): Promise<unknown> {
+  return new Promise((resolve, reject) => {
     try {
       ctrl.execute(() => {
         try { resolve(ctrl.getResponse()); } catch (e) { reject(e); }
@@ -115,21 +267,6 @@ async function findTransactionIdByRefId(orderNumber: string): Promise<string | n
       reject(e);
     }
   });
-
-  const response = new APIContracts.GetUnsettledTransactionListResponse(apiResponse as never);
-  const resultCode = extractString(response.getMessages?.()?.getResultCode);
-  if (resultCode !== 'Ok') {
-    console.error('[backfill] unsettled-list call returned non-Ok:', safeJson(apiResponse));
-    return null;
-  }
-  const txns = response.getTransactions?.()?.getTransaction?.() ?? [];
-  for (const tx of txns) {
-    const refId = extractString(tx?.getInvoiceNumber) ?? extractString(tx?.getRefId);
-    const transId = extractString(tx?.getTransId);
-    if (refId === orderNumber && transId) return transId;
-  }
-
-  return null;
 }
 
 async function fetchTransactionDetails(transactionId: string): Promise<{
