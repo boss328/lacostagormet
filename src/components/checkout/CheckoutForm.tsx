@@ -120,34 +120,37 @@ export function CheckoutForm() {
     setSubmitting(true);
     setErrorMessage(null);
     try {
+      const body = {
+        email,
+        shippingAddress: address,
+        items: items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
+        clientSubtotal: subtotal,
+        opaqueData: {
+          dataDescriptor: token.dataDescriptor,
+          dataValue: token.dataValue,
+        },
+      };
+      // TEMP: diagnostic for empty-payload mystery. Remove after e2e passes.
+      console.log('[checkout] body', body);
       const res = await fetch('/api/checkout/submit', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          shippingAddress: address,
-          items: items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
-          clientSubtotal: subtotal,
-          opaqueData: {
-            dataDescriptor: token.dataDescriptor,
-            dataValue: token.dataValue,
-          },
-        }),
+        body: JSON.stringify(body),
       });
-      const body = (await res.json().catch(() => ({}))) as {
+      const responseBody = (await res.json().catch(() => ({}))) as {
         success?: boolean;
         orderNumber?: string;
         errorMessage?: string;
       };
-      if (!res.ok || !body.success || !body.orderNumber) {
-        setErrorMessage(body.errorMessage ?? 'Something went wrong. Please try again.');
+      if (!res.ok || !responseBody.success || !responseBody.orderNumber) {
+        setErrorMessage(responseBody.errorMessage ?? 'Something went wrong. Please try again.');
         setSubmitting(false);
         // On decline/error the token is already spent — require a fresh one.
         setToken(null);
         return;
       }
       clearCart();
-      router.push(`/order/${body.orderNumber}`);
+      router.push(`/order/${responseBody.orderNumber}`);
     } catch (e) {
       console.error('[checkout] submit failed', e);
       setErrorMessage(

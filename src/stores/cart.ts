@@ -57,7 +57,11 @@ export const useCartStore = create<CartState>()(
     {
       name: 'lcg-cart-v1',
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      // Bumped 1 → 2 to wipe carts populated during Phase 4/5 test iterations
+      // that may contain items with non-UUID product_id. Zustand's persist
+      // middleware sees the version mismatch and starts empty; current code
+      // only ever writes UUIDs so fresh carts are valid.
+      version: 2,
     },
   ),
 );
