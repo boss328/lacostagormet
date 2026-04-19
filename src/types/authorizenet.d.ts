@@ -38,14 +38,16 @@ declare module 'authorizenet' {
       setTransactionType(v: string): void;
       setAmount(v: number): void;
       setPayment(v: PaymentType): void;
-      setRefId(v: string): void;
       setCustomer(v: CustomerDataType): void;
       setBillTo(v: CustomerAddressType): void;
       setShipTo(v: CustomerAddressType): void;
+      // Note: setRefId is NOT on this class — it lives on
+      // CreateTransactionRequest (the wrapping envelope).
     }
     class CreateTransactionRequest {
       setMerchantAuthentication(v: MerchantAuthenticationType): void;
       setTransactionRequest(v: TransactionRequestType): void;
+      setRefId(v: string): void;
       getJSON(): unknown;
     }
 

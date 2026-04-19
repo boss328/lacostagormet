@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
-  loadAcceptJs,
+  waitForAcceptUI,
   bindAcceptHandlers,
   isAcceptJsSuccess,
   type AcceptJsResponse,
@@ -66,7 +66,7 @@ export function AcceptUIButton({
       onCancel: onCancelInner,
     });
 
-    loadAcceptJs()
+    waitForAcceptUI()
       .then(() => setReady(true))
       .catch((e) => {
         console.error('[AcceptUIButton]', e);
@@ -91,14 +91,18 @@ export function AcceptUIButton({
           !ready || disabled || missingKeys ? 'opacity-60 cursor-not-allowed' : ''
         }`}
         style={{ padding: '16px 26px' }}
-        data-billingAddressOptions='{"show":false,"required":false}'
-        data-apiLoginID={apiLoginID}
-        data-clientKey={clientKey}
-        data-acceptUIFormBtnTxt="Pay"
-        data-acceptUIFormHeaderTxt="Card information"
-        data-paymentOptions='{"showCreditCard":true,"showBankAccount":false}'
-        data-responseHandler="lcgAcceptResponse"
-        data-paymentCanceledHandler="lcgAcceptCanceled"
+        // React only emits data-* props to the DOM when the attribute name is
+        // all lowercase; camelCase is silently stripped. Keep these lowercase.
+        // AcceptUI reads HTML attributes case-insensitively so the functional
+        // behaviour is identical.
+        data-billingaddressoptions='{"show":false,"required":false}'
+        data-apiloginid={apiLoginID}
+        data-clientkey={clientKey}
+        data-acceptuiformbtntxt="Pay"
+        data-acceptuiformheadertxt="Card information"
+        data-paymentoptions='{"showCreditCard":true,"showBankAccount":false}'
+        data-responsehandler="lcgAcceptResponse"
+        data-paymentcanceledhandler="lcgAcceptCanceled"
         disabled={!ready || disabled || missingKeys}
         aria-describedby={loadError ? 'acceptui-error' : undefined}
       >

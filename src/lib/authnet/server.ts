@@ -128,7 +128,6 @@ export async function chargeCard(input: ChargeInput): Promise<ChargeResult> {
   txnRequest.setTransactionType(APIContracts.TransactionTypeEnum.AUTHCAPTURETRANSACTION);
   txnRequest.setAmount(Number(input.amount.toFixed(2)));
   txnRequest.setPayment(payment);
-  txnRequest.setRefId(input.orderNumber);
   txnRequest.setCustomer(customer);
   txnRequest.setBillTo(toAuthnetAddress(input.billingAddress));
   txnRequest.setShipTo(toAuthnetAddress(input.shippingAddress));
@@ -136,6 +135,10 @@ export async function chargeCard(input: ChargeInput): Promise<ChargeResult> {
   const createRequest = new APIContracts.CreateTransactionRequest();
   createRequest.setMerchantAuthentication(merchantAuth);
   createRequest.setTransactionRequest(txnRequest);
+  // setRefId lives on the wrapping CreateTransactionRequest, not on the
+  // inner TransactionRequestType. The SDK throws TypeError if called on
+  // the inner class.
+  createRequest.setRefId(input.orderNumber);
 
   const ctrl = new APIControllers.CreateTransactionController(createRequest.getJSON());
   ctrl.setEnvironment(endpoint);

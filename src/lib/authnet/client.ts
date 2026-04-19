@@ -1,9 +1,7 @@
 'use client';
 
-import { acceptJsUrl, resolveAuthnetEnv } from '@/lib/authnet/environment';
-
 /**
- * Accept.js AcceptUI integration — hosted iframe popup.
+ * AcceptUI integration — hosted iframe popup.
  *
  * Card data stays inside Auth.net's iframe and is never touched by our DOM
  * or our server. Client receives an opaque token (dataDescriptor + dataValue)
@@ -11,11 +9,14 @@ import { acceptJsUrl, resolveAuthnetEnv } from '@/lib/authnet/environment';
  *
  * Integration pattern in React:
  *
- *   1. Call loadAcceptJs() once from a client component's useEffect.
- *   2. Assign a window-scoped response trampoline via bindAcceptHandlers()
- *      that forwards to a React ref (stable binding, fresh closure).
- *   3. Render a <button className="AcceptUI" data-...> — Auth.net replaces
- *      its click handler to open the hosted iframe popup.
+ *   1. Load AcceptUI.js once via <Script> in the checkout route layout
+ *      (src/app/(shop)/checkout/layout.tsx).
+ *   2. Call waitForAcceptUI() from a client component's useEffect to flip
+ *      a `ready` state once window.AcceptUI is defined.
+ *   3. Assign window-scoped response trampolines via bindAcceptHandlers()
+ *      that forward to React refs (stable binding, fresh closure).
+ *   4. Render a <button className="AcceptUI" data-...> — AcceptUI.js
+ *      event-delegates clicks on that class to open the hosted iframe.
  */
 
 export type AcceptJsSuccess = {
@@ -35,44 +36,38 @@ export function isAcceptJsSuccess(r: AcceptJsResponse): r is AcceptJsSuccess {
   return r.messages.resultCode === 'Ok';
 }
 
-const SCRIPT_ATTR = 'data-lcg-acceptjs';
-
 /**
- * Idempotently injects the Accept.js script. Resolves when the script tag
- * has loaded (or immediately if already on the page).
+ * Polls for window.AcceptUI availability. AcceptUI.js is loaded at the
+ * route-layout level via next/script strategy="afterInteractive", which
+ * runs after hydration — potentially after the button has mounted. The
+ * button component uses this to flip its `ready` state once the script's
+ * global is defined.
+ *
+ * Resolves when window.AcceptUI is defined, rejects after `timeoutMs`.
  */
-export function loadAcceptJs(): Promise<void> {
+export function waitForAcceptUI(timeoutMs = 8000): Promise<void> {
   if (typeof window === 'undefined') return Promise.resolve();
-
-  const env = resolveAuthnetEnv(process.env.NEXT_PUBLIC_AUTHNET_ENVIRONMENT);
-  const src = acceptJsUrl(env);
-
-  const existing = document.querySelector(`script[${SCRIPT_ATTR}]`) as HTMLScriptElement | null;
-  if (existing) {
-    if (existing.dataset.loaded === 'true') return Promise.resolve();
-    return new Promise((resolve, reject) => {
-      existing.addEventListener('load', () => resolve(), { once: true });
-      existing.addEventListener('error', () => reject(new Error('Accept.js failed to load')), { once: true });
-    });
-  }
+  if ((window as WindowWithAcceptUI).AcceptUI) return Promise.resolve();
 
   return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = src;
-    script.async = true;
-    script.setAttribute(SCRIPT_ATTR, '');
-    script.addEventListener(
-      'load',
-      () => {
-        script.dataset.loaded = 'true';
+    const start = Date.now();
+    const interval = window.setInterval(() => {
+      if ((window as WindowWithAcceptUI).AcceptUI) {
+        window.clearInterval(interval);
         resolve();
-      },
-      { once: true },
-    );
-    script.addEventListener('error', () => reject(new Error('Accept.js failed to load')), { once: true });
-    document.head.appendChild(script);
+        return;
+      }
+      if (Date.now() - start > timeoutMs) {
+        window.clearInterval(interval);
+        reject(new Error('AcceptUI.js did not load within timeout'));
+      }
+    }, 100);
   });
 }
+
+type WindowWithAcceptUI = typeof window & {
+  AcceptUI?: unknown;
+};
 
 type WindowWithHandlers = typeof window & {
   lcgAcceptResponse?: (r: AcceptJsResponse) => void;
