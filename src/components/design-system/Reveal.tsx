@@ -7,9 +7,10 @@ type RevealProps = {
   delay?: number;
   className?: string;
   as?: 'div' | 'section' | 'article' | 'header' | 'footer' | 'aside';
+  id?: string;
 };
 
-export function Reveal({ children, delay = 0, className = '', as: Tag = 'div' }: RevealProps) {
+export function Reveal({ children, delay = 0, className = '', as: Tag = 'div', id }: RevealProps) {
   const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -39,6 +40,7 @@ export function Reveal({ children, delay = 0, className = '', as: Tag = 'div' }:
   return (
     <Tag
       ref={ref as React.RefObject<HTMLDivElement>}
+      id={id}
       className={className}
       style={{
         opacity: visible ? 1 : 0,
