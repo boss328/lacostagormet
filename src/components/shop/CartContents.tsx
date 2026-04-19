@@ -94,7 +94,7 @@ function LineRow({ item }: { item: CartItem }) {
           {item.name}
         </Link>
         {pack && (
-          <span className="type-label-sm text-brand">{pack}</span>
+          <span className="type-data-mono text-brand">{pack}</span>
         )}
         <button
           type="button"
@@ -231,7 +231,7 @@ export function CartContents() {
                 style={{ borderBottom: '1px solid var(--rule-strong)' }}
               >
                 <span className="type-label text-ink">§&nbsp;&nbsp;Line items</span>
-                <span className="type-label-sm text-ink-muted">
+                <span className="type-data-mono text-ink-muted">
                   {items.length} {items.length === 1 ? 'line' : 'lines'}
                 </span>
               </div>
@@ -369,7 +369,7 @@ function SummaryRow({
     >
       <div className="flex flex-col gap-1">
         <dt className="type-label-sm text-ink">{label}</dt>
-        {note && <span className="type-label-sm text-ink-muted">{note}</span>}
+        {note && <span className="type-data-mono text-ink-muted">{note}</span>}
       </div>
       <dd className="text-right">{value}</dd>
     </div>

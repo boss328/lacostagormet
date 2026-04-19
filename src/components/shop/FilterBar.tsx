@@ -89,7 +89,7 @@ export async function FilterBar({
           />
         </div>
 
-        <span className="type-label text-ink-muted shrink-0 whitespace-nowrap">
+        <span className="type-data-mono text-ink-muted shrink-0 whitespace-nowrap">
           {total === 0
             ? 'No products'
             : showing < total

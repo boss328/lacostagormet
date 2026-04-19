@@ -75,7 +75,7 @@ export function ProductAddPanel({ item }: ProductAddPanelProps) {
         <span className="btn-arrow" aria-hidden="true">→</span>
       </button>
 
-      <p className="type-label-sm text-ink-muted">
+      <p className="type-data-mono text-ink-muted">
         Ships in 1–2 business days from Carlsbad
       </p>
     </div>

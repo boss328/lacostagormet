@@ -143,6 +143,16 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.26em;
   }
+  /* Data-shaped mono text — pack sizes, counts, breadcrumbs, SKU values,
+     helper sentences. Keeps mono legibility without the eyebrow treatment
+     (no uppercase, near-normal tracking). */
+  .type-data-mono {
+    font-family: var(--font-mono), monospace;
+    font-size: 11px;
+    line-height: 1.35;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
   .type-numeral {
     font-family: var(--font-display), serif;
     font-size: 36px;

@@ -211,7 +211,7 @@ export default async function ProductPage({ params }: { params: Params }) {
         <div className="max-w-content mx-auto px-8 pt-10 pb-2 max-sm:px-5 max-sm:pt-7">
           <nav
             aria-label="Breadcrumb"
-            className="type-label-sm text-ink-muted flex items-center gap-2 flex-wrap"
+            className="type-data-mono text-ink-muted flex items-center gap-2 flex-wrap"
           >
             <Link href="/" className="hover:text-brand-deep transition-colors duration-200">
               Home
@@ -264,7 +264,7 @@ export default async function ProductPage({ params }: { params: Params }) {
 
               <h1 className="type-display-2">{renderProductName(product.name)}</h1>
 
-              <p className="type-label-sm text-ink-muted">SKU · {product.sku}</p>
+              <p className="type-data-mono text-ink-muted">SKU · {product.sku}</p>
 
               <div
                 className="flex items-baseline gap-3 pt-2 pb-6"
@@ -288,7 +288,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                   </sup>
                 </span>
                 {pack && (
-                  <span className="type-label-sm text-ink-muted ml-2">{pack}</span>
+                  <span className="type-data-mono text-ink-muted ml-2">{pack}</span>
                 )}
               </div>
 

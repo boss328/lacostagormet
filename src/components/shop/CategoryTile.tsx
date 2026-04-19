@@ -67,7 +67,7 @@ export function CategoryTile({ category, image, index }: CategoryTileProps) {
         >
           {category.name}
         </p>
-        <p className="type-label-sm text-accent">
+        <p className="type-data-mono text-accent">
           {category.itemCount} {category.itemCount === 1 ? 'item' : 'items'}
         </p>
       </div>

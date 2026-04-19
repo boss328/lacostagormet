@@ -300,7 +300,7 @@ export default function ForBusinessPage() {
             ))}
           </div>
 
-          <p className="type-label-sm text-ink-muted mt-10 text-center">
+          <p className="type-data-mono text-ink-muted mt-10 text-center">
             Tier mechanics (auto-applied discount vs. quote-based) are finalised per
             account. <Link href="#contact" className="underline underline-offset-[3px] hover:text-brand-deep transition-colors duration-200">Get in touch</Link> to lock yours in.
           </p>
@@ -439,7 +439,7 @@ export default function ForBusinessPage() {
                     <span>Send inquiry</span>
                     <span className="btn-arrow" aria-hidden="true">→</span>
                   </button>
-                  <p className="type-label-sm text-ink-muted mt-3 text-center">
+                  <p className="type-data-mono text-ink-muted mt-3 text-center">
                     Form wiring arrives in Phase 5 — use the phone line below for now.
                   </p>
                 </div>

@@ -128,7 +128,7 @@ export function ProductCard({ product, showJustIn = false, priority = false }: P
           <span className="type-label-sm text-ink-muted">
             {product.brands?.name ?? '—'}
           </span>
-          <span className="type-label-sm text-brand truncate min-w-0 text-right">
+          <span className="type-data-mono text-brand truncate min-w-0 text-right">
             {formatPackSize(product.pack_size) ?? '—'}
           </span>
         </div>

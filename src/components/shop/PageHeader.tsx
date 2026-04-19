@@ -20,7 +20,7 @@ export function PageHeader({ breadcrumb, eyebrow, title, lede, banner }: PageHea
           {breadcrumb && breadcrumb.length > 0 && (
             <nav
               aria-label="Breadcrumb"
-              className="flex items-center gap-2 mb-6 type-label-sm text-ink-muted"
+              className="flex items-center gap-2 mb-6 type-data-mono text-ink-muted"
             >
               {breadcrumb.map((c, i) => (
                 <Fragment key={`${i}-${c.label}`}>
