@@ -12,13 +12,14 @@ import { usePathname } from 'next/navigation';
 type NavItem = { href: string; label: string; numeral: string; shortcut: string };
 
 const NAV: NavItem[] = [
-  { href: '/admin',                 label: 'Dashboard',       numeral: 'I',    shortcut: 'g d' },
-  { href: '/admin/orders',          label: 'Orders',          numeral: 'II',   shortcut: 'g o' },
-  { href: '/admin/customers',       label: 'Customers',       numeral: 'III',  shortcut: 'g c' },
-  { href: '/admin/products',        label: 'Products',        numeral: 'IV',   shortcut: 'g p' },
-  { href: '/admin/vendors',         label: 'Vendors',         numeral: 'V',    shortcut: 'g v' },
-  { href: '/admin/purchase-orders', label: 'Purchase Orders', numeral: 'VI',   shortcut: 'g u' },
-  { href: '/admin/imports',         label: 'Imports',         numeral: 'VII',  shortcut: 'g i' },
+  { href: '/admin',                 label: 'Dashboard',       numeral: 'I',     shortcut: 'g d' },
+  { href: '/admin/orders',          label: 'Orders',          numeral: 'II',    shortcut: 'g o' },
+  { href: '/admin/customers',       label: 'Customers',       numeral: 'III',   shortcut: 'g c' },
+  { href: '/admin/products',        label: 'Products',        numeral: 'IV',    shortcut: 'g p' },
+  { href: '/admin/vendors',         label: 'Vendors',         numeral: 'V',     shortcut: 'g v' },
+  { href: '/admin/purchase-orders', label: 'Purchase Orders', numeral: 'VI',    shortcut: 'g u' },
+  { href: '/admin/inquiries',       label: 'Inquiries',       numeral: 'VII',   shortcut: 'g n' },
+  { href: '/admin/imports',         label: 'Imports',         numeral: 'VIII',  shortcut: 'g i' },
 ];
 
 export function AdminSidebar() {

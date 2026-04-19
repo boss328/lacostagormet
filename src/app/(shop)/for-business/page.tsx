@@ -3,6 +3,7 @@ import { Fragment } from 'react';
 import { Reveal } from '@/components/design-system/Reveal';
 import { SectionHead } from '@/components/design-system/SectionHead';
 import { Button } from '@/components/design-system/Button';
+import { InquiryForm } from '@/components/forms/InquiryForm';
 
 export const metadata = {
   title: 'For Business',
@@ -84,14 +85,6 @@ const TESTIMONIALS: Testimonial[] = [
     role: 'Chef',
     place: 'Palm Office Kitchen, Carlsbad',
   },
-];
-
-const VOLUME_OPTIONS = [
-  { value: '', label: 'Select an estimate' },
-  { value: 'under-500', label: 'Under $500 / month' },
-  { value: '500-2k', label: '$500 – $2,000 / month' },
-  { value: '2k-5k', label: '$2,000 – $5,000 / month' },
-  { value: '5k-plus', label: '$5,000+ / month' },
 ];
 
 export default function ForBusinessPage() {
@@ -371,80 +364,7 @@ export default function ForBusinessPage() {
             title="Tell us about your {italic}business{/italic}."
           />
           <div className="grid gap-14 max-lg:gap-10 lg:grid-cols-[1.3fr_1fr]">
-            {/* Left — form shell (non-interactive for v1) */}
-            {/* TODO: wire form submission in Phase 5 (auth + /api/business-inquiries) */}
-            <form
-              className="bg-cream"
-              style={{ border: '1px solid var(--rule-strong)', padding: '32px' }}
-              action=""
-              method="post"
-            >
-              <div className="grid gap-5 max-sm:gap-4">
-                <Field label="Your name" name="name" type="text" required />
-                <Field label="Business name" name="business" type="text" required />
-                <div className="grid gap-5 max-sm:gap-4 sm:grid-cols-2">
-                  <Field label="Email" name="email" type="email" required />
-                  <Field label="Phone" name="phone" type="tel" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="volume" className="type-label-sm text-ink">
-                    Monthly volume estimate
-                  </label>
-                  <select
-                    id="volume"
-                    name="volume"
-                    className="bg-cream text-ink font-display"
-                    style={{
-                      border: '1px solid var(--rule-strong)',
-                      padding: '12px 14px',
-                      fontSize: '15px',
-                      lineHeight: 1.4,
-                    }}
-                    defaultValue=""
-                  >
-                    {VOLUME_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="notes" className="type-label-sm text-ink">
-                    Notes
-                  </label>
-                  <textarea
-                    id="notes"
-                    name="notes"
-                    rows={4}
-                    className="bg-cream text-ink font-display"
-                    style={{
-                      border: '1px solid var(--rule-strong)',
-                      padding: '12px 14px',
-                      fontSize: '15px',
-                      lineHeight: 1.5,
-                      resize: 'vertical',
-                    }}
-                    placeholder="SKUs you're interested in, current supplier, anything we should know."
-                  />
-                </div>
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled
-                    aria-disabled="true"
-                    className="btn btn-solid w-full justify-center opacity-60 cursor-not-allowed"
-                    style={{ padding: '18px 26px' }}
-                  >
-                    <span>Send inquiry</span>
-                    <span className="btn-arrow" aria-hidden="true">→</span>
-                  </button>
-                  <p className="type-data-mono text-ink-muted mt-3 text-center">
-                    Form wiring arrives in Phase 5 — use the phone line below for now.
-                  </p>
-                </div>
-              </div>
-            </form>
+            <InquiryForm />
 
             {/* Right — direct contact */}
             <aside
@@ -478,40 +398,6 @@ export default function ForBusinessPage() {
         </div>
       </Reveal>
     </>
-  );
-}
-
-function Field({
-  label,
-  name,
-  type,
-  required = false,
-}: {
-  label: string;
-  name: string;
-  type: string;
-  required?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={name} className="type-label-sm text-ink">
-        {label}
-        {required && <span className="text-accent ml-1" aria-hidden="true">*</span>}
-      </label>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        required={required}
-        className="bg-cream text-ink font-display"
-        style={{
-          border: '1px solid var(--rule-strong)',
-          padding: '12px 14px',
-          fontSize: '15px',
-          lineHeight: 1.4,
-        }}
-      />
-    </div>
   );
 }
 
