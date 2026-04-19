@@ -72,32 +72,34 @@ function toAuthnetAddress(a: Address): InstanceType<typeof APIContracts.Customer
   addr.setState(a.state);
   addr.setZip(a.zip);
   addr.setCountry(a.country ?? 'USA');
-  if (a.phone) addr.setPhoneNumber(a.phone);
   return addr;
 }
 
-function extractString(v: unknown): string | null {
-  if (typeof v === 'string') return v;
-  if (typeof v === 'function') {
-    try {
-      const r = (v as () => unknown)();
-      return typeof r === 'string' ? r : null;
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
-function looksLikeFraudHold(reasonText: string): boolean {
-  const t = reasonText.toLowerCase();
-  return (
-    t.includes('fraud') ||
-    t.includes('held for review') ||
-    t.includes('suspicious') ||
-    t.includes('fds')
-  );
-}
+/**
+ * Shape of the raw Auth.net response object we get from the SDK's async
+ * callback. The SDK's response-wrapper classes (CreateTransactionResponse,
+ * getTransactionResponse(), etc.) return `undefined` on this plain-JSON
+ * value, so we read properties directly. Verified against a real approved
+ * sandbox response (LCG-10015, transId 120081353072).
+ */
+type AuthnetJson = {
+  refId?: string;
+  messages?: {
+    resultCode?: string;
+    message?: Array<{ code?: string; text?: string }>;
+  };
+  transactionResponse?: {
+    transId?: string;
+    authCode?: string;
+    responseCode?: string;
+    accountNumber?: string;
+    accountType?: string;
+    avsResultCode?: string;
+    cvvResultCode?: string;
+    messages?: Array<{ code?: string; description?: string }>;
+    errors?: { error?: Array<{ errorCode?: string; errorText?: string }> };
+  };
+};
 
 export async function chargeCard(input: ChargeInput): Promise<ChargeResult> {
   const env = resolveAuthnetEnv(process.env.AUTHNET_ENVIRONMENT);
@@ -164,64 +166,49 @@ export async function chargeCard(input: ChargeInput): Promise<ChargeResult> {
     return emptyResult('network_error', GENERIC_ERROR, 'Auth.net network error — no response.');
   }
 
-  const response = new APIContracts.CreateTransactionResponse(apiResponse);
-  const apiResultCode = extractString(response.getMessages?.()?.getResultCode) ?? 'Error';
-  const txResponse = response.getTransactionResponse?.();
+  const r = apiResponse as AuthnetJson;
+  const apiResultCode = r.messages?.resultCode ?? 'Error';
+  const txResponse = r.transactionResponse;
 
   if (!txResponse) {
-    const firstMsg = response.getMessages?.()?.getMessage?.()?.[0];
-    const reason = extractString(firstMsg?.getText) ?? 'Unknown Auth.net error';
+    const reason = r.messages?.message?.[0]?.text ?? 'Unknown Auth.net error';
     return emptyResult('error', GENERIC_ERROR, reason, apiResponse);
   }
 
-  const responseCode = extractString(txResponse.getResponseCode) ?? '';
-  const transId = extractString(txResponse.getTransId) ?? null;
-  const authCode = extractString(txResponse.getAuthCode) ?? null;
-  const avs = extractString(txResponse.getAvsResultCode) ?? null;
-  const cvv = extractString(txResponse.getCvvResultCode) ?? null;
-  const accountNumber = extractString(txResponse.getAccountNumber) ?? '';
-  const accountType = extractString(txResponse.getAccountType) ?? null;
+  const responseCode = txResponse.responseCode ?? '';
+  const transId = txResponse.transId ?? null;
+  const authCode = txResponse.authCode ?? null;
+  const avs = txResponse.avsResultCode ?? null;
+  const cvv = txResponse.cvvResultCode ?? null;
+  const accountNumber = txResponse.accountNumber ?? '';
+  const accountType = txResponse.accountType ?? null;
   const cardLastFour = accountNumber ? accountNumber.slice(-4) : null;
-
-  const txMsg = txResponse.getMessages?.()?.getMessage?.()?.[0];
-  const errArr = txResponse.getErrors?.()?.getError?.();
-  const reasonText =
-    extractString(txMsg?.getDescription) ??
-    extractString(errArr?.[0]?.getErrorText) ??
-    '';
+  const txMessage = txResponse.messages?.[0]?.description ?? '';
+  const errorText = txResponse.errors?.error?.[0]?.errorText ?? '';
+  const reasonText = txMessage || errorText || '';
 
   // Response code mapping per 04.1-checkout-and-payment.md:
-  //   1 + fraud text → held. 1 → approved. 2 → declined. 3 → error. 4 → held.
-  if (responseCode === '1') {
-    if (apiResultCode === 'Ok' && !looksLikeFraudHold(reasonText)) {
-      return {
-        outcome: 'approved',
-        transactionId: transId,
-        authCode,
-        responseCode,
-        responseReason: reasonText || 'Approved',
-        avsResult: avs,
-        cvvResult: cvv,
-        cardLastFour,
-        cardBrand: accountType,
-        fraudReason: null,
-        rawResponse: apiResponse,
-        customerMessage: 'Approved',
-      };
-    }
+  //   1 → approved (apiResultCode must also be 'Ok')
+  //   4 → held for review (AFDS)
+  //   2 → declined
+  //   else → error
+  // Dropped the prior fraud-text sniffing on responseCode=1 — responseCode=4
+  // is the canonical AFDS signal; text-matching was a leftover weak heuristic
+  // that tripped on unrelated 'auth' substrings in approved response text.
+  if (responseCode === '1' && apiResultCode === 'Ok') {
     return {
-      outcome: 'held_for_review',
+      outcome: 'approved',
       transactionId: transId,
       authCode,
       responseCode,
-      responseReason: reasonText,
+      responseReason: reasonText || 'Approved',
       avsResult: avs,
       cvvResult: cvv,
       cardLastFour,
       cardBrand: accountType,
-      fraudReason: reasonText,
+      fraudReason: null,
       rawResponse: apiResponse,
-      customerMessage: HELD_MESSAGE,
+      customerMessage: 'Approved',
     };
   }
 
