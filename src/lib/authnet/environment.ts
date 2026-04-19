@@ -13,13 +13,17 @@ export function resolveAuthnetEnv(raw: string | undefined | null): AuthnetEnv {
   return raw === 'production' ? 'production' : 'sandbox';
 }
 
-/**
- * URL for AcceptUI.js — the hosted-iframe widget. Delegates click handlers
- * to any element with class="AcceptUI". Distinct from Accept.js (the lower-
- * level tokenization API at /v1/Accept.js) which we are NOT using.
- */
-export function acceptUiUrl(env: AuthnetEnv): string {
+/** Accept Hosted payment page URL — the customer's browser POSTs a form
+ *  token here and Auth.net renders the hosted card-entry page. */
+export function hostedPaymentUrl(env: AuthnetEnv): string {
   return env === 'production'
-    ? 'https://js.authorize.net/v3/AcceptUI.js'
-    : 'https://jstest.authorize.net/v3/AcceptUI.js';
+    ? 'https://accept.authorize.net/payment/payment'
+    : 'https://test.authorize.net/payment/payment';
+}
+
+/** JSON API endpoint — where getHostedPaymentPageRequest + getTransactionDetailsRequest go. */
+export function apiEndpoint(env: AuthnetEnv): string {
+  return env === 'production'
+    ? 'https://api.authorize.net/xml/v1/request.api'
+    : 'https://apitest.authorize.net/xml/v1/request.api';
 }

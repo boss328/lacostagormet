@@ -31,18 +31,18 @@ export const cartItemSchema = z.object({
   quantity:   z.number().int().positive().max(999),
 });
 
-export const opaqueSchema = z.object({
-  dataDescriptor: z.string().min(1),
-  dataValue:      z.string().min(1),
-});
-
-export const checkoutSubmitSchema = z.object({
+/**
+ * Schema for POST /api/checkout/create — the Accept Hosted entry point.
+ * No opaqueData: card tokenisation happens on Auth.net's hosted page after
+ * this endpoint returns a form token. The browser then POSTs the token to
+ * Auth.net's hosted URL and the customer enters card details there.
+ */
+export const checkoutCreateSchema = z.object({
   email: z.string().email().max(254),
   shippingAddress: addressSchema,
   items: z.array(cartItemSchema).min(1).max(100),
   clientSubtotal: z.number().nonnegative(),
-  opaqueData: opaqueSchema,
 });
 
-export type CheckoutSubmitPayload = z.infer<typeof checkoutSubmitSchema>;
+export type CheckoutCreatePayload = z.infer<typeof checkoutCreateSchema>;
 export type AddressPayload = z.infer<typeof addressSchema>;

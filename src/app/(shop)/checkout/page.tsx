@@ -6,6 +6,10 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
+// Form reads ?error= query via useSearchParams on the client. Force dynamic
+// render instead of static prerender to avoid the CSR-bailout at build time.
+export const dynamic = 'force-dynamic';
+
 export default function CheckoutPage() {
   return <CheckoutForm />;
 }

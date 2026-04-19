@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import {
@@ -12,7 +12,6 @@ import {
   FREE_SHIPPING_THRESHOLD,
   type CartItem,
 } from '@/stores/cart';
-import { AcceptUIButton } from '@/components/checkout/AcceptUIButton';
 import { US_STATES, type AddressPayload } from '@/lib/checkout/validate';
 import { formatPackSize } from '@/lib/pack-size';
 
@@ -21,12 +20,6 @@ const CREAM_BG =
 
 const SHIPPING_STANDARD = 12.99;
 const HI_AK_SURCHARGE = 25;
-
-type OpaqueToken = {
-  dataDescriptor: string;
-  dataValue: string;
-  cardLastFour: string | null;
-};
 
 function splitPrice(n: number): { dollars: string; cents: string } {
   const [d, c = '00'] = n.toFixed(2).split('.');
@@ -71,25 +64,64 @@ const EMPTY_ADDRESS: AddressPayload = {
   phone: '',
 };
 
+const ERROR_MESSAGES: Record<string, string> = {
+  declined: 'Your payment was declined. Try a different card or contact your bank.',
+  'callback-missing-order': 'We lost track of your order on the return trip — please retry.',
+  'callback-order-missing': 'That order could not be found. Please retry.',
+  'callback-no-transid': 'Payment provider returned without a transaction id. Please retry.',
+  'callback-lookup-failed': 'We could not verify your payment. Please retry.',
+  'callback-refid-mismatch': 'Security check failed — payment was not applied. Please retry.',
+  'callback-amount-mismatch': 'Amount mismatch on the return trip. Please retry.',
+};
+
+/**
+ * Redirects the browser to Auth.net's hosted payment page by building a
+ * form element, appending it to the document, and submitting. Must POST
+ * (not GET) because the token is a form field, not a query param.
+ */
+function submitToHostedPage(hostedUrl: string, formToken: string): void {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = hostedUrl;
+  form.style.display = 'none';
+
+  const tokenInput = document.createElement('input');
+  tokenInput.type = 'hidden';
+  tokenInput.name = 'token';
+  tokenInput.value = formToken;
+  form.appendChild(tokenInput);
+
+  document.body.appendChild(form);
+  form.submit();
+}
+
 export function CheckoutForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const items = useCartStore((s) => s.items);
   const subtotal = useCartStore(selectSubtotal);
   const itemCount = useCartStore(selectItemCount);
-  const clearCart = useCartStore((s) => s.clear);
 
   const [hydrated, setHydrated] = useState(false);
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState<AddressPayload>(EMPTY_ADDRESS);
-  const [token, setToken] = useState<OpaqueToken | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Surface any error from the hosted-callback redirect.
+  useEffect(() => {
+    const err = searchParams.get('error');
+    if (err && ERROR_MESSAGES[err]) setErrorMessage(ERROR_MESSAGES[err]);
+  }, [searchParams]);
 
   useEffect(() => {
     setHydrated(true);
   }, []);
 
-  const shipping = useMemo(() => clientShipping(subtotal, address.state), [subtotal, address.state]);
+  const shipping = useMemo(
+    () => clientShipping(subtotal, address.state),
+    [subtotal, address.state],
+  );
   const total = subtotal + shipping;
 
   const shippingValid =
@@ -100,12 +132,13 @@ export function CheckoutForm() {
     /^\d{5}(-\d{4})?$/.test(address.zip.trim()) &&
     address.phone.trim().length >= 7 &&
     (US_STATES as readonly string[]).includes(address.state);
-
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const canTokenize = Boolean(emailValid && shippingValid);
-  const canSubmit = canTokenize && token !== null && !submitting;
+  const canContinue = Boolean(emailValid && shippingValid) && !submitting;
 
-  const updateAddress = <K extends keyof AddressPayload>(key: K, value: AddressPayload[K]) => {
+  const updateAddress = <K extends keyof AddressPayload>(
+    key: K,
+    value: AddressPayload[K],
+  ) => {
     setAddress((a) => ({ ...a, [key]: value }));
   };
 
@@ -115,8 +148,8 @@ export function CheckoutForm() {
     }
   }, [hydrated, items.length, submitting, router]);
 
-  async function handleSubmit() {
-    if (!canSubmit || !token) return;
+  async function handleContinue() {
+    if (!canContinue) return;
     setSubmitting(true);
     setErrorMessage(null);
     try {
@@ -125,14 +158,8 @@ export function CheckoutForm() {
         shippingAddress: address,
         items: items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
         clientSubtotal: subtotal,
-        opaqueData: {
-          dataDescriptor: token.dataDescriptor,
-          dataValue: token.dataValue,
-        },
       };
-      // TEMP: diagnostic for empty-payload mystery. Remove after e2e passes.
-      console.log('[checkout] body', body);
-      const res = await fetch('/api/checkout/submit', {
+      const res = await fetch('/api/checkout/create', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(body),
@@ -140,24 +167,31 @@ export function CheckoutForm() {
       const responseBody = (await res.json().catch(() => ({}))) as {
         success?: boolean;
         orderNumber?: string;
+        formToken?: string;
+        hostedUrl?: string;
         errorMessage?: string;
       };
-      if (!res.ok || !responseBody.success || !responseBody.orderNumber) {
-        setErrorMessage(responseBody.errorMessage ?? 'Something went wrong. Please try again.');
+
+      if (
+        !res.ok ||
+        !responseBody.success ||
+        !responseBody.formToken ||
+        !responseBody.hostedUrl
+      ) {
+        setErrorMessage(
+          responseBody.errorMessage ?? 'Something went wrong. Please try again.',
+        );
         setSubmitting(false);
-        // On decline/error the token is already spent — require a fresh one.
-        setToken(null);
         return;
       }
-      clearCart();
-      router.push(`/order/${responseBody.orderNumber}`);
+
+      // Keep submitting=true — we're about to leave this page. Redirect
+      // browser to Auth.net's hosted payment page via form POST.
+      submitToHostedPage(responseBody.hostedUrl, responseBody.formToken);
     } catch (e) {
-      console.error('[checkout] submit failed', e);
-      setErrorMessage(
-        'Something went wrong. Your card was not charged. Please try again.',
-      );
+      console.error('[checkout] create failed', e);
+      setErrorMessage('Something went wrong. Please try again.');
       setSubmitting(false);
-      setToken(null);
     }
   }
 
@@ -295,7 +329,9 @@ export function CheckoutForm() {
                       required
                       autoComplete="address-level1"
                       value={address.state}
-                      onChange={(e) => updateAddress('state', e.target.value as AddressPayload['state'])}
+                      onChange={(e) =>
+                        updateAddress('state', e.target.value as AddressPayload['state'])
+                      }
                       className="bg-cream text-ink font-display"
                       style={inputStyle}
                     >
@@ -327,49 +363,15 @@ export function CheckoutForm() {
 
             <FormSection roman="III" label="Payment">
               <p
-                className="font-display text-ink-2 mb-5"
+                className="font-display text-ink-2 mb-3"
                 style={{ fontSize: '15px', lineHeight: 1.55 }}
               >
-                Your card is entered through Authorize.net&rsquo;s secure form. Card
-                details never reach our server.
+                You&rsquo;ll enter your card on Authorize.net&rsquo;s secure page on the next
+                step. Card details never reach our server.
               </p>
-
-              {token ? (
-                <div
-                  className="flex items-center justify-between gap-3 bg-cream"
-                  style={{ border: '1px solid var(--color-ink)', padding: '14px 18px' }}
-                >
-                  <span className="font-display text-ink" style={{ fontSize: '16px' }}>
-                    <span aria-hidden="true" className="text-gold-bright mr-2">✓</span>
-                    Card ending in{' '}
-                    <span className="type-data-mono text-ink">
-                      {token.cardLastFour ?? '????'}
-                    </span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setToken(null)}
-                    className="type-label-sm text-ink-muted hover:text-brand-deep transition-colors duration-200"
-                  >
-                    Change
-                  </button>
-                </div>
-              ) : (
-                <AcceptUIButton
-                  label="Enter payment details"
-                  disabled={!canTokenize}
-                  onToken={(t) => {
-                    setToken(t);
-                    setErrorMessage(null);
-                  }}
-                />
-              )}
-
-              {!canTokenize && !token && (
-                <p className="type-data-mono text-ink-muted mt-3">
-                  Fill email and shipping above to unlock the payment form.
-                </p>
-              )}
+              <p className="type-data-mono text-ink-muted">
+                Supports browser autofill · SSL throughout · 3D Secure when your bank requires it
+              </p>
             </FormSection>
           </div>
 
@@ -398,7 +400,11 @@ export function CheckoutForm() {
                     shipping === 0 ? (
                       <span
                         className="font-display italic text-gold-bright"
-                        style={{ fontSize: '15px', letterSpacing: '-0.01em', fontWeight: 500 }}
+                        style={{
+                          fontSize: '15px',
+                          letterSpacing: '-0.01em',
+                          fontWeight: 500,
+                        }}
                       >
                         FREE
                       </span>
@@ -427,23 +433,23 @@ export function CheckoutForm() {
               <div className="mt-6">
                 <button
                   type="button"
-                  onClick={handleSubmit}
-                  disabled={!canSubmit}
-                  className={`btn btn-solid w-full justify-center ${!canSubmit ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  onClick={handleContinue}
+                  disabled={!canContinue}
+                  className={`btn btn-solid w-full justify-center ${!canContinue ? 'opacity-60 cursor-not-allowed' : ''}`}
                   style={{ padding: '18px 26px' }}
                   aria-busy={submitting}
                 >
                   <span>
                     {submitting
-                      ? 'Processing…'
-                      : `Complete order — $${total.toFixed(2)}`}
+                      ? 'Redirecting to payment…'
+                      : `Continue to payment — $${total.toFixed(2)}`}
                   </span>
                   <span className="btn-arrow" aria-hidden="true">→</span>
                 </button>
               </div>
 
               <p className="type-data-mono text-ink-muted mt-4 text-center">
-                Secure checkout by Authorize.net
+                Next step: Authorize.net&rsquo;s secure card entry
               </p>
             </div>
           </aside>
@@ -539,7 +545,12 @@ function SummaryLine({ item }: { item: CartItem }) {
     >
       <div
         className="relative overflow-hidden shrink-0"
-        style={{ width: 48, height: 48, background: CREAM_BG, border: '1px solid var(--rule)' }}
+        style={{
+          width: 48,
+          height: 48,
+          background: CREAM_BG,
+          border: '1px solid var(--rule)',
+        }}
       >
         {item.image_url && (
           <div className="absolute inset-0" style={{ padding: 4 }}>
