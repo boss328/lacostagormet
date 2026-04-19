@@ -23,8 +23,11 @@ export const CATEGORY_IMAGES: Record<string, PlaceholderImage> = {
     alt: 'Steaming chai latte in a ceramic cup',
   },
   'cocoa': {
-    src: UNSPLASH('1542990253-0b8be6ae9224'),
-    alt: 'Cocoa powder on warm wood',
+    // Previous ID 1542990253-0b8be6ae9224 was removed from Unsplash and
+    // started 404'ing. Swapped to a verified-live cocoa/chocolate shot —
+    // same warm-brown palette, fits the editorial grid.
+    src: UNSPLASH('1481391319762-47dff72954d9'),
+    alt: 'Stacked dark chocolate squares',
   },
   'frappes': {
     src: UNSPLASH('1461023058943-07fcbe16d735'),
