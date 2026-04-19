@@ -1,15 +1,18 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import {
+  ADMIN_COOKIE,
+  REMEMBER_MAX_AGE,
+  computeAdminCookieToken,
+} from '@/lib/admin/auth-cookie';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const ADMIN_COOKIE = 'lcg_admin';
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
 export async function POST(req: NextRequest) {
   const form = await req.formData();
   const password = String(form.get('password') ?? '');
   const redirect = String(form.get('redirect') ?? '/admin');
+  const remember = String(form.get('remember') ?? '') === 'true';
   const expected = process.env.ADMIN_PASSWORD;
 
   const url = new URL(req.url);
@@ -26,11 +29,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const token = await computeAdminCookieToken(expected);
   const res = NextResponse.redirect(new URL(redirect, url.origin), 303);
+
+  // Persistent vs session cookie: when "Remember this device" is checked
+  // (the default), set a 90-day Max-Age so the user stays signed in
+  // across browser restarts. When unchecked, omit Max-Age entirely so
+  // the cookie clears the moment the browser closes.
   res.cookies.set({
     name: ADMIN_COOKIE,
-    value: expected,
-    maxAge: COOKIE_MAX_AGE,
+    value: token,
+    ...(remember ? { maxAge: REMEMBER_MAX_AGE } : {}),
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',

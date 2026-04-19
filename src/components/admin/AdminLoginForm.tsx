@@ -46,6 +46,30 @@ export function AdminLoginForm({ redirectTo, error }: AdminLoginFormProps) {
           </p>
         )}
 
+        <label
+          htmlFor="remember"
+          className="flex items-center gap-3 cursor-pointer select-none"
+        >
+          <input
+            id="remember"
+            name="remember"
+            type="checkbox"
+            value="true"
+            defaultChecked
+            className="accent-brand-deep"
+            style={{ width: 16, height: 16 }}
+          />
+          <span
+            className="font-display text-ink-2"
+            style={{ fontSize: '14px', lineHeight: 1.3 }}
+          >
+            Remember this device
+            <span className="type-data-mono text-ink-muted ml-2">
+              § 90 days
+            </span>
+          </span>
+        </label>
+
         <button
           type="submit"
           className="btn btn-solid w-full justify-center"

@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-
-const ADMIN_COOKIE = 'lcg_admin';
+import { ADMIN_COOKIE, computeAdminCookieToken } from '@/lib/admin/auth-cookie';
 
 /**
  * Route guards:
@@ -11,6 +10,10 @@ const ADMIN_COOKIE = 'lcg_admin';
  *
  * The admin-login page + the /api/admin/login route are publicly reachable
  * so the gate itself isn't locked behind the gate.
+ *
+ * Cookie comparison accepts both the new sha256 hash AND the legacy
+ * plain-password value — back-compat for sessions established before the
+ * hash rollout. See src/lib/admin/auth-cookie.ts for why we hash.
  */
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -21,7 +24,14 @@ export async function middleware(req: NextRequest) {
     }
     const expected = process.env.ADMIN_PASSWORD;
     const cookie = req.cookies.get(ADMIN_COOKIE)?.value;
-    if (!expected || cookie !== expected) {
+    let ok = false;
+    if (expected && cookie) {
+      // Modern path: hashed token. Plaintext fallback covers any session
+      // issued before the hash deploy.
+      const expectedToken = await computeAdminCookieToken(expected);
+      ok = cookie === expectedToken || cookie === expected;
+    }
+    if (!ok) {
       const url = req.nextUrl.clone();
       url.pathname = '/admin/login';
       url.searchParams.set('redirect', pathname);
