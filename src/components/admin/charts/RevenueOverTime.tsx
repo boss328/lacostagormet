@@ -48,8 +48,17 @@ function fmtMoney(v: number): string {
   return `$${v.toFixed(0)}`;
 }
 
-export function RevenueOverTime({ series }: { series: RevenuePoint[] }) {
-  const [grain, setGrain] = useState<Grain>('day');
+export function RevenueOverTime({
+  series,
+  label,
+}: {
+  series: RevenuePoint[];
+  /** Period label shown in the eyebrow (e.g. "last 30 days", "all-time"). */
+  label?: string;
+}) {
+  // Default grain follows what the page already fed us; user can re-bucket inline.
+  const initialGrain: Grain = series.length > 0 && series[0].date.length === 7 ? 'month' : 'day';
+  const [grain, setGrain] = useState<Grain>(initialGrain);
   const grouped = useMemo(() => bucket(series, grain), [series, grain]);
   const totalRevenue = useMemo(
     () => grouped.reduce((s, p) => s + p.revenue, 0),
@@ -73,7 +82,7 @@ export function RevenueOverTime({ series }: { series: RevenuePoint[] }) {
   return (
     <WidgetFrame
       numeral="I"
-      eyebrow="Revenue"
+      eyebrow={label ? `Revenue — ${label}` : 'Revenue'}
       title={
         <>
           The <em className="type-accent">ledger</em> over time.
