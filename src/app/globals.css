@@ -502,3 +502,57 @@ body {
     will-change: transform;
   }
 }
+
+/* =========================================================================
+   Product description — BC rich-text rendered on PDP
+   ========================================================================= */
+.product-description {
+  color: var(--color-ink-2);
+}
+.product-description > * + * { margin-top: 1em; }
+.product-description p {
+  font-size: 16px;
+  line-height: 1.65;
+}
+.product-description strong { color: var(--color-ink); font-weight: 500; }
+.product-description em { font-style: italic; color: var(--color-brand-deep); }
+.product-description ul {
+  list-style: none;
+  padding: 0;
+  margin: 1em 0;
+}
+.product-description li {
+  position: relative;
+  padding-left: 20px;
+  margin-top: 0.4em;
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+.product-description li::before {
+  content: "·";
+  position: absolute;
+  left: 6px;
+  top: -2px;
+  color: var(--color-brand);
+  font-size: 22px;
+  line-height: 1;
+}
+.product-description a {
+  color: var(--color-brand-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.product-description h2,
+.product-description h3,
+.product-description h4 {
+  font-family: var(--font-display), serif;
+  font-weight: 500;
+  color: var(--color-ink);
+  letter-spacing: -0.01em;
+  margin-top: 1.4em;
+  margin-bottom: 0.4em;
+}
+.product-description h2 { font-size: 22px; line-height: 1.15; }
+.product-description h3 { font-size: 19px; line-height: 1.2; }
+.product-description h4 { font-size: 16px; line-height: 1.25; }
+

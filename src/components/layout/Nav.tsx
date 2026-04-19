@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Menu, Search, ShoppingBag, User } from 'lucide-react';
+import { Menu, Search, User } from 'lucide-react';
+import { CartBadge } from '@/components/layout/CartBadge';
 
 const NAV_LINKS: Array<{ href: string; label: string }> = [
   { href: '/shop/teas-and-chai', label: 'Teas' },
@@ -56,12 +57,7 @@ export function Nav() {
           >
             <User size={18} strokeWidth={1.5} />
           </Link>
-          <Link href="/cart" className="flex items-center gap-2.5" aria-label="Cart, 0 items">
-            <ShoppingBag size={18} strokeWidth={1.5} className="text-ink" />
-            <span className="bg-ink text-paper font-mono text-[10px] leading-none tracking-[0.18em] px-2.5 py-1.5">
-              0
-            </span>
-          </Link>
+          <CartBadge />
           <button
             type="button"
             aria-label="Open menu"
