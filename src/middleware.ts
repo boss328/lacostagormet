@@ -16,7 +16,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (pathname.startsWith('/admin')) {
-    if (pathname === '/admin/login' || pathname.startsWith('/api/admin/login')) {
+    if (pathname === '/admin/login' || pathname === '/admin/login/' || pathname.startsWith('/api/admin/login')) {
       return NextResponse.next();
     }
     const expected = process.env.ADMIN_PASSWORD;
