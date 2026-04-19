@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ImageWithFallback } from '@/components/shop/ImageWithFallback';
+import { ProductCardAdd } from '@/components/shop/ProductCardAdd';
 import { bcImage } from '@/lib/bcImage';
 import { formatPackSize } from '@/lib/pack-size';
 
@@ -20,6 +21,14 @@ export type ProductCardData = {
   brands?: { name: string; slug: string } | null;
   product_images?: ProductImage[] | null;
 };
+
+function pickPrimaryUrl(images: ProductImage[] | null | undefined): string | null {
+  if (!images || images.length === 0) return null;
+  const primary =
+    images.find((i) => i.is_primary) ??
+    [...images].sort((a, b) => a.display_order - b.display_order)[0];
+  return primary?.url ?? null;
+}
 
 type ProductCardProps = {
   product: ProductCardData;
@@ -137,19 +146,21 @@ export function ProductCard({ product, showJustIn = false, priority = false }: P
               {cents}
             </sup>
           </span>
-          <span
-            className="pc-add inline-flex items-center gap-1.5 font-mono uppercase"
-            style={{
-              fontSize: '10px',
-              letterSpacing: '0.18em',
-              padding: '9px 14px',
-              border: '1px solid var(--color-ink)',
-              lineHeight: 1,
+          <ProductCardAdd
+            item={{
+              product_id: product.id,
+              sku: product.sku,
+              name: product.name,
+              slug: product.slug,
+              brand_name: product.brands?.name ?? null,
+              price: typeof product.retail_price === 'string' ? Number(product.retail_price) : product.retail_price,
+              pack_size: product.pack_size,
+              image_url: (() => {
+                const u = pickPrimaryUrl(product.product_images);
+                return u ? bcImage(u, 'mid') : null;
+              })(),
             }}
-          >
-            <span>Add</span>
-            <span className="btn-arrow" aria-hidden="true" style={{ fontSize: '13px' }}>→</span>
-          </span>
+          />
         </div>
       </div>
     </Link>
