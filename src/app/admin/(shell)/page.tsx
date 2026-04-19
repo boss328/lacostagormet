@@ -1,223 +1,197 @@
 import Link from 'next/link';
-import { createAdminClient } from '@/lib/supabase/admin';
+import {
+  loadDashSummary,
+  loadRevenueSeries,
+  loadTopProducts,
+  loadLtvBuckets,
+  loadStockAlerts,
+  loadCohortRetention,
+  loadBrandBreakdown,
+  loadStateBreakdown,
+} from '@/lib/admin/analytics';
+import { RevenueOverTime } from '@/components/admin/charts/RevenueOverTime';
+import { TopProducts } from '@/components/admin/charts/TopProducts';
+import { LtvHistogram } from '@/components/admin/charts/LtvHistogram';
+import { OrdersAov } from '@/components/admin/charts/OrdersAov';
+import { StockAlerts } from '@/components/admin/charts/StockAlerts';
+import { CohortHeatmap } from '@/components/admin/charts/CohortHeatmap';
+import { BrandTreemap } from '@/components/admin/charts/BrandTreemap';
+import { GeographicBreakdown } from '@/components/admin/charts/GeographicBreakdown';
 
 export const dynamic = 'force-dynamic';
 
-type OrderRow = {
-  order_number: string;
-  status: string;
-  fulfillment_status: string;
-  total: number | string;
-  customer_email: string;
-  created_at: string;
-};
-
-function fmtMoney(v: number | string): string {
-  const n = typeof v === 'string' ? Number(v) : v;
-  return `$${n.toFixed(2)}`;
+function fmtMoney(v: number): string {
+  return `$${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function fmtDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  } catch {
-    return iso;
-  }
-}
-
-async function fetchDashboard() {
-  const admin = createAdminClient();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-  const [recentOrders, todayPaid, unfulfilled, customerCount, orderCount, totalRevenue] =
-    await Promise.all([
-      admin
-        .from('orders')
-        .select('order_number, status, fulfillment_status, total, customer_email, created_at')
-        .order('created_at', { ascending: false })
-        .limit(10),
-      admin
-        .from('orders')
-        .select('total')
-        .eq('status', 'paid')
-        .gte('created_at', since24h),
-      admin
-        .from('orders')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'paid')
-        .not('fulfillment_status', 'in', '(shipped,delivered)'),
-      admin.from('customers').select('id', { count: 'exact', head: true }),
-      admin.from('orders').select('id', { count: 'exact', head: true }),
-      admin
-        .from('orders')
-        .select('total')
-        .in('status', ['paid', 'payment_held']),
-    ]);
-
-  const todaysRevenue =
-    (todayPaid.data ?? []).reduce(
-      (sum, o: { total: number | string }) => sum + Number(o.total ?? 0),
-      0,
-    ) || 0;
-  const lifetimeRevenue =
-    (totalRevenue.data ?? []).reduce(
-      (sum, o: { total: number | string }) => sum + Number(o.total ?? 0),
-      0,
-    ) || 0;
-
-  return {
-    recent: (recentOrders.data ?? []) as OrderRow[],
-    todaysRevenue,
-    unfulfilledCount: unfulfilled.count ?? 0,
-    customerCount: customerCount.count ?? 0,
-    orderCount: orderCount.count ?? 0,
-    lifetimeRevenue,
-  };
-}
-
+/**
+ * Admin dashboard — editorial command center.
+ *
+ * 8 analytics widgets load in parallel. Page is a server component so
+ * every render fetches fresh data; client-side auto-refresh can come in
+ * a follow-up (for now the shell supports hard-refresh + fast revalidation).
+ */
 export default async function AdminDashboardPage() {
-  const d = await fetchDashboard();
+  const [summary, revenue, topProducts, ltv, stock, cohorts, brands, states] =
+    await Promise.all([
+      loadDashSummary(),
+      loadRevenueSeries(90),
+      loadTopProducts(20),
+      loadLtvBuckets(),
+      loadStockAlerts(),
+      loadCohortRetention(),
+      loadBrandBreakdown(),
+      loadStateBreakdown(),
+    ]);
 
   return (
     <>
-      <header className="mb-10">
-        <p className="type-label text-accent mb-4">§ Dashboard</p>
-        <h1 className="type-display-2">Morning view.</h1>
+      <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
+        <div className="flex items-baseline justify-between gap-8 flex-wrap">
+          <div className="min-w-0">
+            <p className="type-label text-accent mb-3">§ Dashboard — Est. MMIII</p>
+            <h1
+              className="font-display text-ink"
+              style={{
+                fontSize: '44px',
+                lineHeight: 1,
+                letterSpacing: '-0.028em',
+                fontWeight: 400,
+              }}
+            >
+              La Costa <em className="type-accent">Command</em>.
+            </h1>
+            <p className="type-data-mono text-ink-muted mt-4">
+              Today&rsquo;s trading floor · live Supabase · hard-refresh for latest
+            </p>
+          </div>
+
+          <div className="grid grid-cols-4 gap-4 max-lg:grid-cols-2">
+            <TinyStat
+              label="Today"
+              value={fmtMoney(summary.todaysRevenue)}
+              delta={
+                summary.revenueDelta > 0
+                  ? `+${fmtMoney(summary.revenueDelta)}`
+                  : summary.revenueDelta < 0
+                    ? fmtMoney(summary.revenueDelta)
+                    : '—'
+              }
+              positive={summary.revenueDelta > 0}
+            />
+            <TinyStat
+              label="Orders 24h"
+              value={String(summary.ordersLast24h)}
+              delta={
+                summary.ordersDeltaPct !== 0
+                  ? `${summary.ordersDeltaPct > 0 ? '+' : ''}${summary.ordersDeltaPct}%`
+                  : '—'
+              }
+              positive={summary.ordersDeltaPct > 0}
+            />
+            <TinyStat
+              label="Pending ship"
+              value={summary.unfulfilledCount.toLocaleString()}
+              delta="needs action"
+              href="/admin/orders?status=paid&fulfillment=unfulfilled"
+            />
+            <TinyStat
+              label="Customers"
+              value={summary.customerCount.toLocaleString()}
+              delta="on file"
+              href="/admin/customers"
+            />
+          </div>
+        </div>
       </header>
 
-      <section className="grid gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1 lg:grid-cols-4 mb-12">
-        <StatCard label="Today's revenue" value={fmtMoney(d.todaysRevenue)} hint="Last 24 hours" />
-        <StatCard
-          label="Pending fulfillment"
-          value={String(d.unfulfilledCount)}
-          hint="Paid, not shipped"
-          href="/admin/orders?status=paid&fulfillment=unfulfilled"
-        />
-        <StatCard
-          label="Total orders"
-          value={d.orderCount.toLocaleString()}
-          hint="Lifetime"
-          href="/admin/orders"
-        />
-        <StatCard
-          label="Customers"
-          value={d.customerCount.toLocaleString()}
-          hint="On file"
-          href="/admin/customers"
-        />
+      <section className="mb-6">
+        <RevenueOverTime series={revenue} />
       </section>
 
-      <section>
-        <div
-          className="flex items-baseline justify-between pb-3 mb-3"
-          style={{ borderBottom: '1px solid var(--rule-strong)' }}
-        >
-          <span className="type-label text-ink">§&nbsp;&nbsp;Recent orders</span>
-          <Link
-            href="/admin/orders"
-            className="type-label text-ink hover:text-brand-deep transition-colors duration-200"
-          >
-            View all&nbsp;→
-          </Link>
-        </div>
-
-        {d.recent.length === 0 ? (
-          <p className="type-data-mono text-ink-muted py-6">No orders yet.</p>
-        ) : (
-          <div>
-            {d.recent.map((o) => (
-              <Link
-                key={o.order_number}
-                href={`/admin/orders/${o.order_number}`}
-                className="grid items-center gap-4 py-3 px-2 hover:bg-paper-2 transition-colors duration-200"
-                style={{
-                  gridTemplateColumns: 'minmax(120px,auto) 1fr auto auto auto',
-                  borderBottom: '1px solid var(--rule)',
-                  minHeight: 48,
-                }}
-              >
-                <span
-                  className="font-display italic text-brand-deep"
-                  style={{ fontSize: '17px', fontWeight: 500, letterSpacing: '-0.015em' }}
-                >
-                  {o.order_number}
-                </span>
-                <span className="font-display text-ink truncate">{o.customer_email}</span>
-                <span className="type-data-mono text-ink-muted">{fmtDate(o.created_at)}</span>
-                <StatusPill status={o.status} />
-                <span className="font-display text-ink text-right" style={{ fontSize: '15px' }}>
-                  {fmtMoney(o.total)}
-                </span>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        <p className="type-data-mono text-ink-muted mt-6">
-          Lifetime revenue on file: {fmtMoney(d.lifetimeRevenue)}
-        </p>
+      <section className="grid gap-6 lg:grid-cols-[1.1fr_1fr] mb-6">
+        <OrdersAov series={revenue} />
+        <TopProducts products={topProducts} />
       </section>
+
+      <section className="grid gap-6 lg:grid-cols-[1fr_1.4fr] mb-6">
+        <LtvHistogram buckets={ltv} />
+        <CohortHeatmap cohorts={cohorts} />
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-2 mb-6">
+        <BrandTreemap brands={brands} />
+        <GeographicBreakdown states={states} />
+      </section>
+
+      <section className="mb-6">
+        <StockAlerts alerts={stock} />
+      </section>
+
+      <p className="type-data-mono text-ink-muted text-center py-6">
+        Lifetime revenue on file · {fmtMoney(summary.lifetimeRevenue)} · avg AOV
+        (30d) · {fmtMoney(summary.aovLast30d)}
+      </p>
     </>
   );
 }
 
-function StatCard({
+function TinyStat({
   label,
   value,
-  hint,
+  delta,
+  positive,
   href,
 }: {
   label: string;
   value: string;
-  hint?: string;
+  delta?: string;
+  positive?: boolean;
   href?: string;
 }) {
-  const inner = (
+  const body = (
     <div
-      className="bg-cream h-full"
-      style={{ border: '1px solid var(--rule-strong)', padding: '20px 22px' }}
+      className="bg-cream"
+      style={{
+        border: '1px solid var(--rule)',
+        padding: '10px 14px',
+        minWidth: 140,
+      }}
     >
-      <p className="type-label-sm text-ink-muted mb-3">{label}</p>
+      <p className="type-label-sm text-ink-muted mb-2">{label}</p>
       <p
         className="font-display italic text-brand-deep"
-        style={{ fontSize: '32px', lineHeight: 1, letterSpacing: '-0.022em', fontWeight: 500 }}
+        style={{
+          fontSize: '22px',
+          lineHeight: 1,
+          letterSpacing: '-0.018em',
+          fontWeight: 500,
+        }}
       >
         {value}
       </p>
-      {hint && <p className="type-data-mono text-ink-muted mt-3">{hint}</p>}
+      {delta && (
+        <p
+          className="type-data-mono mt-2"
+          style={{
+            color:
+              positive === true
+                ? 'var(--color-forest)'
+                : positive === false
+                  ? 'var(--color-accent)'
+                  : 'var(--color-ink-muted)',
+          }}
+        >
+          {delta}
+        </p>
+      )}
     </div>
   );
-  if (href) {
-    return (
-      <Link href={href} className="hover:opacity-90 transition-opacity duration-200">
-        {inner}
-      </Link>
-    );
-  }
-  return inner;
-}
-
-function StatusPill({ status }: { status: string }) {
-  const bg =
-    status === 'paid'
-      ? 'var(--color-forest)'
-      : status === 'payment_held'
-        ? 'var(--color-gold)'
-        : status === 'cancelled'
-          ? 'var(--color-accent)'
-          : 'var(--color-ink-muted)';
-  return (
-    <span
-      className="type-label-sm text-cream"
-      style={{ padding: '4px 8px', background: bg }}
-    >
-      {status.replace(/_/g, ' ')}
-    </span>
+  return href ? (
+    <Link href={href} className="hover:opacity-90 transition-opacity">
+      {body}
+    </Link>
+  ) : (
+    body
   );
 }
