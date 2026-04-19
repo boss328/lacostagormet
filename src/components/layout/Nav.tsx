@@ -1,6 +1,8 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Menu, Search, User } from 'lucide-react';
 import { CartBadge } from '@/components/layout/CartBadge';
+import logo from '../../../public/brand/logo.png';
 
 const NAV_LINKS: Array<{ href: string; label: string }> = [
   { href: '/shop/teas-and-chai', label: 'Teas' },
@@ -18,13 +20,13 @@ export function Nav() {
       <div className="max-w-content mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-10 max-lg:grid-cols-[auto_auto] max-lg:justify-between">
         {/* Logo wordmark + tagline */}
         <Link href="/" className="flex items-center gap-4 group">
-          <img
-            src="/brand/logo.png"
+          <Image
+            src={logo}
             alt="La Costa Gourmet"
-            width={210}
-            height={97}
-            className="h-12 max-sm:h-9"
-            style={{ width: 'auto' }}
+            priority
+            sizes="(max-width: 640px) 144px, 210px"
+            placeholder="blur"
+            className="h-12 max-sm:h-9 w-auto"
           />
           <span className="h-7 w-px bg-rule max-sm:hidden" aria-hidden="true" />
           <span className="type-label-sm text-ink-muted max-w-[180px] leading-tight max-sm:hidden">

@@ -1,5 +1,7 @@
 import { Fragment } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import logo from '../../../public/brand/logo.png';
 
 const SHOP_LINKS = [
   { href: '/shop', label: 'All Products' },
@@ -40,17 +42,13 @@ export function Footer() {
           {/* Brand block */}
           <div>
             {/* Logo on dark — invert + drop opacity slightly so the warm cream reads as paper-on-ink */}
-            <img
-              src="/brand/logo.png"
+            <Image
+              src={logo}
               alt="La Costa Gourmet"
-              width={220}
-              height={101}
-              style={{
-                width: 220,
-                height: 'auto',
-                filter: 'invert(1) brightness(1.05)',
-                opacity: 0.94,
-              }}
+              sizes="220px"
+              placeholder="blur"
+              className="w-[220px] h-auto"
+              style={{ filter: 'invert(1) brightness(1.05)', opacity: 0.94 }}
             />
             <p className="type-label-sm text-gold-bright mt-4">
               Est. 2003 · Carlsbad, CA
