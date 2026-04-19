@@ -1,4 +1,5 @@
 import bundleAnalyzer from '@next/bundle-analyzer';
+import { bcRedirects } from './src/lib/seo/bc-redirects.mjs';
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -66,6 +67,9 @@ const nextConfig = {
         ],
       },
     ];
+  },
+  async redirects() {
+    return bcRedirects;
   },
 };
 
