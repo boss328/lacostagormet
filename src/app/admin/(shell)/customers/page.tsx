@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { parseRange, resolveRange, fmtDelta } from '@/lib/admin/range';
 import { loadCustomersSection } from '@/lib/admin/section-analytics';
 import { SectionAnalytics, HeadlineStat } from '@/components/admin/section/SectionAnalytics';
-import { CustomersCharts } from '@/components/admin/section/CustomersCharts';
+import { CustomersCharts } from '@/components/admin/section/LazyCharts';
 
 export const dynamic = 'force-dynamic';
 

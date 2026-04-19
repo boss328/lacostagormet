@@ -11,10 +11,15 @@ import {
 } from '@/lib/admin/analytics';
 import { parseRange, resolveRange } from '@/lib/admin/range';
 import { RangePills } from '@/components/admin/RangePills';
-import { RevenueOverTime } from '@/components/admin/charts/RevenueOverTime';
+// Recharts-using widgets are code-split into a separate client chunk so
+// the dashboard route's First Load JS isn't dragging decimal.js + d3
+// into the initial bundle.
+import {
+  RevenueOverTime,
+  OrdersAov,
+  LtvHistogram,
+} from '@/components/admin/charts/LazyDashboardCharts';
 import { TopProducts } from '@/components/admin/charts/TopProducts';
-import { LtvHistogram } from '@/components/admin/charts/LtvHistogram';
-import { OrdersAov } from '@/components/admin/charts/OrdersAov';
 import { StockAlerts } from '@/components/admin/charts/StockAlerts';
 import { CohortHeatmap } from '@/components/admin/charts/CohortHeatmap';
 import { BrandTreemap } from '@/components/admin/charts/BrandTreemap';

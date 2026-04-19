@@ -5,7 +5,7 @@ import { bcImage } from '@/lib/bcImage';
 import { parseRange, resolveRange } from '@/lib/admin/range';
 import { loadProductsSection } from '@/lib/admin/section-analytics';
 import { SectionAnalytics, HeadlineStat } from '@/components/admin/section/SectionAnalytics';
-import { ProductsCharts } from '@/components/admin/section/ProductsCharts';
+import { ProductsCharts } from '@/components/admin/section/LazyCharts';
 
 export const dynamic = 'force-dynamic';
 
