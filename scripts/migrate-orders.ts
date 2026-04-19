@@ -348,13 +348,22 @@ async function runReal(parsed: ParsedOrder[]) {
   console.log('========================================');
 
   // 1) Build email → customer_id + sku → product_id lookup.
-  const { data: customerRows } = await admin
-    .from('customers')
-    .select('id, email')
-    .limit(20000);
+  // Supabase caps rows per request at 1000 by default — paginate with .range()
+  // to load the full customer base (≈6.3k rows after Phase 5 step 3).
   const custByEmail = new Map<string, string>();
-  for (const r of (customerRows ?? []) as { id: string; email: string }[]) {
-    custByEmail.set(r.email.toLowerCase(), r.id);
+  const pageSize = 1000;
+  for (let from = 0; ; from += pageSize) {
+    const { data: page, error: pageErr } = await admin
+      .from('customers')
+      .select('id, email')
+      .range(from, from + pageSize - 1);
+    if (pageErr) {
+      console.error('[orders] customer page fetch failed', pageErr);
+      break;
+    }
+    const rows = (page ?? []) as { id: string; email: string }[];
+    for (const r of rows) custByEmail.set(r.email.toLowerCase(), r.id);
+    if (rows.length < pageSize) break;
   }
   console.log(`Customer lookup: ${custByEmail.size} customers loaded`);
 
