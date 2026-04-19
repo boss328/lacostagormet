@@ -113,13 +113,13 @@ export function ProductCard({ product, showJustIn = false, priority = false }: P
 
       <div className="flex-1 flex flex-col" style={{ padding: '18px' }}>
         <div
-          className="flex items-baseline justify-between gap-3 pb-2 mb-2.5"
+          className="flex items-baseline justify-between gap-2 pb-2 mb-2.5"
           style={{ borderBottom: '1px solid var(--rule)' }}
         >
-          <span className="type-label-sm text-ink-muted truncate min-w-0">
+          <span className="type-label-sm text-ink-muted">
             {product.brands?.name ?? '—'}
           </span>
-          <span className="type-label-sm text-brand truncate min-w-0">
+          <span className="type-label-sm text-brand truncate min-w-0 text-right">
             {formatPackSize(product.pack_size) ?? '—'}
           </span>
         </div>
