@@ -29,7 +29,7 @@ export function BrandTreemap({ brands }: { brands: BrandBreakdown[] }) {
   return (
     <WidgetFrame
       numeral="VI"
-      eyebrow="Vendor breakdown"
+      eyebrow="Brand share (linked orders)"
       title={
         <>
           Revenue by <em className="type-accent">brand</em>.
@@ -38,7 +38,7 @@ export function BrandTreemap({ brands }: { brands: BrandBreakdown[] }) {
       cornerValue={topBrand ? `${topBrand.brand} leads` : '—'}
       cornerHint={
         topBrand && totalRevenue > 0
-          ? `${Math.round((topBrand.revenue / totalRevenue) * 100)}% of revenue`
+          ? `${Math.round((topBrand.revenue / totalRevenue) * 100)}% of linked revenue`
           : undefined
       }
       minHeight={320}
@@ -88,6 +88,10 @@ export function BrandTreemap({ brands }: { brands: BrandBreakdown[] }) {
           );
         })}
       </div>
+      <p className="type-data-mono text-ink-muted mt-3">
+        Brand share based on linked line items (18% of historical orders retain
+        SKU linkage).
+      </p>
     </WidgetFrame>
   );
 }
