@@ -1,82 +1,58 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { AdminTopRail } from '@/components/admin/AdminTopRail';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { AdminShortcuts } from '@/components/admin/AdminShortcuts';
+import { CommandPalette } from '@/components/admin/CommandPalette';
 
 export const metadata: Metadata = {
-  title: { default: 'Admin', template: '%s · Admin' },
+  title: { default: 'Command', template: '%s · La Costa Command' },
   robots: { index: false, follow: false },
 };
 
-const NAV = [
-  { href: '/admin', label: 'Dashboard' },
-  { href: '/admin/orders', label: 'Orders' },
-  { href: '/admin/customers', label: 'Customers' },
-  { href: '/admin/products', label: 'Products' },
-];
-
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  // The /admin/login page renders without the admin chrome.
-  // Next.js nested layouts don't let us conditionally skip the layout,
-  // so the login page's <section> renders inside this layout. That's
-  // acceptable — the sidebar is visible on login but links require auth
-  // to do anything, and the login page sizes itself.
+/**
+ * Admin shell — editorial command center.
+ *
+ * Structure:
+ *   ┌──────────────────────────────────────────────────┐
+ *   │ TopRail: La Costa / § Admin / shortcuts / signout │
+ *   ├─────────┬────────────────────────────────────────┤
+ *   │ Sidebar │ Main                                    │
+ *   │  § I    │                                         │
+ *   │  § II   │  Page content                           │
+ *   │  § III  │                                         │
+ *   └─────────┴────────────────────────────────────────┘
+ *
+ * Client components mounted once at the layout level: AdminShortcuts
+ * (g-prefix key nav + / focus search) and CommandPalette (Cmd+K fuzzy
+ * search + actions). Both live outside the flex grid so they don't
+ * affect layout.
+ */
+export default function AdminShellLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-paper">
-      {/* Slim admin header */}
-      <header
-        className="bg-ink text-cream"
-        style={{ padding: '14px 32px', borderBottom: '1px solid rgba(212, 169, 97, 0.25)' }}
-      >
-        <div className="max-w-content mx-auto flex items-center justify-between gap-6 max-sm:px-0">
-          <Link href="/admin" className="flex items-center gap-3">
-            <span
-              className="font-display italic text-cream"
-              style={{ fontSize: '20px', letterSpacing: '-0.01em', lineHeight: 1 }}
-            >
-              La Costa Gourmet
-            </span>
-            <span
-              className="font-mono uppercase text-gold-bright"
-              style={{ fontSize: '10px', letterSpacing: '0.26em' }}
-            >
-              Admin
-            </span>
-          </Link>
-          <Link
-            href="/api/admin/logout"
-            className="font-mono uppercase text-cream/70 hover:text-cream transition-colors duration-200"
-            style={{ fontSize: '10px', letterSpacing: '0.22em' }}
-          >
-            Sign out
-          </Link>
-        </div>
-      </header>
-
-      <div className="max-w-content mx-auto px-8 py-8 max-sm:px-5 max-sm:py-6">
-        <div className="grid gap-8 max-lg:gap-5 lg:grid-cols-[200px_1fr]">
-          {/* Sidebar */}
-          <aside className="flex flex-col lg:sticky lg:top-6 self-start">
-            <nav className="flex flex-col">
-              {NAV.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="font-display text-ink hover:text-brand-deep transition-colors duration-200"
-                  style={{
-                    fontSize: '16px',
-                    padding: '14px 8px',
-                    borderBottom: '1px solid var(--rule)',
-                    minHeight: 44,
-                  }}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          </aside>
-
+      <AdminTopRail />
+      <div className="max-w-[1600px] mx-auto px-6 py-6 max-sm:px-4 max-sm:py-5">
+        <div className="grid gap-8 max-lg:gap-5 lg:grid-cols-[220px_1fr]">
+          <AdminSidebar />
           <main className="min-w-0">{children}</main>
         </div>
       </div>
+      <AdminShortcuts />
+      <CommandPalette />
+      <footer className="border-t border-rule mt-12 py-6">
+        <div className="max-w-[1600px] mx-auto px-6 flex items-center justify-between max-sm:px-4 max-sm:flex-col max-sm:gap-3">
+          <p className="type-data-mono text-ink-muted">
+            Est. MMIII · Carlsbad, CA · La Costa Command · № 0042 · Vol. XXII
+          </p>
+          <Link
+            href="/"
+            className="type-data-mono text-ink-muted hover:text-brand-deep transition-colors duration-200"
+          >
+            View storefront →
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 }
