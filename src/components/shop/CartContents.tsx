@@ -330,19 +330,14 @@ export function CartContents() {
                 </div>
 
                 <div className="mt-6">
-                  <button
-                    type="button"
-                    disabled
-                    className="btn btn-solid w-full justify-center opacity-60 cursor-not-allowed"
+                  <Link
+                    href="/checkout"
+                    className="btn btn-solid w-full justify-center"
                     style={{ padding: '18px 26px' }}
-                    aria-disabled="true"
                   >
                     <span>Checkout</span>
                     <span className="btn-arrow" aria-hidden="true">→</span>
-                  </button>
-                  <p className="type-label-sm text-ink-muted mt-3 text-center">
-                    Checkout coming soon — Phase 4
-                  </p>
+                  </Link>
                 </div>
               </div>
             </aside>
