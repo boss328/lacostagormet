@@ -5,19 +5,29 @@ import { TopRail } from "@/components/layout/TopRail";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 
+// Fraunces — drop 600 (unused) and pin to actually-used weights.
+// 300 stays because HomeHero uses it; 400 + 500 cover the rest.
+// Italic stays — used in 60+ places across the site.
 const fraunces = Fraunces({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  weight: ["300", "400", "500"],
   style: ["normal", "italic"],
   variable: "--font-display",
   display: "swap",
+  preload: true,
+  fallback: ["Georgia", "Cambria", "Times New Roman", "serif"],
+  // adjustFontFallback defaults to true on Google fonts → metric-aware
+  // override font is generated automatically.
 });
 
+// JetBrains Mono — drop 300 (no explicit usage). 400 default + 500 medium.
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  weight: ["400", "500"],
   variable: "--font-mono",
   display: "swap",
+  preload: false, // mono is below-the-fold filler; let it load when needed
+  fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "monospace"],
 });
 
 export const metadata: Metadata = {
