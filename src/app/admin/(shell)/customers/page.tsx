@@ -72,7 +72,7 @@ export default async function AdminCustomersPage({
         <p className="type-label text-accent mb-3">§ III. Customers</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
-            className="font-display text-ink"
+            className="font-display text-ink max-md:!text-[24px]"
             style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em', fontWeight: 400 }}
           >
             The <em className="type-accent">rolodex</em>.
@@ -186,9 +186,9 @@ export default async function AdminCustomersPage({
           </p>
         </div>
       ) : (
-        <div style={{ border: '1px solid var(--rule)', background: 'var(--color-cream)' }}>
+        <div className="overflow-x-auto" style={{ border: '1px solid var(--rule)', background: 'var(--color-cream)' }}>
           <div
-            className="grid items-center gap-4 px-5 py-4 bg-paper-2"
+            className="grid items-center gap-4 px-5 py-4 bg-paper-2 min-w-[820px]"
             style={{
               gridTemplateColumns:
                 'minmax(260px,1.2fr) minmax(160px,1fr) minmax(160px,1fr) auto auto',
@@ -205,7 +205,7 @@ export default async function AdminCustomersPage({
             <Link
               key={c.id}
               href={`/admin/customers/${c.id}/`}
-              className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream"
+              className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream min-w-[820px]"
               style={{
                 gridTemplateColumns:
                   'minmax(260px,1.2fr) minmax(160px,1fr) minmax(160px,1fr) auto auto',

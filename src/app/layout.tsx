@@ -32,11 +32,11 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "La Costa Gourmet — Café supplies since 2003",
+    default: "La Costa Gourmet — Café-quality drinks shipped to your door",
     template: "%s · La Costa Gourmet",
   },
   description:
-    "Bulk chai, cocoa, syrups, frappé mixes and café supplies for independent coffee shops, kitchens, and home. Family-run since 2003.",
+    "Café-quality chai, cocoa, frappés, and smoothie bases — shipped nationwide from California. Bulk-bag recipes trusted by coffee shops since 2003.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001",
   ),

@@ -69,7 +69,7 @@ export default async function AdminVendorsPage({
         <p className="type-label text-accent mb-3">§ V. Vendors</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
-            className="font-display text-ink"
+            className="font-display text-ink max-md:!text-[24px]"
             style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em', fontWeight: 400 }}
           >
             The <em className="type-accent">supply ledger</em>.
@@ -123,9 +123,9 @@ export default async function AdminVendorsPage({
           </p>
         </div>
       ) : (
-        <div style={{ border: '1px solid var(--rule)', background: 'var(--color-cream)' }}>
+        <div className="overflow-x-auto" style={{ border: '1px solid var(--rule)', background: 'var(--color-cream)' }}>
           <div
-            className="grid items-center gap-4 px-5 py-4 bg-paper-2"
+            className="grid items-center gap-4 px-5 py-4 bg-paper-2 min-w-[820px]"
             style={{
               gridTemplateColumns: 'minmax(200px,1.4fr) minmax(220px,1fr) auto auto auto auto',
               borderBottom: '1px solid var(--rule-strong)',
@@ -142,7 +142,7 @@ export default async function AdminVendorsPage({
             <Link
               key={v.id}
               href={`/admin/vendors/${v.id}/`}
-              className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream"
+              className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream min-w-[820px]"
               style={{
                 gridTemplateColumns: 'minmax(200px,1.4fr) minmax(220px,1fr) auto auto auto auto',
                 borderBottom: '1px solid var(--rule)',

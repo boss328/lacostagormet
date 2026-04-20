@@ -138,7 +138,7 @@ export default async function AdminOrdersPage({
         <p className="type-label text-accent mb-3">§ II. Orders</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
-            className="font-display text-ink"
+            className="font-display text-ink max-md:!text-[24px]"
             style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em', fontWeight: 400 }}
           >
             The <em className="type-accent">ledger</em>.
@@ -282,9 +282,9 @@ export default async function AdminOrdersPage({
           </p>
         </div>
       ) : (
-        <div style={{ border: '1px solid var(--rule)', background: 'var(--color-cream)' }}>
+        <div className="overflow-x-auto" style={{ border: '1px solid var(--rule)', background: 'var(--color-cream)' }}>
           <div
-            className="grid items-center gap-4 px-5 py-4 bg-paper-2"
+            className="grid items-center gap-4 px-5 py-4 bg-paper-2 min-w-[720px]"
             style={{
               gridTemplateColumns:
                 'minmax(140px,auto) minmax(240px,1fr) minmax(110px,auto) auto auto minmax(100px,auto)',
@@ -302,7 +302,7 @@ export default async function AdminOrdersPage({
             <Link
               key={o.order_number}
               href={`/admin/orders/${o.order_number}/`}
-              className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream"
+              className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream min-w-[720px]"
               style={{
                 gridTemplateColumns:
                   'minmax(140px,auto) minmax(240px,1fr) minmax(110px,auto) auto auto minmax(100px,auto)',

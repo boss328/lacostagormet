@@ -75,7 +75,7 @@ export default async function AdminInquiriesPage({
         <p className="type-label text-accent mb-3">§ VII. Inquiries</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
-            className="font-display text-ink"
+            className="font-display text-ink max-md:!text-[24px]"
             style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em', fontWeight: 400 }}
           >
             The <em className="type-accent">inbox</em>.

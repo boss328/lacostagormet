@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { AdminSearchTrigger } from '@/components/admin/AdminSearchTrigger';
+import { AdminDrawerToggle } from '@/components/admin/AdminDrawerToggle';
 import logo from '../../../public/brand/logo.png';
 
 /**
@@ -18,8 +19,9 @@ export function AdminTopRail() {
         borderBottom: '1px solid rgba(212, 169, 97, 0.2)',
       }}
     >
-      <div className="max-w-[1600px] mx-auto grid items-center gap-6 px-6 py-3 max-sm:px-4 max-sm:grid-cols-[1fr_auto] lg:grid-cols-[auto_1fr_auto]">
-        <Link href="/admin/" className="flex items-center gap-4 shrink-0">
+      <div className="max-w-[1600px] mx-auto grid items-center gap-6 px-6 py-3 max-md:gap-3 max-md:px-4 max-md:grid-cols-[auto_1fr_auto] lg:grid-cols-[auto_1fr_auto]">
+        <AdminDrawerToggle />
+        <Link href="/admin/" className="flex items-center gap-4 shrink-0 max-md:gap-2">
           <Image
             src={logo}
             alt="La Costa Gourmet"

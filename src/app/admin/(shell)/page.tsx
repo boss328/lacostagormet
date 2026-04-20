@@ -64,12 +64,12 @@ export default async function AdminDashboardPage({
 
   return (
     <>
-      <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <div className="flex items-baseline justify-between gap-8 flex-wrap">
+      <header className="mb-8 pb-6 max-md:mb-5 max-md:pb-4" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
+        <div className="flex items-baseline justify-between gap-8 flex-wrap max-md:gap-4">
           <div className="min-w-0">
-            <p className="type-label text-accent mb-3">§ I. Dashboard — Est. MMIII</p>
+            <p className="type-label text-accent mb-3 max-md:mb-2">§ I. Dashboard — Est. MMIII</p>
             <h1
-              className="font-display text-ink"
+              className="font-display text-ink max-md:!text-[28px]"
               style={{
                 fontSize: '44px',
                 lineHeight: 1,
@@ -79,12 +79,12 @@ export default async function AdminDashboardPage({
             >
               La Costa <em className="type-accent">Command</em>.
             </h1>
-            <p className="type-data-mono text-ink-muted mt-4">
+            <p className="type-data-mono text-ink-muted mt-4 max-md:mt-2">
               Today&rsquo;s trading floor · live Supabase · hard-refresh for latest
             </p>
           </div>
 
-          <div className="grid grid-cols-4 gap-4 max-lg:grid-cols-2">
+          <div className="grid grid-cols-4 gap-4 max-lg:grid-cols-2 max-md:gap-2 w-full">
             <TinyStat
               label="Today"
               value={fmtMoney(summary.todaysRevenue)}
@@ -125,17 +125,17 @@ export default async function AdminDashboardPage({
 
       {/* HERITAGE — all-time totals, the bedrock the rest of the dashboard sits on */}
       <section
-        className="mb-8 px-6 py-5"
+        className="mb-8 px-6 py-5 max-md:mb-5 max-md:px-4 max-md:py-4"
         style={{
           border: '1px solid var(--rule-strong)',
           background: 'var(--color-cream)',
         }}
       >
-        <div className="flex items-baseline justify-between gap-6 mb-4 flex-wrap">
+        <div className="flex items-baseline justify-between gap-6 mb-4 flex-wrap max-md:gap-2 max-md:mb-3">
           <div>
             <p className="type-label text-ink-muted mb-1">§ Heritage</p>
             <p
-              className="font-display italic text-brand-deep"
+              className="font-display italic text-brand-deep max-md:!text-[16px]"
               style={{ fontSize: '20px', lineHeight: 1, fontWeight: 500, letterSpacing: '-0.018em' }}
             >
               Est. MMIII — {HERITAGE_YEARS} years of history.
@@ -143,7 +143,7 @@ export default async function AdminDashboardPage({
           </div>
           <p className="type-data-mono text-ink-muted">All-time, since 2003</p>
         </div>
-        <div className="grid gap-6 lg:grid-cols-4 max-sm:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-4 max-md:grid-cols-2 max-md:gap-4">
           <HeritageTile label="Revenue — all-time" value={fmtMoney(summary.lifetimeRevenue)} />
           <HeritageTile label="Orders — all-time" value={summary.orderCount.toLocaleString()} />
           <HeritageTile label="Customers — on file" value={summary.customerCount.toLocaleString()} />
@@ -152,10 +152,10 @@ export default async function AdminDashboardPage({
       </section>
 
       {/* TIME-RANGE STRIP */}
-      <div className="flex items-baseline gap-4 flex-wrap mb-5">
+      <div className="flex items-baseline gap-4 flex-wrap mb-5 max-md:gap-2 max-md:mb-4">
         <p className="type-label text-ink-muted">§ Range</p>
         <RangePills active={rangeKey} />
-        <span className="type-data-mono text-ink-muted">
+        <span className="type-data-mono text-ink-muted max-md:hidden">
           Showing {range.short} · {range.grain} aggregation
         </span>
       </div>
@@ -194,9 +194,9 @@ export default async function AdminDashboardPage({
 function HeritageTile({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="type-label-sm text-ink-muted mb-2">{label}</p>
+      <p className="type-label-sm text-ink-muted mb-2 max-md:mb-1">{label}</p>
       <p
-        className="font-display italic text-brand-deep"
+        className="font-display italic text-brand-deep max-md:!text-[20px]"
         style={{ fontSize: '28px', lineHeight: 1, fontWeight: 500, letterSpacing: '-0.022em' }}
       >
         {value}
@@ -220,16 +220,16 @@ function TinyStat({
 }) {
   const body = (
     <div
-      className="bg-cream"
+      className="bg-cream max-md:!min-w-0 max-md:!p-2"
       style={{
         border: '1px solid var(--rule)',
         padding: '10px 14px',
         minWidth: 140,
       }}
     >
-      <p className="type-label-sm text-ink-muted mb-2">{label}</p>
+      <p className="type-label-sm text-ink-muted mb-2 max-md:mb-1 max-md:!text-[8px]">{label}</p>
       <p
-        className="font-display italic text-brand-deep"
+        className="font-display italic text-brand-deep max-md:!text-[16px]"
         style={{
           fontSize: '22px',
           lineHeight: 1,

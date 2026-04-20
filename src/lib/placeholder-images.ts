@@ -34,16 +34,22 @@ export const CATEGORY_IMAGES: Record<string, PlaceholderImage> = {
     alt: 'Iced blended coffee frappé in a tall glass',
   },
   'oatmeal-and-grains': {
-    src: UNSPLASH('1517686469429-8bdb88b9f907'),
-    alt: 'Warm oatmeal bowl with grains and fruit',
+    // Previous ID 1517686469429-8bdb88b9f907 was off-topic; swapped to a
+    // clearer oatmeal/grain bowl shot.
+    src: UNSPLASH('1517673132405-a56a62b18caf'),
+    alt: 'Bowl of oatmeal with grains and fresh berries',
   },
   'smoothie-bases': {
-    src: UNSPLASH('1546039907-7fa05f864c02'),
-    alt: 'Blended smoothie in a glass',
+    // Previous ID 1546039907-7fa05f864c02 was reading as hummus / grain
+    // bowl, not a smoothie. Swapped to a colourful berry smoothie glass.
+    src: UNSPLASH('1505252585461-04db1eb84625'),
+    alt: 'Berry smoothie in a tall glass',
   },
   'syrups-and-sauces': {
-    src: UNSPLASH('1578326457399-3b34dbbf23b8'),
-    alt: 'Amber syrup in a glass bottle',
+    // Previous ID 1578326457399-3b34dbbf23b8 rendered as a zebra photo
+    // (Unsplash content drift). Swapped to flavoured-syrup bottles.
+    src: UNSPLASH('1579954115545-a95591f28bfc'),
+    alt: 'Flavoured syrup bottles lined up on a counter',
   },
 };
 
@@ -53,6 +59,9 @@ export const HERO_IMAGE: PlaceholderImage = {
 };
 
 export const STORY_IMAGE: PlaceholderImage = {
-  src: UNSPLASH('1445116572660-236099ec97a0'),
-  alt: 'Café counter in warm natural light',
+  // The Dispatch Desk section (HomeStory) — was a generic café counter;
+  // swapped to a coffee-brewing / shipping-prep shot to match the
+  // warehouse/ship-from-Carlsbad positioning.
+  src: UNSPLASH('1559925393-8be0ec4767c8'),
+  alt: 'Coffee being brewed in a warm-lit workspace',
 };

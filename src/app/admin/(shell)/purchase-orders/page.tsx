@@ -76,7 +76,7 @@ export default async function PurchaseOrdersPage({
         <p className="type-label text-accent mb-3">§ VI. Purchase Orders</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
-            className="font-display text-ink"
+            className="font-display text-ink max-md:!text-[24px]"
             style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em' }}
           >
             The <em className="type-accent">drop-ship desk</em>.
@@ -119,9 +119,9 @@ export default async function PurchaseOrdersPage({
           </p>
         </div>
       ) : (
-        <div style={{ border: '1px solid var(--rule)', background: 'var(--color-cream)' }}>
+        <div className="overflow-x-auto" style={{ border: '1px solid var(--rule)', background: 'var(--color-cream)' }}>
           <div
-            className="grid items-center gap-4 px-5 py-4 bg-paper-2"
+            className="grid items-center gap-4 px-5 py-4 bg-paper-2 min-w-[960px]"
             style={{
               gridTemplateColumns:
                 'minmax(140px,auto) minmax(200px,1fr) minmax(180px,1fr) auto auto auto auto',
@@ -140,7 +140,7 @@ export default async function PurchaseOrdersPage({
             <Link
               key={p.id}
               href={`/admin/purchase-orders/${p.id}/`}
-              className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream"
+              className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream min-w-[960px]"
               style={{
                 gridTemplateColumns:
                   'minmax(140px,auto) minmax(200px,1fr) minmax(180px,1fr) auto auto auto auto',

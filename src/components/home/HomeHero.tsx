@@ -33,17 +33,9 @@ export function HomeHero() {
           </div>
 
           <h1 className="stagger-2 type-display-1 mb-10 max-sm:mb-5">
-            The pantry
+            <em className="type-accent">Café-quality drinks</em>,
             <br className="max-md:hidden" />{' '}
-            for cafés, <em className="type-accent">kitchens</em>
-            <br className="max-md:hidden" />{' '}
-            <span
-              className="font-display italic text-gold align-middle max-md:!text-[36px] max-md:!leading-none"
-              style={{ fontSize: '110px', lineHeight: 0.8, fontWeight: 300, letterSpacing: '-0.04em' }}
-            >
-              &amp;
-            </span>
-            &nbsp;home.
+            shipped to your door.
           </h1>
 
           <p
@@ -56,9 +48,10 @@ export function HomeHero() {
               backgroundPosition: 'left top',
             }}
           >
-            Café-grade chai, cocoa, and smoothie concentrates — shipped direct from Carlsbad
-            since 2003. The same bulk-bag pricing trusted by independent coffee shops across
-            the country, now available to anyone who appreciates a proper cup.
+            Chai, cocoa, frappés, and smoothie bases — the same bulk-bag recipes
+            trusted by independent coffee shops since 2003. Now available for
+            your kitchen, your office, your next event. Ships nationwide from
+            California, usually within one business day.
           </p>
 
           <div className="stagger-4 flex flex-wrap items-center gap-3.5">

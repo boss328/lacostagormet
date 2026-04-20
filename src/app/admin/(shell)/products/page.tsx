@@ -82,7 +82,7 @@ export default async function AdminProductsPage({
         <p className="type-label text-accent mb-3">§ IV. Products</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
-            className="font-display text-ink"
+            className="font-display text-ink max-md:!text-[24px]"
             style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em', fontWeight: 400 }}
           >
             The <em className="type-accent">catalog</em>.
@@ -181,9 +181,9 @@ export default async function AdminProductsPage({
         )}
       </form>
 
-      <div style={{ border: '1px solid var(--rule)', background: 'var(--color-cream)' }}>
+      <div className="overflow-x-auto" style={{ border: '1px solid var(--rule)', background: 'var(--color-cream)' }}>
         <div
-          className="grid items-center gap-4 px-5 py-4 bg-paper-2"
+          className="grid items-center gap-4 px-5 py-4 bg-paper-2 min-w-[900px]"
           style={{
             gridTemplateColumns: '48px 1fr minmax(140px,auto) minmax(80px,auto) minmax(80px,auto) minmax(60px,auto) auto auto',
             borderBottom: '1px solid var(--rule-strong)',
@@ -207,7 +207,7 @@ export default async function AdminProductsPage({
             <Link
               key={p.id}
               href={`/admin/products/${p.id}/`}
-              className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream"
+              className="grid items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-cream min-w-[900px]"
               style={{
                 gridTemplateColumns: '48px 1fr minmax(140px,auto) minmax(80px,auto) minmax(80px,auto) minmax(60px,auto) auto auto',
                 borderBottom: '1px solid var(--rule)',
