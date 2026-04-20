@@ -49,3 +49,4 @@ dist/
 # scratch reference data — BC URL inventory, sitemap dumps, etc.
 # The bc-redirects.mjs file in src/ is the committed artifact.
 /seo/
+.firecrawl/

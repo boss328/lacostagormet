@@ -34,10 +34,12 @@ export const CATEGORY_IMAGES: Record<string, PlaceholderImage> = {
     alt: 'Iced blended coffee frappé in a tall glass',
   },
   'oatmeal-and-grains': {
-    // Previous ID 1517673132405-a56a62b18caf was rendering as a stack of
-    // books (unrelated). Swapped to an oatmeal breakfast bowl.
-    src: UNSPLASH('1484723091739-30a097e8f929'),
-    alt: 'Oatmeal breakfast bowl with berries and grains',
+    // Previous ID 1484723091739-30a097e8f929 was rendering as French
+    // toast with bananas and blueberries — not oatmeal. Swapped to an
+    // Unsplash-confirmed oatmeal bowl (alt text on the Unsplash search
+    // result explicitly reads "a bowl of oatmeal with fruit on top").
+    src: UNSPLASH('1638813133218-4367bd8123f6'),
+    alt: 'Bowl of oatmeal topped with fruit',
   },
   'smoothie-bases': {
     // Previous ID 1546039907-7fa05f864c02 was reading as hummus / grain
