@@ -22,8 +22,12 @@ export function HomeHero() {
       />
 
       <div className="relative max-w-content mx-auto px-8 pt-20 pb-16 grid items-center gap-14 max-md:px-5 max-md:pt-10 max-md:pb-10 max-md:gap-8 lg:grid-cols-[1.15fr_1fr]">
+        {/* Mobile order flip: on narrow viewports the image+stats column
+            should render first (visual anchor), then the text/CTA column
+            below it. lg+ keeps the original reading order (text left,
+            image right) via the grid auto-flow. */}
         {/* Left column — eyebrow, h1, lede, CTAs */}
-        <div>
+        <div className="max-lg:order-2">
           <div className="stagger-1 flex items-center gap-3.5 mb-10 max-sm:mb-7">
             <span className="h-px flex-1" style={{ background: 'rgba(193, 72, 40, 0.4)' }} />
             <span className="type-label text-accent whitespace-nowrap">
@@ -68,8 +72,9 @@ export function HomeHero() {
           </div>
         </div>
 
-        {/* Right column — hero image + stats strip */}
-        <div className="flex flex-col gap-8 max-sm:gap-6">
+        {/* Right column — hero image + stats strip (rendered first on
+            mobile via order-1; lg+ falls back to grid flow = right col). */}
+        <div className="flex flex-col gap-8 max-sm:gap-6 max-lg:order-1">
           <div className="scale-in">
             <div
               className="relative overflow-hidden img-overlay-radial max-md:aspect-[4/3] max-md:max-h-[60vh]"

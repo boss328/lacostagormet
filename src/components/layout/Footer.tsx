@@ -23,7 +23,7 @@ const TRUST_BADGES = ['Trustwave Secured', 'Authorize.Net Verified', 'HTTPS 256-
 
 export function Footer() {
   return (
-    <footer className="bg-ink text-paper relative pt-16 pb-6 px-8 max-md:px-5 max-md:pt-10">
+    <footer className="bg-ink text-paper relative pt-16 pb-6 px-8 max-md:px-5 max-md:pt-10 overflow-x-hidden">
       {/* Gold gradient top border */}
       <div
         className="absolute top-0 left-0 right-0 h-px pointer-events-none"
@@ -95,18 +95,22 @@ export function Footer() {
             <p className="font-display italic text-[13px] leading-[1.55] text-paper/75 mb-5 max-w-[280px]">
               New arrivals, seasonal picks, and the occasional café note. No spam. Unsubscribe any time.
             </p>
-            {/* Non-interactive shell for 3B — wired to Resend in Phase 4 */}
-            <div className="flex items-stretch max-md:flex-col">
+            {/* Non-interactive shell for 3B — wired to Resend in Phase 4.
+                w-full on the flex container + explicit max-md:w-full on the
+                input kills the previous mobile overflow (input was taking
+                its intrinsic 20-char width in flex-col mode instead of
+                stretching to the column). */}
+            <div className="flex items-stretch max-md:flex-col w-full max-w-full">
               <label htmlFor="newsletter-email" className="sr-only">Email address</label>
               <input
                 id="newsletter-email"
                 type="email"
                 placeholder="your@email.com"
-                className="flex-1 min-w-0 bg-transparent font-display text-[14px] text-paper placeholder:text-paper/40 px-3 py-3 border border-[rgba(246,238,222,0.2)] focus:border-gold-bright focus:outline-none transition-colors duration-200"
+                className="flex-1 min-w-0 bg-transparent font-display text-[14px] text-paper placeholder:text-paper/40 px-3 py-3 border border-[rgba(246,238,222,0.2)] focus:border-gold-bright focus:outline-none transition-colors duration-200 max-md:w-full"
               />
               <button
                 type="button"
-                className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink bg-gold-bright px-5 whitespace-nowrap hover:bg-paper transition-colors duration-200 max-md:py-3 max-md:w-full"
+                className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink bg-gold-bright px-5 hover:bg-paper transition-colors duration-200 whitespace-nowrap max-md:py-3 max-md:w-full"
               >
                 Subscribe
               </button>
