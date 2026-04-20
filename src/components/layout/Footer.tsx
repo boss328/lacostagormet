@@ -23,7 +23,7 @@ const TRUST_BADGES = ['Trustwave Secured', 'Authorize.Net Verified', 'HTTPS 256-
 
 export function Footer() {
   return (
-    <footer className="bg-ink text-paper relative pt-16 pb-6 px-8 max-sm:px-5 max-sm:pt-14">
+    <footer className="bg-ink text-paper relative pt-16 pb-6 px-8 max-md:px-5 max-md:pt-10">
       {/* Gold gradient top border */}
       <div
         className="absolute top-0 left-0 right-0 h-px pointer-events-none"
@@ -36,7 +36,7 @@ export function Footer() {
       <div className="max-w-content mx-auto">
         {/* 4-column top */}
         <div
-          className="grid gap-12 pb-10 max-lg:grid-cols-2 max-sm:grid-cols-1 max-sm:gap-10"
+          className="grid gap-12 pb-10 max-lg:grid-cols-2 max-md:grid-cols-1 max-md:gap-8 max-md:pb-6"
           style={{ gridTemplateColumns: '1.4fr 1fr 1fr 1.3fr', borderBottom: '1px solid rgba(246, 238, 222, 0.14)' }}
         >
           {/* Brand block */}
@@ -96,7 +96,7 @@ export function Footer() {
               New arrivals, seasonal picks, and the occasional café note. No spam. Unsubscribe any time.
             </p>
             {/* Non-interactive shell for 3B — wired to Resend in Phase 4 */}
-            <div className="flex items-stretch">
+            <div className="flex items-stretch max-md:flex-col">
               <label htmlFor="newsletter-email" className="sr-only">Email address</label>
               <input
                 id="newsletter-email"
@@ -106,7 +106,7 @@ export function Footer() {
               />
               <button
                 type="button"
-                className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink bg-gold-bright px-5 whitespace-nowrap hover:bg-paper transition-colors duration-200"
+                className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink bg-gold-bright px-5 whitespace-nowrap hover:bg-paper transition-colors duration-200 max-md:py-3 max-md:w-full"
               >
                 Subscribe
               </button>
@@ -116,7 +116,7 @@ export function Footer() {
 
         {/* Badges row */}
         <div
-          className="flex flex-wrap items-center gap-x-8 gap-y-3 py-5"
+          className="flex flex-wrap items-center gap-x-8 gap-y-3 py-5 max-md:gap-x-4 max-md:gap-y-2 max-md:py-3"
           style={{ borderBottom: '1px solid rgba(246, 238, 222, 0.14)' }}
         >
           {TRUST_BADGES.map((badge, idx) => (
@@ -132,7 +132,7 @@ export function Footer() {
         </div>
 
         {/* Bottom row */}
-        <div className="flex items-center justify-between pt-5 max-sm:flex-col max-sm:items-start max-sm:gap-3">
+        <div className="flex items-center justify-between pt-5 max-md:pt-3 max-md:flex-col max-md:items-start max-md:gap-2">
           <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-paper/65">
             © MMXXVI La Costa Gourmet. Made with care in California.
           </span>

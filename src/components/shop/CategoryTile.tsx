@@ -22,7 +22,7 @@ function pad2(n: number) {
 export function CategoryTile({ category, image, index }: CategoryTileProps) {
   return (
     <Link href={`/shop/${category.slug}`} className="category-tile group">
-      <div className="relative overflow-hidden img-overlay-radial" style={{ height: '160px' }}>
+      <div className="relative overflow-hidden img-overlay-radial max-md:!h-[120px]" style={{ height: '160px' }}>
         <ImageWithFallback
           src={image.src}
           alt={image.alt}
@@ -59,15 +59,15 @@ export function CategoryTile({ category, image, index }: CategoryTileProps) {
           aria-hidden="true"
         />
       </div>
-      <div className="bg-cream" style={{ padding: '16px 16px 20px' }}>
-        <p className="type-label-sm text-ink-muted mb-1.5">№&nbsp;{pad2(index + 1)}</p>
+      <div className="bg-cream max-md:!p-3" style={{ padding: '16px 16px 20px' }}>
+        <p className="type-label-sm text-ink-muted mb-1.5 max-md:mb-1">№&nbsp;{pad2(index + 1)}</p>
         <p
-          className="font-display italic text-brand-deep mb-1.5"
+          className="font-display italic text-brand-deep mb-1.5 max-md:!text-[15px] max-md:mb-1"
           style={{ fontSize: '18px', lineHeight: 1.1, letterSpacing: '-0.01em', fontWeight: 500 }}
         >
           {category.name}
         </p>
-        <p className="type-data-mono text-accent">
+        <p className="type-data-mono text-accent max-md:!text-[10px]">
           {category.itemCount} {category.itemCount === 1 ? 'item' : 'items'}
         </p>
       </div>

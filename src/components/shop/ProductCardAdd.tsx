@@ -25,7 +25,7 @@ export function ProductCardAdd({ item }: ProductCardAddProps) {
       type="button"
       onClick={handleClick}
       aria-label={`Add ${item.name} to cart`}
-      className="pc-add inline-flex items-center gap-1.5 font-mono uppercase"
+      className="pc-add inline-flex items-center gap-1.5 font-mono uppercase max-md:!text-[9px] max-md:!px-2.5 max-md:!py-2"
       style={{
         fontSize: '10px',
         letterSpacing: '0.18em',

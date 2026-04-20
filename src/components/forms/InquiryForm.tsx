@@ -112,7 +112,7 @@ export function InquiryForm() {
 
   return (
     <form
-      className="bg-cream"
+      className="bg-cream max-md:!p-5"
       style={{ border: '1px solid var(--rule-strong)', padding: '32px' }}
       onSubmit={onSubmit}
       noValidate
@@ -130,7 +130,7 @@ export function InquiryForm() {
         </div>
       )}
 
-      <div className="grid gap-5 max-sm:gap-4">
+      <div className="grid gap-5 max-md:gap-3">
         <Field
           label="Your name"
           name="name"
@@ -147,7 +147,7 @@ export function InquiryForm() {
           value={values.business}
           onChange={(v) => update('business', v)}
         />
-        <div className="grid gap-5 max-sm:gap-4 sm:grid-cols-2">
+        <div className="grid gap-5 max-md:gap-3 sm:grid-cols-2">
           <Field
             label="Email"
             name="email"

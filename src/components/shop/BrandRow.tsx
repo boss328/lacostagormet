@@ -17,10 +17,10 @@ export function BrandRow({ brand }: BrandRowProps) {
 
   return (
     <Link href={`/brand/${brand.slug}`} className="brand-row group">
-      <p className="type-brand mb-3" style={{ lineHeight: 1.15 }}>
+      <p className="type-brand mb-3 max-md:mb-1.5" style={{ lineHeight: 1.15 }}>
         {brand.name}
       </p>
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 max-md:gap-2">
         <span
           className="font-mono uppercase text-ink-muted truncate"
           style={{ fontSize: '10px', letterSpacing: '0.14em' }}

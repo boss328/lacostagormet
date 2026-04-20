@@ -56,10 +56,11 @@ export async function FilterBar({
       className="sticky top-0 z-20 bg-paper"
       style={{ borderBottom: '1px solid var(--rule)' }}
     >
-      <div className="max-w-content mx-auto px-8 py-4 flex items-center gap-6 flex-wrap max-sm:px-5 max-sm:gap-4">
-        <span className="type-label text-ink-muted shrink-0">Filter by</span>
+      <div className="max-w-content mx-auto px-8 py-4 flex items-center gap-6 flex-wrap max-md:px-4 max-md:py-2.5 max-md:gap-2">
+        {/* "Filter by" label is decoration; hide on mobile to recover space */}
+        <span className="type-label text-ink-muted shrink-0 max-md:hidden">Filter by</span>
 
-        <div className="flex items-center gap-5 flex-wrap flex-1 min-w-0">
+        <div className="flex items-center gap-5 flex-wrap flex-1 min-w-0 max-md:gap-x-3 max-md:gap-y-1">
           {!hideBrand && (
             <FilterSelect
               name="brand"
@@ -89,7 +90,7 @@ export async function FilterBar({
           />
         </div>
 
-        <span className="type-data-mono text-ink-muted shrink-0 whitespace-nowrap">
+        <span className="type-data-mono text-ink-muted shrink-0 whitespace-nowrap max-md:!text-[10px]">
           {total === 0
             ? 'No products'
             : showing < total

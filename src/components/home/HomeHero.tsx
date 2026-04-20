@@ -21,7 +21,7 @@ export function HomeHero() {
         }}
       />
 
-      <div className="relative max-w-content mx-auto px-8 pt-20 pb-16 grid items-center gap-14 max-sm:px-5 max-sm:pt-14 max-sm:pb-12 max-lg:gap-10 lg:grid-cols-[1.15fr_1fr]">
+      <div className="relative max-w-content mx-auto px-8 pt-20 pb-16 grid items-center gap-14 max-md:px-5 max-md:pt-10 max-md:pb-10 max-md:gap-8 lg:grid-cols-[1.15fr_1fr]">
         {/* Left column — eyebrow, h1, lede, CTAs */}
         <div>
           <div className="stagger-1 flex items-center gap-3.5 mb-10 max-sm:mb-7">
@@ -32,13 +32,13 @@ export function HomeHero() {
             <span className="h-px flex-1" style={{ background: 'rgba(193, 72, 40, 0.4)' }} />
           </div>
 
-          <h1 className="stagger-2 type-display-1 mb-10 max-sm:mb-7">
+          <h1 className="stagger-2 type-display-1 mb-10 max-sm:mb-5">
             The pantry
-            <br />
+            <br className="max-md:hidden" />{' '}
             for cafés, <em className="type-accent">kitchens</em>
-            <br />
+            <br className="max-md:hidden" />{' '}
             <span
-              className="font-display italic text-gold align-middle max-sm:text-[80px]"
+              className="font-display italic text-gold align-middle max-md:!text-[36px] max-md:!leading-none"
               style={{ fontSize: '110px', lineHeight: 0.8, fontWeight: 300, letterSpacing: '-0.04em' }}
             >
               &amp;
@@ -47,7 +47,7 @@ export function HomeHero() {
           </h1>
 
           <p
-            className="stagger-3 type-body mb-10 max-w-[460px] pl-5 max-sm:mb-7"
+            className="stagger-3 type-body mb-10 max-w-[460px] pl-5 max-md:mb-6 max-md:pl-4"
             style={{
               backgroundImage:
                 'linear-gradient(to bottom, var(--color-gold) 0%, transparent 100%)',
@@ -75,7 +75,7 @@ export function HomeHero() {
         <div className="flex flex-col gap-8 max-sm:gap-6">
           <div className="scale-in">
             <div
-              className="relative overflow-hidden img-overlay-radial"
+              className="relative overflow-hidden img-overlay-radial max-md:aspect-[4/3] max-md:max-h-[60vh]"
               style={{ aspectRatio: '4 / 5', border: '1px solid var(--color-ink)' }}
             >
               <Image
@@ -89,7 +89,7 @@ export function HomeHero() {
               />
 
               {/* Top-left: live + issue */}
-              <div className="absolute top-5 left-5 flex items-center gap-3 z-10">
+              <div className="absolute top-5 left-5 flex items-center gap-3 z-10 max-md:top-3 max-md:left-3 max-md:gap-2">
                 <span className="flex items-center gap-1.5 type-label-sm text-cream">
                   <span
                     className="pulse-dot inline-block w-1.5 h-1.5 bg-accent"
@@ -102,7 +102,7 @@ export function HomeHero() {
 
               {/* Bottom-left: dispatch tag */}
               <div
-                className="absolute bottom-5 left-5 z-10 type-label-sm text-gold-bright"
+                className="absolute bottom-5 left-5 z-10 type-label-sm text-gold-bright max-md:bottom-3 max-md:left-3 max-md:!text-[8px] max-md:!px-1.5 max-md:!py-1"
                 style={{
                   padding: '6px 10px',
                   background: 'rgba(26, 17, 10, 0.78)',
@@ -115,9 +115,9 @@ export function HomeHero() {
               </div>
 
               {/* Bottom-right: coordinates */}
-              <div className="absolute bottom-5 right-5 z-10 text-right">
+              <div className="absolute bottom-5 right-5 z-10 text-right max-md:bottom-3 max-md:right-3">
                 <p className="type-label-sm text-cream leading-tight">Carlsbad, CA 92009</p>
-                <p className="type-label-sm text-cream/60 leading-tight mt-1">
+                <p className="type-label-sm text-cream/60 leading-tight mt-1 max-md:hidden">
                   33.1°N · 117.3°W
                 </p>
               </div>
@@ -132,19 +132,19 @@ export function HomeHero() {
             {HERO_STATS.map((stat, i) => (
               <div
                 key={stat.label}
-                className="py-4 px-4 max-sm:px-2 flex flex-col items-start"
+                className="py-4 px-4 flex flex-col items-start max-md:py-2.5 max-md:px-2"
                 style={{
                   borderLeft: i === 0 ? 'none' : '1px solid var(--rule)',
                 }}
               >
                 <span
-                  className="font-display italic text-brand-deep"
+                  className="font-display italic text-brand-deep max-md:!text-[20px]"
                   style={{ fontSize: '28px', lineHeight: 1, letterSpacing: '-0.02em', fontWeight: 500 }}
                 >
                   {stat.value}
                 </span>
                 <span
-                  className="font-mono uppercase text-ink-muted mt-2"
+                  className="font-mono uppercase text-ink-muted mt-2 max-md:mt-1 max-md:!text-[8px]"
                   style={{ fontSize: '9px', letterSpacing: '0.22em', lineHeight: 1.2 }}
                 >
                   {stat.label}

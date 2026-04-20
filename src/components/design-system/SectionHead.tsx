@@ -24,7 +24,7 @@ function renderTitle(title: string): ReactNode {
 }
 
 export function SectionHead({ numeral, eyebrow, title, link, className = '', id }: SectionHeadProps) {
-  const base = 'grid grid-cols-[auto_1fr_auto] items-baseline gap-8 pb-5 mb-11 border-b border-rule max-sm:grid-cols-1 max-sm:gap-3';
+  const base = 'grid grid-cols-[auto_1fr_auto] items-baseline gap-8 pb-5 mb-11 border-b border-rule max-md:grid-cols-1 max-md:gap-2 max-md:pb-3 max-md:mb-6';
   return (
     <header id={id} className={`${base}${className ? ' ' + className : ''}`}>
       <div className="flex items-baseline gap-4 max-sm:gap-3">

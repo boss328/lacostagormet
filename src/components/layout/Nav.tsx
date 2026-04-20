@@ -16,8 +16,8 @@ const NAV_LINKS: Array<{ href: string; label: string }> = [
 
 export function Nav() {
   return (
-    <nav className="bg-cream border-b border-rule px-8 max-sm:px-5 pt-6 pb-5">
-      <div className="max-w-content mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-10 max-lg:grid-cols-[auto_auto] max-lg:justify-between">
+    <nav className="bg-cream border-b border-rule px-8 max-md:px-5 pt-6 pb-5 max-md:pt-3 max-md:pb-3">
+      <div className="max-w-content mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-10 max-lg:grid-cols-[auto_auto] max-lg:justify-between max-md:gap-4">
         {/* Logo wordmark + tagline */}
         <Link href="/" className="flex items-center gap-4 group">
           <Image

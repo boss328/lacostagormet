@@ -208,7 +208,7 @@ export default async function ProductPage({ params }: { params: Params }) {
     <>
       {/* Breadcrumb */}
       <section className="bg-paper">
-        <div className="max-w-content mx-auto px-8 pt-10 pb-2 max-sm:px-5 max-sm:pt-7">
+        <div className="max-w-content mx-auto px-8 pt-10 pb-2 max-md:px-4 max-md:pt-4">
           <nav
             aria-label="Breadcrumb"
             className="type-data-mono text-ink-muted flex items-center gap-2 flex-wrap"
@@ -239,10 +239,10 @@ export default async function ProductPage({ params }: { params: Params }) {
 
       {/* Main 2-column hero */}
       <section className="bg-paper">
-        <div className="max-w-content mx-auto px-8 pt-8 pb-20 max-sm:px-5 max-sm:pt-6 max-sm:pb-12">
-          <div className="grid gap-12 max-lg:gap-8 lg:grid-cols-[1.5fr_1fr]">
-            {/* Gallery */}
-            <div>
+        <div className="max-w-content mx-auto px-8 pt-8 pb-20 max-md:px-4 max-md:pt-4 max-md:pb-8">
+          <div className="grid gap-12 max-lg:gap-8 max-md:gap-5 lg:grid-cols-[1.5fr_1fr]">
+            {/* Gallery — capped on mobile so it doesn't dominate the viewport */}
+            <div className="max-md:max-h-[55vh] max-md:overflow-hidden">
               <ProductGallery
                 images={gallery}
                 productName={product.name}
@@ -252,7 +252,7 @@ export default async function ProductPage({ params }: { params: Params }) {
             </div>
 
             {/* Info panel */}
-            <div className="flex flex-col gap-6 lg:pl-4 lg:pt-4">
+            <div className="flex flex-col gap-6 lg:pl-4 lg:pt-4 max-md:gap-4">
               {brandName && (
                 <Link
                   href={product.brands ? `/brand/${product.brands.slug}` : '#'}
@@ -267,16 +267,16 @@ export default async function ProductPage({ params }: { params: Params }) {
               <p className="type-data-mono text-ink-muted">SKU · {product.sku}</p>
 
               <div
-                className="flex items-baseline gap-3 pt-2 pb-6"
+                className="flex items-baseline gap-3 pt-2 pb-6 max-md:pt-1 max-md:pb-4"
                 style={{ borderBottom: '1px solid var(--rule)' }}
               >
                 <span
-                  className="type-price"
+                  className="type-price max-md:!text-[28px]"
                   style={{ fontSize: '40px', lineHeight: 1 }}
                 >
                   ${dollars}
                   <sup
-                    className="font-display"
+                    className="font-display max-md:!text-[13px]"
                     style={{
                       fontSize: '18px',
                       color: 'var(--color-ink-muted)',
@@ -327,8 +327,8 @@ export default async function ProductPage({ params }: { params: Params }) {
         className="bg-paper-2"
         style={{ borderTop: '1px solid var(--rule)', borderBottom: '1px solid var(--rule)' }}
       >
-        <div className="max-w-content mx-auto px-8 py-20 max-sm:px-5 max-sm:py-14">
-          <div className="grid gap-14 max-lg:gap-10 lg:grid-cols-[1.4fr_1fr]">
+        <div className="max-w-content mx-auto px-8 py-20 max-md:px-4 max-md:py-8">
+          <div className="grid gap-14 max-lg:gap-10 max-md:gap-6 lg:grid-cols-[1.4fr_1fr]">
             <div>
               <p className="type-label text-accent mb-6">§ About this product</p>
               <ProductDescription html={product.description} />
@@ -364,7 +364,7 @@ export default async function ProductPage({ params }: { params: Params }) {
       {/* Related products */}
       {related.length > 0 && (
         <Reveal as="section" className="bg-paper">
-          <div className="max-w-content mx-auto px-8 pt-20 pb-20 max-sm:px-5 max-sm:pt-14 max-sm:pb-14">
+          <div className="max-w-content mx-auto px-8 pt-20 pb-20 max-md:px-4 max-md:pt-10 max-md:pb-10">
             <SectionHead
               numeral="II"
               eyebrow="You might also like"

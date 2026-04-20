@@ -23,8 +23,8 @@ export function ProductAddPanel({ item }: ProductAddPanelProps) {
   };
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-center gap-5">
+    <div className="flex flex-col gap-5 max-md:gap-3">
+      <div className="flex items-center gap-5 max-md:gap-3">
         <span className="type-label-sm text-ink-muted">Quantity</span>
         <div
           className="inline-flex items-stretch"
@@ -68,7 +68,7 @@ export function ProductAddPanel({ item }: ProductAddPanelProps) {
       <button
         type="button"
         onClick={handleAdd}
-        className="btn btn-solid w-full justify-center"
+        className="btn btn-solid w-full justify-center max-md:!py-3 max-md:!px-5"
         style={{ padding: '18px 26px' }}
       >
         <span>{justAdded ? 'Added to cart' : 'Add to cart'}</span>

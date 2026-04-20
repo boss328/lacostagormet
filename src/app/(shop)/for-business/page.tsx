@@ -112,7 +112,7 @@ export default function ForBusinessPage() {
           }}
         />
 
-        <div className="relative max-w-content mx-auto px-8 pt-24 pb-28 max-sm:px-5 max-sm:pt-16 max-sm:pb-20 grid items-center gap-14 max-lg:gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="relative max-w-content mx-auto px-8 pt-24 pb-28 max-md:px-4 max-md:pt-10 max-md:pb-10 grid items-center gap-14 max-lg:gap-10 max-md:gap-7 lg:grid-cols-[1.1fr_0.9fr]">
           {/* Left — copy */}
           <div>
             <div className="stagger-1 flex items-center gap-3.5 mb-9 max-sm:mb-6">
@@ -129,7 +129,7 @@ export default function ForBusinessPage() {
             </div>
 
             <h1
-              className="stagger-2 font-display mb-9 max-sm:mb-6"
+              className="stagger-2 font-display mb-9 max-md:!text-[36px] max-md:mb-4 max-md:!leading-[1.05]"
               style={{
                 fontSize: '76px',
                 lineHeight: 0.98,
@@ -144,7 +144,7 @@ export default function ForBusinessPage() {
             </h1>
 
             <p
-              className="stagger-3 font-display text-cream/80 mb-10 max-w-[540px]"
+              className="stagger-3 font-display text-cream/80 mb-10 max-w-[540px] max-md:!text-[14.5px] max-md:!leading-[1.55] max-md:mb-6"
               style={{ fontSize: '18px', lineHeight: 1.65 }}
             >
               Twenty-two years stocking independent coffee shops, bagel counters, and
@@ -166,7 +166,7 @@ export default function ForBusinessPage() {
 
           {/* Right — inset contact card */}
           <div
-            className="scale-in relative"
+            className="scale-in relative max-md:!p-5"
             style={{
               border: '1px solid rgba(184, 138, 72, 0.45)',
               background: 'rgba(26, 17, 10, 0.55)',
@@ -189,19 +189,19 @@ export default function ForBusinessPage() {
 
             <div className="relative">
               <p
-                className="font-mono uppercase text-gold-bright mb-8"
+                className="font-mono uppercase text-gold-bright mb-8 max-md:mb-4"
                 style={{ fontSize: '10px', letterSpacing: '0.26em' }}
               >
                 The short version
               </p>
               <p
-                className="font-display text-cream mb-6"
+                className="font-display text-cream mb-6 max-md:!text-[17px] max-md:mb-3"
                 style={{ fontSize: '22px', lineHeight: 1.3, letterSpacing: '-0.01em' }}
               >
                 Fourteen brands. One warehouse. No ticket queue.
               </p>
               <p
-                className="font-display italic text-gold-bright mb-8"
+                className="font-display italic text-gold-bright mb-8 max-md:!text-[14px] max-md:mb-4"
                 style={{ fontSize: '17px', lineHeight: 1.5, letterSpacing: '-0.02em' }}
               >
                 &ldquo;They know us by name.&rdquo;
@@ -223,7 +223,7 @@ export default function ForBusinessPage() {
 
       {/* Volume pricing tiers */}
       <Reveal as="section" className="bg-paper-2">
-        <div className="max-w-content mx-auto px-8 pt-24 pb-20 max-sm:px-5 max-sm:pt-16 max-sm:pb-14">
+        <div className="max-w-content mx-auto px-8 pt-24 pb-20 max-md:px-4 max-md:pt-10 max-md:pb-8">
           <SectionHead
             numeral="I"
             eyebrow="Volume pricing"
@@ -233,12 +233,12 @@ export default function ForBusinessPage() {
             {TIERS.map((t, i) => (
               <Reveal key={t.roman} delay={i * 0.08}>
                 <article
-                  className="bg-cream h-full flex flex-col"
+                  className="bg-cream h-full flex flex-col max-md:!p-5"
                   style={{ border: '1px solid var(--rule-strong)', padding: '32px' }}
                 >
-                  <div className="flex items-baseline gap-4 mb-8">
+                  <div className="flex items-baseline gap-4 mb-8 max-md:mb-4">
                     <span
-                      className="font-display italic text-brand-deep"
+                      className="font-display italic text-brand-deep max-md:!text-[28px]"
                       style={{
                         fontSize: '44px',
                         lineHeight: 1,
@@ -252,26 +252,26 @@ export default function ForBusinessPage() {
                   </div>
 
                   <div
-                    className="pb-5 mb-6"
+                    className="pb-5 mb-6 max-md:pb-3 max-md:mb-3"
                     style={{ borderBottom: '1px solid var(--rule)' }}
                   >
                     <p
-                      className="type-price"
+                      className="type-price max-md:!text-[22px]"
                       style={{ fontSize: '32px', lineHeight: 1 }}
                     >
                       {t.threshold}
                     </p>
-                    <p className="type-label-sm text-ink-muted mt-3">per order</p>
+                    <p className="type-label-sm text-ink-muted mt-3 max-md:mt-1.5">per order</p>
                   </div>
 
                   <p
-                    className="font-display text-ink mb-6"
+                    className="font-display text-ink mb-6 max-md:!text-[16px] max-md:mb-3"
                     style={{ fontSize: '20px', lineHeight: 1.3, letterSpacing: '-0.01em' }}
                   >
                     {t.headline}
                   </p>
 
-                  <ul className="flex flex-col gap-3 flex-1">
+                  <ul className="flex flex-col gap-3 max-md:gap-1.5 flex-1">
                     {t.bullets.map((b) => (
                       <li
                         key={b}
@@ -303,7 +303,7 @@ export default function ForBusinessPage() {
       {/* Testimonials */}
       {/* TODO: replace with real testimonials from Jeff's customers */}
       <Reveal as="section" className="bg-paper">
-        <div className="max-w-content mx-auto px-8 pt-24 pb-20 max-sm:px-5 max-sm:pt-16 max-sm:pb-14">
+        <div className="max-w-content mx-auto px-8 pt-24 pb-20 max-md:px-4 max-md:pt-10 max-md:pb-8">
           <SectionHead
             numeral="II"
             eyebrow="In their words"
@@ -357,31 +357,31 @@ export default function ForBusinessPage() {
         id="contact"
         className="bg-paper-2"
       >
-        <div className="max-w-content mx-auto px-8 pt-24 pb-28 max-sm:px-5 max-sm:pt-16 max-sm:pb-20">
+        <div className="max-w-content mx-auto px-8 pt-24 pb-28 max-md:px-4 max-md:pt-10 max-md:pb-12">
           <SectionHead
             numeral="III"
             eyebrow="Open an account"
             title="Tell us about your {italic}business{/italic}."
           />
-          <div className="grid gap-14 max-lg:gap-10 lg:grid-cols-[1.3fr_1fr]">
+          <div className="grid gap-14 max-lg:gap-10 max-md:gap-6 lg:grid-cols-[1.3fr_1fr]">
             <InquiryForm />
 
             {/* Right — direct contact */}
             <aside
-              className="flex flex-col"
+              className="flex flex-col max-md:!p-5"
               style={{ border: '1px solid var(--rule-strong)', padding: '32px', background: 'var(--color-paper)' }}
             >
-              <p className="type-label text-accent mb-6">§ Or call directly</p>
+              <p className="type-label text-accent mb-6 max-md:mb-3">§ Or call directly</p>
 
               <a
                 href="tel:+17609311028"
-                className="font-display italic text-brand-deep mb-4 hover:opacity-80 transition-opacity"
+                className="font-display italic text-brand-deep mb-4 hover:opacity-80 transition-opacity max-md:!text-[26px] max-md:mb-2"
                 style={{ fontSize: '34px', lineHeight: 1, letterSpacing: '-0.025em', fontWeight: 500 }}
               >
                 (760) 931-1028
               </a>
 
-              <p className="type-label-sm text-ink-muted mb-8">
+              <p className="type-label-sm text-ink-muted mb-8 max-md:mb-5">
                 Monday thru Friday · 9–5 Pacific
               </p>
 

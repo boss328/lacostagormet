@@ -58,7 +58,7 @@ export function ProductCard({ product, showJustIn = false, priority = false }: P
   return (
     <Link href={`/product/${product.slug}`} className="product-card group">
       <div
-        className="relative aspect-square overflow-hidden"
+        className="relative aspect-square overflow-hidden max-md:aspect-[4/3]"
         style={{
           background:
             'radial-gradient(ellipse at center, var(--color-cream) 0%, var(--color-paper-2) 115%)',
@@ -91,7 +91,7 @@ export function ProductCard({ product, showJustIn = false, priority = false }: P
         >
           {product.sku}
         </span>
-        <div className="absolute inset-0" style={{ padding: '18px' }}>
+        <div className="absolute inset-0 max-md:!p-3" style={{ padding: '18px' }}>
           <ImageWithFallback
             src={imgUrl}
             alt={product.name}
@@ -120,9 +120,9 @@ export function ProductCard({ product, showJustIn = false, priority = false }: P
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col" style={{ padding: '18px' }}>
+      <div className="flex-1 flex flex-col max-md:!p-3" style={{ padding: '18px' }}>
         <div
-          className="flex items-baseline justify-between gap-2 pb-2 mb-2.5"
+          className="flex items-baseline justify-between gap-2 pb-2 mb-2.5 max-md:pb-1.5 max-md:mb-2"
           style={{ borderBottom: '1px solid var(--rule)' }}
         >
           <span className="type-label-sm text-ink-muted">
@@ -132,15 +132,15 @@ export function ProductCard({ product, showJustIn = false, priority = false }: P
             {formatPackSize(product.pack_size) ?? '—'}
           </span>
         </div>
-        <p className="type-product flex-1 mb-4">{product.name}</p>
+        <p className="type-product flex-1 mb-4 max-md:mb-3">{product.name}</p>
         <div
-          className="flex items-center justify-between gap-3"
+          className="flex items-center justify-between gap-3 max-md:!pt-2"
           style={{ paddingTop: '12px', borderTop: '1px dashed var(--rule)' }}
         >
           <span className="type-price">
             ${dollars}
             <sup
-              className="font-display"
+              className="font-display max-md:!text-[10px]"
               style={{ fontSize: '13px', color: 'var(--color-ink-muted)', marginLeft: '2px', verticalAlign: 'super' }}
             >
               {cents}

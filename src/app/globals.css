@@ -170,13 +170,48 @@ body {
     font-weight: inherit;
   }
 
-  /* Mobile shrinks per 1.3 § Mobile adaptations */
-  @media (max-width: 640px) {
-    .type-display-1 { font-size: 54px; line-height: 0.98; }
-    .type-display-2 { font-size: 34px; }
-    .type-display-3 { font-size: 40px; }
-    .type-numeral   { font-size: 28px; }
+  /* Mobile shrinks — tightened ~30-40% from desktop per April 2026 mobile pass */
+  @media (max-width: 768px) {
+    .type-display-1 { font-size: 36px; line-height: 1.02; letter-spacing: -0.025em; }
+    .type-display-2 { font-size: 28px; line-height: 1.05; }
+    .type-display-3 { font-size: 32px; line-height: 1.05; }
+    .type-numeral   { font-size: 22px; }
+    .type-brand     { font-size: 17px; }
+    .type-price     { font-size: 18px; }
+    .type-product   { font-size: 13.5px; line-height: 1.35; }
+    .type-body      { font-size: 15px; line-height: 1.55; }
+    .type-label     { font-size: 10px; letter-spacing: 0.20em; }
+    .type-label-sm  { font-size: 9px;  letter-spacing: 0.22em; }
   }
+}
+
+/* =========================================================================
+   Mobile section padding rhythm — desktop py-20/py-24 felt cramped on
+   narrow viewports because the literal pixel value was unchanged. Halve
+   the vertical breathing room on phones. Targets the common section
+   wrappers without touching individual page layouts.
+   ========================================================================= */
+@media (max-width: 768px) {
+  /* Tighter base body so paragraphs don't bloat the line-count */
+  body { font-size: 15px; line-height: 1.55; }
+
+  /* Product description blocks (PDP) — tighter line-height + smaller hX */
+  .product-description p  { font-size: 14.5px; line-height: 1.55; }
+  .product-description li { font-size: 14px;  line-height: 1.5; }
+  .product-description h2 { font-size: 19px; }
+  .product-description h3 { font-size: 17px; }
+  .product-description h4 { font-size: 15px; }
+
+  /* Buttons: tighter vertical padding on mobile only */
+  .btn-solid          { padding: 12px 22px; }
+  .btn-outline        { padding: 11px 18px; }
+  .btn-outline-gold   { padding: 11px 18px; }
+
+  /* Brand row tile — defined as 26px 22px on desktop */
+  .brand-row          { padding: 16px 14px 14px 14px; }
+
+  /* Drop-cap shrinks on mobile so it doesn't dwarf the body type */
+  .drop-cap-w         { font-size: 40px; line-height: 0.9; margin-right: 8px; }
 }
 
 /* =========================================================================

@@ -16,11 +16,11 @@ export function PageHeader({ breadcrumb, eyebrow, title, lede, banner }: PageHea
   return (
     <>
       <header className="bg-cream border-b border-rule">
-        <div className="max-w-content mx-auto px-8 pt-14 pb-16 max-sm:px-5 max-sm:pt-10 max-sm:pb-12">
+        <div className="max-w-content mx-auto px-8 pt-14 pb-16 max-md:px-4 max-md:pt-7 max-md:pb-7">
           {breadcrumb && breadcrumb.length > 0 && (
             <nav
               aria-label="Breadcrumb"
-              className="flex items-center gap-2 mb-6 type-data-mono text-ink-muted"
+              className="flex items-center gap-2 mb-6 type-data-mono text-ink-muted max-md:mb-3 flex-wrap"
             >
               {breadcrumb.map((c, i) => (
                 <Fragment key={`${i}-${c.label}`}>
@@ -42,15 +42,15 @@ export function PageHeader({ breadcrumb, eyebrow, title, lede, banner }: PageHea
             </nav>
           )}
 
-          <p className="type-label text-accent mb-6">{eyebrow}</p>
+          <p className="type-label text-accent mb-6 max-md:mb-3">{eyebrow}</p>
 
-          <h1 className="type-display-1 mb-8 max-w-[12ch] max-sm:max-w-none">
+          <h1 className="type-display-1 mb-8 max-w-[12ch] max-md:mb-4 max-md:max-w-none">
             {title}
           </h1>
 
           {lede && (
             <p
-              className="type-body max-w-[620px] pl-5"
+              className="type-body max-w-[620px] pl-5 max-md:pl-3"
               style={{
                 backgroundImage:
                   'linear-gradient(to bottom, var(--color-gold) 0%, transparent 100%)',

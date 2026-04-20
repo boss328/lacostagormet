@@ -106,7 +106,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
         hideBrand
       />
 
-      <section className="max-w-content mx-auto px-8 py-14 max-sm:px-5 max-sm:py-10">
+      <section className="max-w-content mx-auto px-8 py-14 max-md:px-4 max-md:py-6">
         <ProductGrid
           products={products}
           total={total}

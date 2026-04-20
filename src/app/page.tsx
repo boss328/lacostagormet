@@ -104,7 +104,7 @@ export default async function HomePage() {
 
       {/* [3] Categories */}
       <Reveal as="section" className="bg-paper">
-        <div className="max-w-content mx-auto px-8 pt-20 pb-14 max-sm:px-5 max-sm:pt-14">
+        <div className="max-w-content mx-auto px-8 pt-20 pb-14 max-md:px-5 max-md:pt-10 max-md:pb-8">
           <SectionHead
             numeral="I"
             eyebrow="The Departments"
@@ -154,7 +154,7 @@ export default async function HomePage() {
                 'repeating-linear-gradient(45deg, rgba(26, 17, 10, 0.015) 0 1px, transparent 1px 6px)',
             }}
           />
-          <div className="relative max-w-content mx-auto px-8 pt-20 pb-16 max-sm:px-5 max-sm:pt-14">
+          <div className="relative max-w-content mx-auto px-8 pt-20 pb-16 max-md:px-5 max-md:pt-10 max-md:pb-10">
             <SectionHead
               numeral="II"
               eyebrow="Fresh on the shelf"
@@ -162,7 +162,7 @@ export default async function HomePage() {
               link={{ href: '/shop?sort=new', label: 'Shop New' }}
             />
             {featured.length > 0 ? (
-              <div className="grid gap-5 max-lg:grid-cols-2 max-sm:grid-cols-1 lg:grid-cols-4">
+              <div className="grid gap-5 max-lg:grid-cols-2 max-md:gap-3 lg:grid-cols-4">
                 {featured.map((p) => (
                   <ProductCard key={p.id} product={p} showJustIn />
                 ))}

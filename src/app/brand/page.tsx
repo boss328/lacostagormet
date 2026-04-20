@@ -64,14 +64,16 @@ export default async function BrandsIndexPage() {
       />
 
       <Reveal as="section" className="bg-paper">
-        <div className="max-w-content mx-auto px-8 py-14 max-sm:px-5 max-sm:py-10">
+        <div className="max-w-content mx-auto px-8 py-14 max-md:px-4 max-md:py-6">
           {brands.length === 0 ? (
             <p className="type-data-mono text-ink-muted text-center py-16">
               No active brands on file yet.
             </p>
           ) : (
+            // 2-col on mobile (was 1-col) — tile content is text-only and
+            // reads fine in two compact columns on narrow viewports.
             <div
-              className="grid gap-px max-lg:grid-cols-2 max-sm:grid-cols-1 lg:grid-cols-4"
+              className="grid gap-px max-lg:grid-cols-2 lg:grid-cols-4"
               style={{ background: 'var(--rule)' }}
             >
               {brands.map((b) => (
