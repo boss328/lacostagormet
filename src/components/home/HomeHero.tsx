@@ -32,8 +32,12 @@ export function HomeHero() {
             <span className="h-px flex-1" style={{ background: 'rgba(193, 72, 40, 0.4)' }} />
           </div>
 
-          <h1 className="stagger-2 type-display-1 mb-10 max-sm:mb-5">
-            <em className="type-accent">Café-quality drinks</em>,
+          {/* Desktop punch-up: italic accent gets a heavier weight + darker
+              brand colour at lg+ so "Café-quality drinks" reads first;
+              mb-12 on lg+ gives the lede below ~20% more breathing room.
+              Mobile untouched — still mb-10 → max-sm:mb-5. */}
+          <h1 className="stagger-2 type-display-1 mb-10 max-sm:mb-5 lg:mb-12">
+            <em className="type-accent lg:font-medium lg:text-brand-darker">Café-quality drinks</em>,
             <br className="max-md:hidden" />{' '}
             shipped to your door.
           </h1>

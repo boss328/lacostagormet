@@ -170,6 +170,18 @@ body {
     font-weight: inherit;
   }
 
+  /* Desktop punch-up (≥ lg = 1024px) — bigger size, tighter leading,
+     tighter tracking so the hero headline dominates above the fold.
+     Mobile is clamped by the max-width media query below; tablet
+     (769–1023) keeps the base 92px look. */
+  @media (min-width: 1024px) {
+    .type-display-1 {
+      font-size: 100px;
+      line-height: 0.95;
+      letter-spacing: -0.038em;
+    }
+  }
+
   /* Mobile shrinks — tightened ~30-40% from desktop per April 2026 mobile pass */
   @media (max-width: 768px) {
     .type-display-1 { font-size: 36px; line-height: 1.02; letter-spacing: -0.025em; }
