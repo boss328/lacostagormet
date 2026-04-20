@@ -23,21 +23,21 @@ export const CATEGORY_IMAGES: Record<string, PlaceholderImage> = {
     alt: 'Steaming chai latte in a ceramic cup',
   },
   'cocoa': {
-    // Previous ID 1542990253-0b8be6ae9224 was removed from Unsplash and
-    // started 404'ing. Swapped to a verified-live cocoa/chocolate shot —
-    // same warm-brown palette, fits the editorial grid.
-    src: UNSPLASH('1481391319762-47dff72954d9'),
-    alt: 'Stacked dark chocolate squares',
+    // Previous ID 1481391319762-47dff72954d9 rendered as chocolate
+    // truffles in a gift box — wrong for this category, which is hot
+    // cocoa drink mix. Swapped to a mug of hot chocolate.
+    src: UNSPLASH('1517578239113-b03992dcdd25'),
+    alt: 'Mug of hot chocolate',
   },
   'frappes': {
     src: UNSPLASH('1461023058943-07fcbe16d735'),
     alt: 'Iced blended coffee frappé in a tall glass',
   },
   'oatmeal-and-grains': {
-    // Previous ID 1517686469429-8bdb88b9f907 was off-topic; swapped to a
-    // clearer oatmeal/grain bowl shot.
-    src: UNSPLASH('1517673132405-a56a62b18caf'),
-    alt: 'Bowl of oatmeal with grains and fresh berries',
+    // Previous ID 1517673132405-a56a62b18caf was rendering as a stack of
+    // books (unrelated). Swapped to an oatmeal breakfast bowl.
+    src: UNSPLASH('1484723091739-30a097e8f929'),
+    alt: 'Oatmeal breakfast bowl with berries and grains',
   },
   'smoothie-bases': {
     // Previous ID 1546039907-7fa05f864c02 was reading as hummus / grain
@@ -46,10 +46,11 @@ export const CATEGORY_IMAGES: Record<string, PlaceholderImage> = {
     alt: 'Berry smoothie in a tall glass',
   },
   'syrups-and-sauces': {
-    // Previous ID 1578326457399-3b34dbbf23b8 rendered as a zebra photo
-    // (Unsplash content drift). Swapped to flavoured-syrup bottles.
-    src: UNSPLASH('1579954115545-a95591f28bfc'),
-    alt: 'Flavoured syrup bottles lined up on a counter',
+    // Previous ID 1579954115545-a95591f28bfc rendered as a pink
+    // strawberry smoothie — collided visually with the Smoothie Bases
+    // tile. Swapped to flavoured-syrup bottles.
+    src: UNSPLASH('1541167760496-1628856ab772'),
+    alt: 'Flavoured syrup bottles',
   },
 };
 
@@ -59,9 +60,12 @@ export const HERO_IMAGE: PlaceholderImage = {
 };
 
 export const STORY_IMAGE: PlaceholderImage = {
-  // The Dispatch Desk section (HomeStory) — was a generic café counter;
-  // swapped to a coffee-brewing / shipping-prep shot to match the
-  // warehouse/ship-from-Carlsbad positioning.
-  src: UNSPLASH('1559925393-8be0ec4767c8'),
-  alt: 'Coffee being brewed in a warm-lit workspace',
+  // The Dispatch Desk section (HomeStory). Previous ID
+  // 1559925393-8be0ec4767c8 was rendering as a European café
+  // storefront with wrought iron + cobblestones — completely off-brand
+  // for a US wholesale beverage supplier shipping from Carlsbad.
+  // Swapped to a warehouse/shipping shelves shot to tie into the body
+  // copy's "still shipping from California" line.
+  src: UNSPLASH('1553413077-190dd305871c'),
+  alt: 'Warehouse shelves lined with shipping boxes',
 };
