@@ -66,10 +66,13 @@ export function PageHeader({ breadcrumb, eyebrow, title, lede, banner }: PageHea
       </header>
 
       {banner && (
+        // Category page banner — behaves as a wide editorial band, not a
+        // splash page. Explicit heights per breakpoint replace the old
+        // aspectRatio: 3/1 (which produced ~480px on 1440px viewports and
+        // felt full-screen). Image still crops via object-cover.
         <section
           aria-hidden="true"
-          className="relative overflow-hidden img-overlay-radial"
-          style={{ aspectRatio: '3 / 1' }}
+          className="relative overflow-hidden img-overlay-radial h-[200px] md:h-[360px]"
         >
           <Image
             src={banner.src}
