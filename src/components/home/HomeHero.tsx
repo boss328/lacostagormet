@@ -76,9 +76,14 @@ export function HomeHero() {
             mobile via order-1; lg+ falls back to grid flow = right col). */}
         <div className="flex flex-col gap-8 max-sm:gap-6 max-lg:order-1">
           <div className="scale-in">
+            {/* Aspect-ratio moved out of inline style (which beat the
+                max-md Tailwind classes by specificity) into classes.
+                Default 4:5 (desktop + tablet) preserved; mobile overrides
+                to 4:3 crop with a 360px height cap. Image still uses
+                object-cover so the framing is preserved at both ratios. */}
             <div
-              className="relative overflow-hidden img-overlay-radial max-md:aspect-[4/3] max-md:max-h-[45vh]"
-              style={{ aspectRatio: '4 / 5', border: '1px solid var(--color-ink)' }}
+              className="relative overflow-hidden img-overlay-radial aspect-[4/5] max-md:aspect-[4/3] max-md:max-h-[360px]"
+              style={{ border: '1px solid var(--color-ink)' }}
             >
               <Image
                 src={HERO_IMAGE.src}

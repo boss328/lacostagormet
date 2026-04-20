@@ -125,25 +125,27 @@ export default async function AdminDashboardPage({
 
       {/* HERITAGE — all-time totals, the bedrock the rest of the dashboard sits on */}
       <section
-        className="mb-8 px-6 py-5 max-md:mb-5 max-md:px-4 max-md:py-4"
+        className="mb-8 px-6 py-5 max-md:mb-5 max-md:px-4 max-md:py-3"
         style={{
           border: '1px solid var(--rule-strong)',
           background: 'var(--color-cream)',
         }}
       >
-        <div className="flex items-baseline justify-between gap-6 mb-4 flex-wrap max-md:gap-2 max-md:mb-3">
+        <div className="flex items-baseline justify-between gap-6 mb-4 flex-wrap max-md:gap-2 max-md:mb-2">
           <div>
-            <p className="type-label text-ink-muted mb-1">§ Heritage</p>
+            <p className="type-label text-ink-muted mb-1 max-md:mb-0.5">§ Heritage</p>
             <p
-              className="font-display italic text-brand-deep max-md:!text-[16px]"
+              className="font-display italic text-brand-deep max-md:!text-[15px]"
               style={{ fontSize: '20px', lineHeight: 1, fontWeight: 500, letterSpacing: '-0.018em' }}
             >
               Est. MMIII — {HERITAGE_YEARS} years of history.
             </p>
           </div>
-          <p className="type-data-mono text-ink-muted">All-time, since 2003</p>
+          <p className="type-data-mono text-ink-muted max-md:hidden">All-time, since 2003</p>
         </div>
-        <div className="grid gap-6 lg:grid-cols-4 max-md:grid-cols-2 max-md:gap-4">
+        {/* Tighter vertical rhythm on mobile: gap-3 (12px) keeps each
+            data point at ~56px including its label. */}
+        <div className="grid gap-6 lg:grid-cols-4 max-md:grid-cols-2 max-md:gap-x-4 max-md:gap-y-3">
           <HeritageTile label="Revenue — all-time" value={fmtMoney(summary.lifetimeRevenue)} />
           <HeritageTile label="Orders — all-time" value={summary.orderCount.toLocaleString()} />
           <HeritageTile label="Customers — on file" value={summary.customerCount.toLocaleString()} />
@@ -219,8 +221,11 @@ function TinyStat({
   href?: string;
 }) {
   const body = (
+    // max-md:min-h-[88px] forces all four tiles to the same height so
+    // rows 1 and 2 of the 2x2 mobile grid stay visually aligned even
+    // when delta strings differ in length ("—" vs "-100%" etc.).
     <div
-      className="bg-cream max-md:!min-w-0 max-md:!p-3"
+      className="bg-cream max-md:!min-w-0 max-md:!p-3 max-md:min-h-[88px] max-md:flex max-md:flex-col max-md:justify-between"
       style={{
         border: '1px solid var(--rule)',
         padding: '10px 14px',
@@ -241,7 +246,7 @@ function TinyStat({
       </p>
       {delta && (
         <p
-          className="type-data-mono mt-2"
+          className="type-data-mono mt-2 max-md:mt-1 max-md:!text-[10px]"
           style={{
             color:
               positive === true
