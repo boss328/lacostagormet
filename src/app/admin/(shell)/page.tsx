@@ -69,7 +69,7 @@ export default async function AdminDashboardPage({
           <div className="min-w-0">
             <p className="type-label text-accent mb-3 max-md:mb-2">§ I. Dashboard — Est. MMIII</p>
             <h1
-              className="font-display text-ink max-md:!text-[28px]"
+              className="font-display text-ink max-md:!text-[22px]"
               style={{
                 fontSize: '44px',
                 lineHeight: 1,
@@ -196,7 +196,7 @@ function HeritageTile({ label, value }: { label: string; value: string }) {
     <div>
       <p className="type-label-sm text-ink-muted mb-2 max-md:mb-1">{label}</p>
       <p
-        className="font-display italic text-brand-deep max-md:!text-[20px]"
+        className="font-display italic text-brand-deep max-md:!text-[22px]"
         style={{ fontSize: '28px', lineHeight: 1, fontWeight: 500, letterSpacing: '-0.022em' }}
       >
         {value}
@@ -220,16 +220,16 @@ function TinyStat({
 }) {
   const body = (
     <div
-      className="bg-cream max-md:!min-w-0 max-md:!p-2"
+      className="bg-cream max-md:!min-w-0 max-md:!p-3"
       style={{
         border: '1px solid var(--rule)',
         padding: '10px 14px',
         minWidth: 140,
       }}
     >
-      <p className="type-label-sm text-ink-muted mb-2 max-md:mb-1 max-md:!text-[8px]">{label}</p>
+      <p className="type-label-sm text-ink-muted mb-2 max-md:mb-1 max-md:!text-[9px]">{label}</p>
       <p
-        className="font-display italic text-brand-deep max-md:!text-[16px]"
+        className="font-display italic text-brand-deep max-md:!text-[20px]"
         style={{
           fontSize: '22px',
           lineHeight: 1,

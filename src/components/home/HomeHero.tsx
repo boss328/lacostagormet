@@ -77,7 +77,7 @@ export function HomeHero() {
         <div className="flex flex-col gap-8 max-sm:gap-6 max-lg:order-1">
           <div className="scale-in">
             <div
-              className="relative overflow-hidden img-overlay-radial max-md:aspect-[4/3] max-md:max-h-[60vh]"
+              className="relative overflow-hidden img-overlay-radial max-md:aspect-[4/3] max-md:max-h-[45vh]"
               style={{ aspectRatio: '4 / 5', border: '1px solid var(--color-ink)' }}
             >
               <Image
