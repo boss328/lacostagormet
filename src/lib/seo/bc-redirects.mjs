@@ -14,6 +14,24 @@
  */
 
 export const bcRedirects = [
+  // ───── Apr 2026 category restructure (6 → 5) ─────
+  // teas-and-chai → chai-tea
+  { source: '/shop/teas-and-chai/',      destination: '/shop/chai-tea/',            permanent: true },
+  { source: '/shop/teas-and-chai',       destination: '/shop/chai-tea',             permanent: true },
+  // oatmeal-and-grains → oatmeal
+  { source: '/shop/oatmeal-and-grains/', destination: '/shop/oatmeal/',             permanent: true },
+  { source: '/shop/oatmeal-and-grains',  destination: '/shop/oatmeal',              permanent: true },
+  // smoothie-bases → smoothies
+  { source: '/shop/smoothie-bases/',     destination: '/shop/smoothies/',           permanent: true },
+  { source: '/shop/smoothie-bases',      destination: '/shop/smoothies',            permanent: true },
+  // cocoa + frappes + syrups-and-sauces → specialty-beverages (merge)
+  { source: '/shop/cocoa/',              destination: '/shop/specialty-beverages/', permanent: true },
+  { source: '/shop/cocoa',               destination: '/shop/specialty-beverages',  permanent: true },
+  { source: '/shop/frappes/',            destination: '/shop/specialty-beverages/', permanent: true },
+  { source: '/shop/frappes',             destination: '/shop/specialty-beverages',  permanent: true },
+  { source: '/shop/syrups-and-sauces/',  destination: '/shop/specialty-beverages/', permanent: true },
+  { source: '/shop/syrups-and-sauces',   destination: '/shop/specialty-beverages',  permanent: true },
+
   // ───── Top-level pages ─────
   { source: '/blog/', destination: '/', permanent: true },
   { source: '/contact-us/', destination: '/contact', permanent: true },
@@ -57,7 +75,7 @@ export const bcRedirects = [
   { source: '/brand-names/tiki-breeze/', destination: '/brand', permanent: true },
 
   // ───── Categories → teas-and-chai ─────
-  { source: '/teas/', destination: '/shop/teas-and-chai', permanent: true },
+  { source: '/teas/', destination: '/shop/chai-tea', permanent: true },
   { source: '/teas/two-leaves-and-a-bud/', destination: '/brand', permanent: true },
   { source: '/teas/numi-tea/', destination: '/brand', permanent: true },
   { source: '/chai-tea/mocafe-chai-tea/', destination: '/brand/mocafe', permanent: true },
@@ -74,8 +92,8 @@ export const bcRedirects = [
 
   // ───── Categories → frappes ─────
   { source: '/frappes/mocafe-frappes/', destination: '/brand/mocafe', permanent: true },
-  { source: '/frappe-mixes/', destination: '/shop/frappes', permanent: true },
-  { source: '/frappe-mixes/carb-conscious/', destination: '/shop/frappes', permanent: true },
+  { source: '/frappe-mixes/', destination: '/shop/specialty-beverages', permanent: true },
+  { source: '/frappe-mixes/carb-conscious/', destination: '/shop/specialty-beverages', permanent: true },
   { source: '/blended-ice-coffee/big-train-frappe-power/', destination: '/brand/big-train', permanent: true },
   { source: '/blended-ice-coffee/cafe-essentials-dr-smoothie/', destination: '/brand/cafe-essentials', permanent: true },
   { source: '/blended-ice-coffee/davinci-blended-ice-coffee/', destination: '/brand/davinci-gourmet', permanent: true },
@@ -83,7 +101,7 @@ export const bcRedirects = [
   { source: '/blended-ice-creme/big-train-frappe-power/', destination: '/brand/big-train', permanent: true },
 
   // ───── Categories → cocoa ─────
-  { source: '/cocoa-powder/', destination: '/shop/cocoa', permanent: true },
+  { source: '/cocoa-powder/', destination: '/shop/specialty-beverages', permanent: true },
   { source: '/gourmet-cocoa/dr-smoothie-gourmet-coco/', destination: '/brand/dr-smoothie', permanent: true },
   { source: '/gourmet-cocoa/big-train-gourmet-cocoa/', destination: '/brand/big-train', permanent: true },
   { source: '/gourmet-cocoa/mocafe-gourmet-cocoa/', destination: '/brand/mocafe', permanent: true },
@@ -91,7 +109,7 @@ export const bcRedirects = [
   { source: '/cocoa/big-train-gourmet-cocoa/big-train/', destination: '/brand/big-train', permanent: true },
 
   // ───── Categories → oatmeal-and-grains ─────
-  { source: '/oatmeal/', destination: '/shop/oatmeal-and-grains', permanent: true },
+  { source: '/oatmeal/', destination: '/shop/oatmeal', permanent: true },
   { source: '/oatmeal/mylk-oatmeal/', destination: '/brand/mylk-labs', permanent: true },
   { source: '/oatmeal/modern-oats/', destination: '/brand/modern-oats', permanent: true },
 
@@ -99,11 +117,11 @@ export const bcRedirects = [
   { source: '/smoothies-juice/monin-real-fruit-smoothie-mixes/', destination: '/brand/monin', permanent: true },
   { source: '/smoothies-juice/torani-real-fruit-smoothie-mixes/', destination: '/brand/torani', permanent: true },
   { source: '/smoothies-juice/dr-smoothie-refreshers/', destination: '/brand/dr-smoothie', permanent: true },
-  { source: '/smoothie-mixes/', destination: '/shop/smoothie-bases', permanent: true },
+  { source: '/smoothie-mixes/', destination: '/shop/smoothies', permanent: true },
   { source: '/smoothie-mixes/davinci-gourmet/', destination: '/brand/davinci-gourmet', permanent: true },
 
   // ───── Categories → syrups-and-sauces ─────
-  { source: '/gourmet-sauces-and-syrups/', destination: '/shop/syrups-and-sauces', permanent: true },
+  { source: '/gourmet-sauces-and-syrups/', destination: '/shop/specialty-beverages', permanent: true },
   { source: '/gourmet-sauces-and-syrups/numi/', destination: '/brand', permanent: true },
   { source: '/gourmet-sauces-and-syrups/upouria-flavored-syrups/', destination: '/brand/upouria', permanent: true },
   { source: '/gourmet-sauces-and-syrups/monin/', destination: '/brand/monin', permanent: true },

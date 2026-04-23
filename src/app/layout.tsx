@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     template: "%s · La Costa Gourmet",
   },
   description:
-    "Café-quality chai, cocoa, frappés, and smoothie bases — shipped nationwide from California. Bulk-bag recipes trusted by coffee shops since 2003.",
+    "Café-quality chai, smoothies, oatmeal, specialty beverages, and more — shipped nationwide from La Costa Gourmet. Premium brands trusted by independent coffee shops since 2003.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001",
   ),

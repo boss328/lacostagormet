@@ -56,10 +56,12 @@ export function HomeHero() {
               backgroundPosition: 'left top',
             }}
           >
-            Chai, cocoa, frappés, and smoothie bases — the same bulk-bag recipes
-            trusted by independent coffee shops since 2003. Now available for
-            your kitchen, your office, your next event. Ships nationwide from
-            California, usually within one business day.
+            Stock your kitchen with the same chai, cocoa, frappé mixes, and
+            smoothie bases that independent coffee shops have been pouring for
+            their customers since 2003. Big Train. Mocafe. David Rio. Torani.
+            Monin. The brands you&rsquo;ve ordered at your favorite café — now
+            available for your home, your office, or your next event.
+            One-business-day shipping from our warehouses across the US.
           </p>
 
           <div className="stagger-4 flex flex-wrap items-center gap-3.5">

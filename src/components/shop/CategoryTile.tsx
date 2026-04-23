@@ -21,7 +21,7 @@ function pad2(n: number) {
 
 export function CategoryTile({ category, image, index }: CategoryTileProps) {
   return (
-    <Link href={`/shop/${category.slug}`} className="category-tile group">
+    <Link href={`/shop/${category.slug}/`} className="category-tile group">
       <div className="relative overflow-hidden img-overlay-radial max-md:!h-[120px]" style={{ height: '160px' }}>
         <ImageWithFallback
           src={image.src}
@@ -48,7 +48,9 @@ export function CategoryTile({ category, image, index }: CategoryTileProps) {
                 className="font-mono uppercase text-ink-muted mt-2"
                 style={{ fontSize: '9px', letterSpacing: '0.24em' }}
               >
-                {category.itemCount} {category.itemCount === 1 ? 'item' : 'items'}
+                {category.itemCount === 0
+                  ? 'Coming soon'
+                  : `${category.itemCount} ${category.itemCount === 1 ? 'item' : 'items'}`}
               </span>
             </div>
           }
@@ -68,7 +70,9 @@ export function CategoryTile({ category, image, index }: CategoryTileProps) {
           {category.name}
         </p>
         <p className="type-data-mono text-accent max-md:!text-[10px]">
-          {category.itemCount} {category.itemCount === 1 ? 'item' : 'items'}
+          {category.itemCount === 0
+            ? 'Coming soon'
+            : `${category.itemCount} ${category.itemCount === 1 ? 'item' : 'items'}`}
         </p>
       </div>
     </Link>

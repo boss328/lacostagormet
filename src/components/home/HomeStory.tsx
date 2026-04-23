@@ -79,18 +79,24 @@ export function HomeStory() {
             className="font-display text-paper/85 mb-7"
             style={{ fontSize: '17px', lineHeight: 1.7 }}
           >
-            <span className="drop-cap-w" aria-hidden="true">W</span>
-            <span className="sr-only">W</span>e started out of a garage in 2003 with one
-            goal — to bring café-grade chai, cocoa, and smoothie bases into homes and smaller
-            businesses at pricing that independents could actually afford.
+            <span className="drop-cap-q" aria-hidden="true">Q</span>
+            <span className="sr-only">Q</span>UALITY YOU CAN TRUST. For over twenty years,
+            La Costa Gourmet has been the neighborhood source for café-quality
+            beverage supplies — keeping independent coffee shops, bagel counters,
+            and office kitchens stocked with the brands and ingredients their
+            customers count on.
           </p>
           <p
             className="font-display text-paper/70 mb-10"
             style={{ fontSize: '17px', lineHeight: 1.7 }}
           >
-            Two decades later, we&apos;re still family-owned. Still shipping from California.
-            Still answering the phone ourselves. The brands you know and trust, delivered by
-            people who remember your name.
+            We ship nationwide from warehouses across the US, but we still run
+            things the way we always have: small orders handled with care, big
+            orders packed on time, and a real person on the other end of the
+            phone when you need one. When you order from La Costa Gourmet,
+            you&rsquo;re getting the good stuff — delivered fast, handled right,
+            and backed by people who&rsquo;ve been in this business long enough
+            to know how it&rsquo;s done.
           </p>
 
           <div

@@ -223,7 +223,7 @@ body {
   .brand-row          { padding: 16px 14px 14px 14px; }
 
   /* Drop-cap shrinks on mobile so it doesn't dwarf the body type */
-  .drop-cap-w         { font-size: 40px; line-height: 0.9; margin-right: 8px; }
+  .drop-cap-q         { font-size: 40px; line-height: 0.9; margin-right: 8px; }
 }
 
 /* =========================================================================
@@ -477,7 +477,7 @@ body {
   }
 
   /* Drop-cap for the Story section's first paragraph */
-  .drop-cap-w {
+  .drop-cap-q {
     font-family: var(--font-display), serif;
     font-style: italic;
     font-weight: 400;

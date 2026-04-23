@@ -5,14 +5,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Menu, Search, User, X, ShoppingBag } from 'lucide-react';
 import { CartBadge } from '@/components/layout/CartBadge';
-import logo from '../../../public/brand/logo.png';
+import logo from '../../../public/logo.png';
 
 const NAV_LINKS: Array<{ href: string; label: string }> = [
-  { href: '/shop/teas-and-chai', label: 'Teas' },
-  { href: '/shop/cocoa', label: 'Cocoa' },
-  { href: '/shop/frappes', label: 'Frappés' },
-  { href: '/shop/syrups-and-sauces', label: 'Syrups' },
-  { href: '/shop/smoothie-bases', label: 'Smoothies' },
+  { href: '/shop/chai-tea', label: 'Chai Tea' },
+  { href: '/shop/specialty-beverages', label: 'Specialty' },
+  { href: '/shop/smoothies', label: 'Smoothies' },
+  { href: '/shop/oatmeal', label: 'Oatmeal' },
+  { href: '/shop/protein-and-supplements', label: 'Protein' },
   { href: '/brand', label: 'Brands' },
   { href: '/for-business', label: 'For Business' },
 ];

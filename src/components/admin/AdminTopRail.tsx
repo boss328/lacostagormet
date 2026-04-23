@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { AdminSearchTrigger } from '@/components/admin/AdminSearchTrigger';
 import { AdminDrawerToggle } from '@/components/admin/AdminDrawerToggle';
-import logo from '../../../public/brand/logo.png';
+import logo from '../../../public/logo.png';
 
 /**
  * Admin top rail — ink-dark editorial band.
@@ -22,15 +22,26 @@ export function AdminTopRail() {
       <div className="max-w-[1600px] mx-auto grid items-center gap-6 px-6 py-3 max-md:gap-3 max-md:px-4 max-md:grid-cols-[auto_1fr_auto] lg:grid-cols-[auto_1fr_auto]">
         <AdminDrawerToggle />
         <Link href="/admin/" className="flex items-center gap-4 shrink-0 max-md:gap-2">
-          <Image
-            src={logo}
-            alt="La Costa Gourmet"
-            priority
-            sizes="(max-width: 640px) 96px, 170px"
-            placeholder="blur"
-            className="h-10 max-sm:h-8 w-auto"
-            style={{ filter: 'invert(1) brightness(1.05)', opacity: 0.96 }}
-          />
+          {/* Coloured wordmark on the dark admin rail — sit it on a
+              cream plaque so the purple + teal read against the ink bg.
+              No invert filter; the logo ships with its own colours. */}
+          <span
+            className="inline-block"
+            style={{
+              background: 'var(--color-cream)',
+              padding: '4px 8px',
+              borderRadius: 2,
+            }}
+          >
+            <Image
+              src={logo}
+              alt="La Costa Gourmet"
+              priority
+              sizes="(max-width: 640px) 96px, 170px"
+              placeholder="blur"
+              className="h-7 max-sm:h-6 w-auto block"
+            />
+          </span>
           <span
             className="font-mono uppercase text-gold-bright"
             style={{ fontSize: '10px', letterSpacing: '0.26em' }}

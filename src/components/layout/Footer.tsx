@@ -41,15 +41,26 @@ export function Footer() {
         >
           {/* Brand block */}
           <div>
-            {/* Logo on dark — invert + drop opacity slightly so the warm cream reads as paper-on-ink */}
-            <Image
-              src={logo}
-              alt="La Costa Gourmet"
-              sizes="220px"
-              placeholder="blur"
-              className="w-[220px] h-auto"
-              style={{ filter: 'invert(1) brightness(1.05)', opacity: 0.94 }}
-            />
+            {/* New brand logo (purple + teal wordmark, Apr 2026). Wrapped
+                in a cream plaque so the coloured wordmark keeps its
+                intended hues on the dark ink footer — previous invert()
+                filter would have destroyed the colours. */}
+            <div
+              className="inline-block"
+              style={{
+                background: 'var(--color-cream)',
+                padding: '14px 18px',
+                border: '1px solid rgba(246, 238, 222, 0.24)',
+              }}
+            >
+              <Image
+                src={logo}
+                alt="La Costa Gourmet"
+                sizes="220px"
+                placeholder="blur"
+                className="w-[200px] h-auto block"
+              />
+            </div>
             <p className="type-label-sm text-gold-bright mt-4">
               Est. 2003 · Carlsbad, CA
             </p>

@@ -112,7 +112,7 @@ export default async function HomePage() {
             link={{ href: '/shop', label: 'View All' }}
           />
           <div
-            className="grid gap-px max-lg:grid-cols-3 max-sm:grid-cols-2 lg:grid-cols-6"
+            className="grid gap-px max-lg:grid-cols-3 max-sm:grid-cols-2 lg:grid-cols-5"
             style={{ background: 'var(--rule)' }}
           >
             {categories.map((cat, i) => (
