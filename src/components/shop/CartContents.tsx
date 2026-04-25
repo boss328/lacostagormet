@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Minus, Plus, X } from 'lucide-react';
 import {
   useCartStore,
@@ -173,9 +174,14 @@ function EmptyState() {
   );
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const STORAGE_KEY_EMAIL = 'lcg-recovery-email';
+const SAVE_DEBOUNCE_MS = 1_000;
+
 export function CartContents() {
   const [hydrated, setHydrated] = useState(false);
   const items = useCartStore((s) => s.items);
+  const addItem = useCartStore((s) => s.addItem);
   const subtotal = useCartStore(selectSubtotal);
   const shipping = useCartStore(selectShipping);
   const total = useCartStore(selectTotal);
@@ -183,9 +189,155 @@ export function CartContents() {
   const reorder = useCartStore((s) => s.reorder);
   const dismissUnavailable = useCartStore((s) => s.dismissUnavailableNotice);
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoveryStatus, setRecoveryStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'error' | 'unavailable'
+  >('idle');
+
   useEffect(() => {
     setHydrated(true);
+    if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem(STORAGE_KEY_EMAIL);
+      if (stored) setRecoveryEmail(stored);
+    }
   }, []);
+
+  // ---- Cart recovery from ?recover=<id> -------------------------------------
+  // Fired once on mount when the URL carries a recovery token. Pulls the
+  // saved cart from /api/cart/recover and adds any missing items into the
+  // local Zustand store. Existing items are kept (recovery is additive,
+  // not destructive), then the param is stripped so a refresh doesn't
+  // re-trigger.
+  const recoveryTriedRef = useRef(false);
+  useEffect(() => {
+    if (!hydrated || recoveryTriedRef.current) return;
+    const recoverId = searchParams.get('recover');
+    if (!recoverId) return;
+    recoveryTriedRef.current = true;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/cart/recover?id=${encodeURIComponent(recoverId)}`, {
+          cache: 'no-store',
+        });
+        const data = (await res.json()) as {
+          ok: boolean;
+          email?: string;
+          items?: Array<{
+            product_id: string;
+            sku: string | null;
+            name: string;
+            price: number;
+            quantity: number;
+          }>;
+          recovered?: boolean;
+          unsubscribed?: boolean;
+        };
+        if (data.ok && data.items) {
+          const known = new Set(items.map((i) => i.product_id));
+          for (const it of data.items) {
+            if (!known.has(it.product_id)) {
+              addItem(
+                {
+                  product_id: it.product_id,
+                  sku: it.sku ?? '',
+                  name: it.name,
+                  slug: '',
+                  brand_name: null,
+                  price: it.price,
+                  pack_size: null,
+                  image_url: null,
+                },
+                it.quantity,
+              );
+            }
+          }
+          if (data.email) {
+            setRecoveryEmail(data.email);
+            if (typeof window !== 'undefined') {
+              window.localStorage.setItem(STORAGE_KEY_EMAIL, data.email);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[cart] recovery failed', err);
+      } finally {
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('recover');
+        const qs = params.toString();
+        router.replace(qs ? `/cart?${qs}` : '/cart', { scroll: false });
+      }
+    })();
+    // We only want this effect to fire once after hydration.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
+
+  // ---- Debounced save into abandoned_carts ----------------------------------
+  // Only POST when the user has typed a valid email AND the cart has items.
+  // Debounce ensures one network call after the user pauses typing rather
+  // than one per keystroke. Server-side keying on email handles UPSERT.
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedSignatureRef = useRef<string>('');
+  useEffect(() => {
+    if (!hydrated) return;
+    if (recoveryStatus === 'unavailable') return;
+    const trimmed = recoveryEmail.trim().toLowerCase();
+    const validEmail = EMAIL_RE.test(trimmed);
+    if (!validEmail || items.length === 0) return;
+
+    const signature = `${trimmed}|${subtotal.toFixed(2)}|${items
+      .map((i) => `${i.product_id}:${i.quantity}`)
+      .join(',')}`;
+    if (signature === lastSavedSignatureRef.current) return;
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    setRecoveryStatus('saving');
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/cart/save', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            email: trimmed,
+            cart_contents: items.map((i) => ({
+              product_id: i.product_id,
+              sku: i.sku,
+              name: i.name,
+              price: i.price,
+              quantity: i.quantity,
+            })),
+            subtotal_cents: Math.round(subtotal * 100),
+          }),
+        });
+        if (res.status === 503) {
+          setRecoveryStatus('unavailable');
+          return;
+        }
+        const data = (await res.json()) as { ok: boolean };
+        if (data.ok) {
+          lastSavedSignatureRef.current = signature;
+          setRecoveryStatus('saved');
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem(STORAGE_KEY_EMAIL, trimmed);
+          }
+        } else {
+          setRecoveryStatus('error');
+        }
+      } catch (err) {
+        console.error('[cart] save failed', err);
+        setRecoveryStatus('error');
+      }
+    }, SAVE_DEBOUNCE_MS);
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+    // Subtotal + items + email are the inputs; recoveryStatus excluded so
+    // status changes don't re-arm the timer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, recoveryEmail, items, subtotal]);
 
   const qualifiesFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const tier1 = subtotal >= VOLUME_TIER_1_THRESHOLD;
@@ -353,6 +505,39 @@ export function CartContents() {
                 </div>
 
                 <div className="mt-6">
+                  <label
+                    htmlFor="cart-recovery-email"
+                    className="type-label-sm text-ink-muted block mb-2"
+                  >
+                    Email (so we can save your cart)
+                  </label>
+                  <input
+                    id="cart-recovery-email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={recoveryEmail}
+                    onChange={(e) => setRecoveryEmail(e.target.value)}
+                    className="w-full bg-paper font-display text-[15px] text-ink placeholder:text-ink-muted/60 focus:outline-none focus:border-brand-deep transition-colors duration-200"
+                    style={{
+                      border: '1px solid var(--rule-strong)',
+                      padding: '12px 14px',
+                    }}
+                  />
+                  {recoveryStatus === 'saved' && (
+                    <p className="type-data-mono text-gold mt-2">
+                      Saved · we&rsquo;ll email a reminder if you don&rsquo;t finish.
+                    </p>
+                  )}
+                  {recoveryStatus === 'error' && (
+                    <p className="type-data-mono text-accent mt-2">
+                      We couldn&rsquo;t save your cart — try again or just check out.
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-4">
                   <Link
                     href="/checkout"
                     className="btn btn-solid w-full justify-center"
