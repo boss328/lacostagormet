@@ -12,7 +12,7 @@ const NAV_LINKS: Array<{ href: string; label: string }> = [
   { href: '/shop/specialty-beverages', label: 'Specialty' },
   { href: '/shop/smoothies', label: 'Smoothies' },
   { href: '/shop/oatmeal', label: 'Oatmeal' },
-  { href: '/shop/protein-and-supplements', label: 'Protein' },
+  { href: '/shop/protein-and-energy', label: 'Protein' },
   { href: '/brand', label: 'Brands' },
   { href: '/for-business', label: 'For Business' },
 ];

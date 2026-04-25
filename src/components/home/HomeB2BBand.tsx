@@ -42,7 +42,7 @@ export function HomeB2BBand() {
               className="font-mono uppercase text-gold-bright"
               style={{ fontSize: '10px', letterSpacing: '0.30em' }}
             >
-              For Cafés, Offices &amp; Independent Business
+              For Baristas, Cafés &amp; Coffee Shops
             </span>
           </div>
 
@@ -65,10 +65,9 @@ export function HomeB2BBand() {
             className="font-display text-cream/80 mb-10 max-w-[520px]"
             style={{ fontSize: '17px', lineHeight: 1.65 }}
           >
-            We&apos;ve been stocking independent coffee shops, bagel counters, and office
-            kitchens for twenty-two years. Our customers reorder the same Big Train Vanilla
-            Chai case every six weeks like clockwork — because it works, and because they
-            know us by name.
+            Providing homes and businesses with Big Train chai, cocoa, frappé, and
+            specialty café products at volume pricing. Our customers reorder like
+            clockwork — because it works, and because they know us by name.
           </p>
 
           <Button variant="outline-gold" arrow href="/for-business">

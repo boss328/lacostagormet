@@ -25,6 +25,7 @@ export function HomeStory() {
 
       <div className="relative max-w-content mx-auto px-8 py-24 max-sm:px-5 max-sm:py-16 grid gap-16 items-center max-lg:gap-10 lg:grid-cols-[1fr_1.15fr]">
         {/* Left — photo */}
+        {/* TODO: replace with owner's actual building photo when received */}
         <div
           className="relative"
           style={{ aspectRatio: '3 / 4', border: '1px solid rgba(246, 238, 222, 0.24)' }}
@@ -114,6 +115,13 @@ export function HomeStory() {
             </div>
             <span className="type-label-sm text-gold-bright">Dispatch № MMXXVI</span>
           </div>
+
+          <p
+            className="font-mono uppercase text-gold-bright text-right mt-6"
+            style={{ fontSize: '11px', letterSpacing: '0.28em' }}
+          >
+            Best of Class · Five-Star Service
+          </p>
         </div>
       </div>
     </section>

@@ -27,8 +27,8 @@ const TIERS: Tier[] = [
     headline: 'Standard pricing',
     bullets: [
       'Catalog pricing, no minimum order',
-      'Free ground shipping on orders $70+',
-      'Ships from Carlsbad in 1–2 business days',
+      'Free ground shipping on orders over $70',
+      'Ships from Carlsbad in 3 to 5 days',
     ],
   },
   {

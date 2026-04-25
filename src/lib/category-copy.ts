@@ -10,7 +10,7 @@
  *   specialty-beverages        (merged cocoa + frappés + syrups-and-sauces)
  *   smoothies                  (was smoothie-bases)
  *   oatmeal                    (was oatmeal-and-grains)
- *   protein-and-supplements    (new)
+ *   protein-and-energy         (new — renamed from protein-and-supplements)
  */
 
 export const CATEGORY_COPY: Record<string, string> = {
@@ -22,8 +22,8 @@ export const CATEGORY_COPY: Record<string, string> = {
     'Fruit purees and smoothie bases from Dr. Smoothie and Sunny Sky.',
   'oatmeal':
     'Steel-cut oats and single-serve cups from Modern Oats and Mylk Labs.',
-  'protein-and-supplements':
-    'Protein powders and beverage supplements — new category, products landing soon.',
+  'protein-and-energy':
+    'Protein powders and energy drinks — new category, products landing soon.',
 };
 
 export function categoryCopy(slug: string): string {

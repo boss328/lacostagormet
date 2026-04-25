@@ -9,8 +9,9 @@
  * and redirects to /product/<slug> if a match exists.
  *
  * Missing brands (routed to /brand index):
- *   hollander, two-leaves-and-a-bud, numi, cappuccine, lotus, tiki-breeze
+ *   hollander, two-leaves-and-a-bud, numi, cappuccine, lotus
  * If these get re-added to the catalog, update the destinations here.
+ * (tiki-breeze + lotus-plant-energy land via 0009 brand stub migration.)
  */
 
 export const bcRedirects = [
@@ -31,6 +32,11 @@ export const bcRedirects = [
   { source: '/shop/frappes',             destination: '/shop/specialty-beverages',  permanent: true },
   { source: '/shop/syrups-and-sauces/',  destination: '/shop/specialty-beverages/', permanent: true },
   { source: '/shop/syrups-and-sauces',   destination: '/shop/specialty-beverages',  permanent: true },
+
+  // ───── Apr 2026 protein category rename ─────
+  // protein-and-supplements → protein-and-energy
+  { source: '/shop/protein-and-supplements/', destination: '/shop/protein-and-energy/', permanent: true },
+  { source: '/shop/protein-and-supplements',  destination: '/shop/protein-and-energy',  permanent: true },
 
   // ───── Top-level pages ─────
   { source: '/blog/', destination: '/', permanent: true },

@@ -6,7 +6,7 @@ export function TopRail() {
     >
       <div className="max-w-content mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-8 max-sm:grid-cols-[1fr_auto] max-sm:gap-4">
         <span className="type-label-sm text-paper/80 whitespace-nowrap">
-          Est. MMIII — Carlsbad, California
+          Purveyors of specialty café provisions · Carlsbad, California
         </span>
         <span className="type-label-sm text-paper/80 justify-self-center whitespace-nowrap max-sm:hidden flex items-center gap-3">
           Family Owned

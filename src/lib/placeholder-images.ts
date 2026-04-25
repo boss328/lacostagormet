@@ -11,7 +11,7 @@
  *   - For hero/story, swap the constants below
  *
  * April 2026: category restructure 6 → 5 —
- *   chai-tea, specialty-beverages, smoothies, oatmeal, protein-and-supplements.
+ *   chai-tea, specialty-beverages, smoothies, oatmeal, protein-and-energy.
  */
 
 type PlaceholderImage = { src: string; alt: string };
@@ -40,7 +40,7 @@ export const CATEGORY_IMAGES: Record<string, PlaceholderImage> = {
     src: UNSPLASH('1638813133218-4367bd8123f6'),
     alt: 'Bowl of oatmeal topped with fruit',
   },
-  'protein-and-supplements': {
+  'protein-and-energy': {
     // New category, no products yet. Picked from Unsplash's "protein-powder"
     // search — alt "a jar of protein powder next to a scoop of protein powder".
     src: UNSPLASH('1704650311190-7eeb9c4f6e11'),

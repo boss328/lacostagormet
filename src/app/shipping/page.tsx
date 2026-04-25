@@ -3,7 +3,7 @@ import { PageHeader } from '@/components/shop/PageHeader';
 export const metadata = {
   title: 'Shipping',
   description:
-    'La Costa Gourmet ships nationwide from Carlsbad, California. Free shipping on continental US orders over $70.',
+    'Five warehouses, coast to coast. Orders ship in 3 to 5 business days. Free shipping on continental US orders over $70.',
 };
 
 export default function ShippingPage() {
@@ -20,24 +20,43 @@ export default function ShippingPage() {
             How we <em className="type-accent">ship</em>.
           </>
         }
-        lede="Ships nationwide from Carlsbad, California. Orders typically ship within one business day. Free shipping on orders over $70 continental US."
+        lede="Five warehouses, coast to coast. Orders typically ship within 3 to 5 business days. Free shipping on orders over $70 continental US."
       />
 
       <section className="max-w-content mx-auto px-8 py-14 max-md:px-4 max-md:py-6">
         <div className="max-w-[720px] flex flex-col gap-5">
           <Row label="Free shipping threshold" value="$70 continental US" />
-          <Row label="Ship-out time" value="Typically one business day" />
-          <Row label="Ships from" value="Carlsbad, California" />
-          <Row label="Carriers" value="UPS Ground · USPS Priority · FedEx Home" />
+          <Row label="Ship-out time" value="3 to 5 business days" />
+          <Row
+            label="Ships from"
+            value={
+              <>
+                5 warehouses — coast to coast nationwide
+                <br />
+                <span className="text-ink-muted">West · Central · Northwest · South</span>
+              </>
+            }
+          />
+          <Row label="Carriers" value="USPS Priority · UPS Ground · FedEx Home" />
           <Row
             label="Questions"
             value={
-              <a
-                href="tel:+17609311028"
-                className="hover:text-brand-deep transition-colors"
-              >
-                (760) 931-1028 · Mon–Fri 9–5 PT
-              </a>
+              <>
+                <a
+                  href="tel:+17609311028"
+                  className="hover:text-brand-deep transition-colors"
+                >
+                  (760) 931-1028
+                </a>
+                {' · '}
+                <a
+                  href="tel:+18583541120"
+                  className="hover:text-brand-deep transition-colors"
+                >
+                  (858) 354-1120
+                </a>
+                {' · Mon–Fri 9–5 PT'}
+              </>
             }
           />
         </div>

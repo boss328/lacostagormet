@@ -12,21 +12,40 @@
 
 export const BRAND_TYPOLOGY: Record<string, string> = {
   'big-train':           'Frappé · Chai · Café',
-  'cafe-essentials':     'Café Bases',
-  'david-rio':           'Chai · Specialty Tea',
+  'cafe-essentials':     'Frappé · Chai · Cocoa',
+  'david-rio':           'Chai · Gourmet',
   'davinci-gourmet':     'Syrups · Sauces',
-  'dr-smoothie':         'Smoothie Bases',
-  'mocafe':              'Cocoa · Frappé',
+  'dr-smoothie':         'Chai · Refreshers',
+  'lotus-plant-energy':  'Energy · Protein',
+  'mocafe':              'Chai · Matcha',
   'modern-oats':         'Oatmeal',
   'monin':               'Syrups · Sauces',
   'mylk-labs':           'Oatmeal',
   'oregon-chai':         'Chai',
   'smartfruit':          'Smoothie Bases',
-  'sunny-sky-products':  'Smoothie · Fruit',
+  'sunny-sky-products':  'Syrups · Sauces',
+  'tiki-breeze':         'Specialty',
   'torani':              'Syrups · Sauces',
-  'upouria':             'Cocoa · Drink Mixes',
+  'upouria':             'Syrups · Sauces',
 };
 
 export function brandTypology(slug: string): string {
   return BRAND_TYPOLOGY[slug] ?? '';
+}
+
+/**
+ * Brands whose product catalog is empty by design — show "Coming soon"
+ * on /brand tiles instead of "0 items". Update when the owner ships
+ * real SKUs for any of these labels.
+ */
+export const BRAND_COMING_SOON: ReadonlySet<string> = new Set([
+  'modern-oats',
+  'smartfruit',
+  'torani',
+  'tiki-breeze',
+  'lotus-plant-energy',
+]);
+
+export function isBrandComingSoon(slug: string): boolean {
+  return BRAND_COMING_SOON.has(slug);
 }

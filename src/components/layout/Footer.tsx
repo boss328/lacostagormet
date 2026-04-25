@@ -62,7 +62,7 @@ export function Footer() {
               />
             </div>
             <p className="type-label-sm text-gold-bright mt-4">
-              Est. 2003 · Carlsbad, CA
+              Corporate HQ · Est. 2003
             </p>
             <address
               className="not-italic font-display text-[13px] leading-[1.6] text-paper/70 mt-5 italic"
@@ -72,6 +72,14 @@ export function Footer() {
               Carlsbad, CA 92009<br />
               <a href="tel:+17609311028" className="hover:text-gold-bright transition-colors duration-200">
                 (760) 931&ndash;1028
+              </a>
+              {' · '}
+              <a href="tel:+18583541120" className="hover:text-gold-bright transition-colors duration-200">
+                (858) 354&ndash;1120
+              </a>
+              <br />
+              <a href="mailto:customercare@lacostagourmet.com" className="hover:text-gold-bright transition-colors duration-200">
+                customercare@lacostagourmet.com
               </a>
             </address>
           </div>
@@ -146,8 +154,15 @@ export function Footer() {
           ))}
         </div>
 
+        {/* Trust-mark row */}
+        <div className="pt-5 max-md:pt-3 text-center">
+          <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-gold-bright">
+            All Manufacturing Products Made in the USA
+          </span>
+        </div>
+
         {/* Bottom row */}
-        <div className="flex items-center justify-between pt-5 max-md:pt-3 max-md:flex-col max-md:items-start max-md:gap-2">
+        <div className="flex items-center justify-between pt-3 max-md:pt-2 max-md:flex-col max-md:items-start max-md:gap-2">
           <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-paper/65">
             © MMXXVI La Costa Gourmet. Made with care in California.
           </span>
