@@ -100,6 +100,13 @@ export function HomeStory() {
             to know how it&rsquo;s done.
           </p>
 
+          <p
+            className="font-mono uppercase text-gold-bright text-right mb-6"
+            style={{ fontSize: '11px', letterSpacing: '0.28em' }}
+          >
+            Best of Class · Five-Star Service
+          </p>
+
           <div
             className="flex items-baseline justify-between gap-4 pt-6"
             style={{ borderTop: '1px solid rgba(246, 238, 222, 0.2)' }}
@@ -115,13 +122,6 @@ export function HomeStory() {
             </div>
             <span className="type-label-sm text-gold-bright">Dispatch № MMXXVI</span>
           </div>
-
-          <p
-            className="font-mono uppercase text-gold-bright text-right mt-6"
-            style={{ fontSize: '11px', letterSpacing: '0.28em' }}
-          >
-            Best of Class · Five-Star Service
-          </p>
         </div>
       </div>
     </section>

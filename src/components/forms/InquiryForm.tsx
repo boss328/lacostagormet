@@ -72,7 +72,7 @@ export function InquiryForm() {
       setState('sent');
     } catch (err) {
       console.error('[inquiry-form] submit failed', err);
-      setError('Network hiccup — try again or call us at (760) 931-1028.');
+      setError('Network hiccup — try again or call us at (858) 354-1120.');
       setState('error');
     }
   }

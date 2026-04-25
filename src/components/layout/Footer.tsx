@@ -70,10 +70,6 @@ export function Footer() {
             >
               6209 Paseo Privado<br />
               Carlsbad, CA 92009<br />
-              <a href="tel:+17609311028" className="hover:text-gold-bright transition-colors duration-200">
-                (760) 931&ndash;1028
-              </a>
-              {' · '}
               <a href="tel:+18583541120" className="hover:text-gold-bright transition-colors duration-200">
                 (858) 354&ndash;1120
               </a>

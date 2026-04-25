@@ -33,10 +33,10 @@ export default function ReturnsPage() {
           <p className="type-body">
             <strong className="text-ink">Phone: </strong>
             <a
-              href="tel:+17609311028"
+              href="tel:+18583541120"
               className="text-brand-deep hover:text-ink transition-colors"
             >
-              (760) 931-1028
+              (858) 354-1120
             </a>{' '}
             · Monday through Friday, 9–5 Pacific.
           </p>

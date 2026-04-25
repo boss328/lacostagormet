@@ -88,7 +88,7 @@ export function ReorderButton({ orderNumber, variant = 'outline', className = ''
     if (r.reorderable_items.length === 0) {
       // Nothing to add — leave the user on the page with a clear note.
       setError(
-        'None of these items are available to reorder. The catalog has moved on since this order — call (760) 931-1028 if you need help finding equivalents.',
+        'None of these items are available to reorder. The catalog has moved on since this order — call (858) 354-1120 if you need help finding equivalents.',
       );
       setState('idle');
       return;

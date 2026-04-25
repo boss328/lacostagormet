@@ -126,7 +126,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
               }}
             >
               We&rsquo;re bringing {brand.name} into the catalog. Check back
-              shortly, or call <a href="tel:+17609311028" className="text-brand-deep hover:text-ink transition-colors">(760) 931-1028</a> if
+              shortly, or call <a href="tel:+18583541120" className="text-brand-deep hover:text-ink transition-colors">(858) 354-1120</a> if
               you&rsquo;re after a specific line.
             </p>
           </div>

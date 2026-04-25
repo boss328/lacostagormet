@@ -374,11 +374,11 @@ export default function ForBusinessPage() {
               <p className="type-label text-accent mb-6 max-md:mb-3">§ Or call directly</p>
 
               <a
-                href="tel:+17609311028"
+                href="tel:+18583541120"
                 className="font-display italic text-brand-deep mb-4 hover:opacity-80 transition-opacity max-md:!text-[26px] max-md:mb-2"
                 style={{ fontSize: '34px', lineHeight: 1, letterSpacing: '-0.025em', fontWeight: 500 }}
               >
-                (760) 931-1028
+                (858) 354-1120
               </a>
 
               <p className="type-label-sm text-ink-muted mb-8 max-md:mb-5">

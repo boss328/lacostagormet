@@ -3,7 +3,7 @@ import { PageHeader } from '@/components/shop/PageHeader';
 export const metadata = {
   title: 'Contact',
   description:
-    'Reach La Costa Gourmet — Carlsbad, California. (760) 931-1028 · Monday through Friday, 9–5 Pacific.',
+    'Reach La Costa Gourmet — Carlsbad, California. (858) 354-1120 · Monday through Friday, 9–5 Pacific.',
 };
 
 export default function ContactPage() {
@@ -31,11 +31,11 @@ export default function ContactPage() {
           >
             <p className="type-label text-accent mb-5">§ By phone</p>
             <a
-              href="tel:+17609311028"
+              href="tel:+18583541120"
               className="font-display italic text-brand-deep hover:opacity-80 transition-opacity block mb-3"
               style={{ fontSize: '30px', lineHeight: 1, letterSpacing: '-0.025em', fontWeight: 500 }}
             >
-              (760) 931-1028
+              (858) 354-1120
             </a>
             <p className="type-data-mono text-ink-muted">
               Monday through Friday · 9–5 Pacific

@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
           {
             success: false,
             errorMessage:
-              'Too many submissions from this address. Try again in an hour, or call (760) 931-1028.',
+              'Too many submissions from this address. Try again in an hour, or call (858) 354-1120.',
           },
           { status: 429 },
         );

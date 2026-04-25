@@ -41,22 +41,12 @@ export default function ShippingPage() {
           <Row
             label="Questions"
             value={
-              <>
-                <a
-                  href="tel:+17609311028"
-                  className="hover:text-brand-deep transition-colors"
-                >
-                  (760) 931-1028
-                </a>
-                {' · '}
-                <a
-                  href="tel:+18583541120"
-                  className="hover:text-brand-deep transition-colors"
-                >
-                  (858) 354-1120
-                </a>
-                {' · Mon–Fri 9–5 PT'}
-              </>
+              <a
+                href="tel:+18583541120"
+                className="hover:text-brand-deep transition-colors"
+              >
+                (858) 354-1120 · Mon–Fri 9–5 PT
+              </a>
             }
           />
         </div>
