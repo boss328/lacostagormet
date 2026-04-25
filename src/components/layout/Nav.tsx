@@ -69,19 +69,39 @@ export function Nav() {
 
           {/* Utility column */}
           <div className="flex items-center gap-6 max-sm:gap-4">
-            <button
-              type="button"
-              aria-label="Search"
-              className="text-ink hover:text-brand-deep transition-colors duration-300 max-lg:hidden"
+            <Link
+              href="/search"
+              aria-label="Search products"
+              className="text-ink hover:text-brand-deep transition-colors duration-300 max-lg:hidden inline-flex items-center justify-center"
+              style={{ minWidth: 44, minHeight: 44 }}
             >
               <Search size={18} strokeWidth={1.5} />
-            </button>
+            </Link>
+            <Link
+              href="/search"
+              aria-label="Search products"
+              className="text-ink hover:text-brand-deep transition-colors duration-300 lg:hidden inline-flex items-center justify-center"
+              style={{ minWidth: 44, minHeight: 44 }}
+            >
+              <Search size={22} strokeWidth={1.5} />
+            </Link>
             <Link
               href="/account"
               aria-label="Your account"
-              className="text-ink hover:text-brand-deep transition-colors duration-300 max-lg:hidden"
+              className="text-ink hover:text-brand-deep transition-colors duration-300 max-lg:hidden inline-flex items-center gap-2"
             >
               <User size={18} strokeWidth={1.5} />
+              <span className="font-mono uppercase" style={{ fontSize: '10px', letterSpacing: '0.22em' }}>
+                Account
+              </span>
+            </Link>
+            <Link
+              href="/account"
+              aria-label="Your account"
+              className="text-ink hover:text-brand-deep transition-colors duration-300 lg:hidden inline-flex items-center justify-center"
+              style={{ minWidth: 44, minHeight: 44 }}
+            >
+              <User size={22} strokeWidth={1.5} />
             </Link>
             <CartBadge />
             <button
@@ -90,9 +110,10 @@ export function Nav() {
               aria-expanded={isOpen}
               aria-controls="mobile-nav"
               onClick={() => setIsOpen((v) => !v)}
-              className="lg:hidden text-ink hover:text-brand-deep transition-colors"
+              className="lg:hidden text-ink hover:text-brand-deep transition-colors inline-flex items-center justify-center"
+              style={{ minWidth: 44, minHeight: 44 }}
             >
-              {isOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
+              {isOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
           </button>
         </div>
       </div>

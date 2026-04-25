@@ -41,26 +41,19 @@ export function Footer() {
         >
           {/* Brand block */}
           <div>
-            {/* New brand logo (purple + teal wordmark, Apr 2026). Wrapped
-                in a cream plaque so the coloured wordmark keeps its
-                intended hues on the dark ink footer — previous invert()
-                filter would have destroyed the colours. */}
-            <div
-              className="inline-block"
-              style={{
-                background: 'var(--color-cream)',
-                padding: '14px 18px',
-                border: '1px solid rgba(246, 238, 222, 0.24)',
-              }}
-            >
-              <Image
-                src={logo}
-                alt="La Costa Gourmet"
-                sizes="220px"
-                placeholder="blur"
-                className="w-[200px] h-auto block"
-              />
-            </div>
+            {/* New brand logo (purple + teal wordmark, Apr 2026). On the
+                dark ink footer we render it monochrome white via CSS
+                filter so it reads as a brand mark, not a placeholder
+                tile. The coloured PNG ships unchanged in /public — the
+                filter is footer-only. */}
+            <Image
+              src={logo}
+              alt="La Costa Gourmet"
+              sizes="220px"
+              placeholder="blur"
+              className="w-[200px] h-auto block"
+              style={{ filter: 'brightness(0) invert(1)' }}
+            />
             <p className="type-label-sm text-gold-bright mt-4">
               Corporate HQ · Est. 2003
             </p>
