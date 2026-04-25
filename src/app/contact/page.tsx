@@ -20,7 +20,7 @@ export default function ContactPage() {
             Get in <em className="type-accent">touch</em>.
           </>
         }
-        lede="Jeff answers the phone. Call, email, or stop by the warehouse — we're happy to talk shop."
+        lede="Email or call — we're here Monday through Friday, 9 AM to 5 PM Pacific."
       />
 
       <section className="max-w-content mx-auto px-8 py-14 max-md:px-4 max-md:py-6">
@@ -48,11 +48,11 @@ export default function ContactPage() {
           >
             <p className="type-label text-accent mb-5">§ By email</p>
             <a
-              href="mailto:info@lacostagourmet.com"
+              href="mailto:customercare@lacostagourmet.com"
               className="font-display italic text-brand-deep hover:opacity-80 transition-opacity block mb-3"
               style={{ fontSize: '22px', lineHeight: 1, letterSpacing: '-0.02em', fontWeight: 500 }}
             >
-              info@lacostagourmet.com
+              customercare@lacostagourmet.com
             </a>
             <p className="type-data-mono text-ink-muted">
               Replies within a business day.
@@ -63,7 +63,7 @@ export default function ContactPage() {
             className="not-italic lg:col-span-2"
             style={{ border: '1px solid var(--rule)', padding: '24px 28px', background: 'var(--color-paper-2)' }}
           >
-            <p className="type-label text-ink-muted mb-4">§ The warehouse</p>
+            <p className="type-label text-ink-muted mb-4">§ Corporate HQ</p>
             <p className="font-display italic text-brand-deep" style={{ fontSize: '20px', lineHeight: 1.3, fontWeight: 500 }}>
               6209 Paseo Privado
             </p>
@@ -71,7 +71,7 @@ export default function ContactPage() {
               Carlsbad, California 92009
             </p>
             <p className="type-data-mono text-ink-muted mt-3">
-              Est. MMIII · 22 years of shipping from the same warm corner.
+              Est. MMIII · Mailing address only — orders ship from regional warehouses.
             </p>
           </address>
         </div>

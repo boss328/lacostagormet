@@ -389,7 +389,7 @@ export default function ForBusinessPage() {
                 className="pt-6 mt-auto flex flex-col gap-5"
                 style={{ borderTop: '1px solid var(--rule)' }}
               >
-                <ContactLine label="Email" value="info@lacostagourmet.com" href="mailto:info@lacostagourmet.com" />
+                <ContactLine label="Email" value="customercare@lacostagourmet.com" href="mailto:customercare@lacostagourmet.com" />
                 <ContactLine label="Warehouse" value="6209 Paseo Privado, Carlsbad, CA 92009" />
                 <ContactLine label="Established" value="Anno 2003" />
               </div>

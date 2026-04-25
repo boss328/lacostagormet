@@ -487,10 +487,10 @@ export function CartContents() {
                   >
                     Contact us for custom pricing on orders over $400 —{' '}
                     <a
-                      href="mailto:info@lacostagourmet.com"
+                      href="mailto:customercare@lacostagourmet.com"
                       className="underline underline-offset-[3px] hover:text-ink transition-colors duration-200"
                     >
-                      info@lacostagourmet.com
+                      customercare@lacostagourmet.com
                     </a>
                     .
                   </p>
@@ -547,6 +547,10 @@ export function CartContents() {
                     <span className="btn-arrow" aria-hidden="true">→</span>
                   </Link>
                 </div>
+
+                <p className="type-data-mono text-ink-muted text-center mt-4">
+                  We accept Visa, Mastercard, American Express, and Discover.
+                </p>
               </div>
             </aside>
           </div>

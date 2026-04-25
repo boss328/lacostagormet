@@ -19,7 +19,13 @@ const SERVICE_LINKS = [
   { href: '/returns', label: 'Returns' },
 ];
 
-const TRUST_BADGES = ['Trustwave Secured', 'Authorize.Net Verified', 'HTTPS 256-bit', 'PCI Compliant'];
+const TRUST_BADGES = [
+  'Trustwave Secured',
+  'Authorize.Net Verified',
+  'HTTPS 256-bit',
+  'PCI Compliant',
+  'All Major Credit Cards Accepted',
+];
 
 export function Footer() {
   return (

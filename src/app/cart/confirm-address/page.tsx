@@ -259,6 +259,9 @@ export default function ConfirmAddressPage() {
               Fill in name, address, city, ZIP, and phone to continue.
             </p>
           )}
+          <p className="type-data-mono text-ink-muted text-center">
+            Visa · Mastercard · American Express · Discover · All major cards accepted
+          </p>
         </aside>
       </form>
     </section>
