@@ -61,7 +61,7 @@ export function HomeHero() {
             their customers since 2003. Big Train. Mocafe. David Rio. Torani.
             Monin. The brands you&rsquo;ve ordered at your favorite café — now
             available for your home, your office, or your next event.
-            One-business-day shipping from our warehouses across the US.
+            Shipping in 3 to 5 business days from our warehouses across the US.
           </p>
 
           <div className="stagger-4 flex flex-wrap items-center gap-3.5">

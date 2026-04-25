@@ -60,7 +60,7 @@ const GENERIC_DECLINE =
 const GENERIC_ERROR =
   'Something went wrong processing your payment. Your card was not charged. Please try again.';
 const HELD_MESSAGE =
-  'Your order has been received. We are doing a quick review of your payment — you will hear from us within one business day.';
+  'Your order has been received. We are doing a quick review of your payment — you will hear from us within a business day.';
 
 function toAuthnetAddress(a: Address): InstanceType<typeof APIContracts.CustomerAddressType> {
   const addr = new APIContracts.CustomerAddressType();

@@ -55,7 +55,7 @@ export default function ContactPage() {
               info@lacostagourmet.com
             </a>
             <p className="type-data-mono text-ink-muted">
-              Replies within one business day.
+              Replies within a business day.
             </p>
           </div>
 

@@ -76,7 +76,7 @@ export function ProductAddPanel({ item }: ProductAddPanelProps) {
       </button>
 
       <p className="type-data-mono text-ink-muted">
-        Ships in 1–2 business days from Carlsbad
+        Ships in 3 to 5 business days from Carlsbad
       </p>
     </div>
   );

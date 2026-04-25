@@ -168,7 +168,7 @@ export default async function OrderConfirmationPage({ params }: { params: Params
             }}
           >
             {held
-              ? "We've received your order and are doing a quick review of the payment — you'll hear from us within one business day."
+              ? "We've received your order and are doing a quick review of the payment — you'll hear from us within a business day."
               : 'Your order is in. We\u2019ll be in touch with tracking as soon as it leaves Carlsbad.'}
           </p>
 

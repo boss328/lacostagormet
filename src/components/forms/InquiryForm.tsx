@@ -103,7 +103,7 @@ export function InquiryForm() {
             lineHeight: 1.6,
           }}
         >
-          Jeff will reply within one business day. If you need an answer sooner,
+          Jeff will reply within a business day. If you need an answer sooner,
           the line is open Monday thru Friday, 9–5 Pacific.
         </p>
       </div>
