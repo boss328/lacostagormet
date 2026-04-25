@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import logo from '../../../public/brand/logo.png';
+import logo from '../../../public/logo.png';
 
 const SHOP_LINKS = [
   { href: '/shop', label: 'All Products' },
@@ -41,18 +41,17 @@ export function Footer() {
         >
           {/* Brand block */}
           <div>
-            {/* New brand logo (purple + teal wordmark, Apr 2026). On the
-                dark ink footer we render it monochrome white via CSS
-                filter so it reads as a brand mark, not a placeholder
-                tile. The coloured PNG ships unchanged in /public — the
-                filter is footer-only. */}
+            {/* Apr 2026: render the canonical La Costa Gourmet logo
+                (purple GOURMET + teal LA COSTA + sprout) directly on
+                the dark ink footer. The wordmark colours hold up
+                against the brown background; previous filter is
+                gone. Same file the Nav uses. */}
             <Image
               src={logo}
               alt="La Costa Gourmet"
               sizes="220px"
               placeholder="blur"
               className="w-[200px] h-auto block"
-              style={{ filter: 'brightness(0) invert(1)' }}
             />
             <p className="type-label-sm text-gold-bright mt-4">
               Corporate HQ · Est. 2003

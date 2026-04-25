@@ -11,7 +11,7 @@
  * Missing brands (routed to /brand index):
  *   hollander, two-leaves-and-a-bud, numi, cappuccine, lotus
  * If these get re-added to the catalog, update the destinations here.
- * (tiki-breeze + lotus-plant-energy land via 0009 brand stub migration.)
+ * (tiki-breeze + lotus-plant-power land via 0009/0010 brand migrations.)
  */
 
 export const bcRedirects = [
@@ -37,6 +37,10 @@ export const bcRedirects = [
   // protein-and-supplements → protein-and-energy
   { source: '/shop/protein-and-supplements/', destination: '/shop/protein-and-energy/', permanent: true },
   { source: '/shop/protein-and-supplements',  destination: '/shop/protein-and-energy',  permanent: true },
+
+  // ───── Apr 2026 brand rename: Lotus Plant Energy → Lotus Plant Power ─────
+  { source: '/brand/lotus-plant-energy/', destination: '/brand/lotus-plant-power/', permanent: true },
+  { source: '/brand/lotus-plant-energy',  destination: '/brand/lotus-plant-power',  permanent: true },
 
   // ───── Top-level pages ─────
   { source: '/blog/', destination: '/', permanent: true },

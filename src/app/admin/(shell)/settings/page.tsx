@@ -53,7 +53,7 @@ export default async function SettingsPage() {
           replyTo: stripQuotes(map['vendor_po.default_reply_to'] ?? '') || (process.env.REPLY_TO_EMAIL ?? ''),
           signature:
             stripQuotes(map['vendor_po.signature'] ?? '') ||
-            'Thanks,\nLa Costa Gourmet\n(760) 931-1028',
+            'Thanks,\nLa Costa Gourmet\n(858) 354-1120',
           attachCsv: parseBool(map['vendor_po.attach_csv'] ?? 'false'),
         }}
       />

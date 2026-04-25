@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { AddressPayload } from '@/lib/checkout/validate';
+import { calculateShipping, SHIPPING_TIERS } from '@/lib/checkout/shipping';
 
 export type CartItem = {
   product_id: string;
@@ -165,9 +166,17 @@ export const selectSubtotal = (s: CartState): number =>
 export const selectItemCount = (s: CartState): number =>
   s.items.reduce((sum, i) => sum + i.quantity, 0);
 
-export const FREE_SHIPPING_THRESHOLD = 70;
+export const FREE_SHIPPING_THRESHOLD = SHIPPING_TIERS.freeThreshold;
 export const VOLUME_TIER_1_THRESHOLD = 400;
 export const VOLUME_TIER_2_THRESHOLD = 700;
+
+export const selectShipping = (s: CartState): number => {
+  if (s.items.length === 0) return 0;
+  return calculateShipping(selectSubtotal(s));
+};
+
+export const selectTotal = (s: CartState): number =>
+  selectSubtotal(s) + selectShipping(s);
 
 export const selectQualifiesForFreeShipping = (s: CartState): boolean =>
   selectSubtotal(s) >= FREE_SHIPPING_THRESHOLD;

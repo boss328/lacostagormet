@@ -1,10 +1,18 @@
 import 'server-only';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { calculateShipping, SHIPPING_TIERS } from '@/lib/checkout/shipping';
 
 /**
- * Canonical money math for checkout. Shipping rules are driven by
- * settings rows (shipping.free_threshold, shipping.flat_rate_under_threshold,
- * shipping.hi_ak_surcharge) so Jeff can tune them without a deploy.
+ * Canonical money math for checkout. Shipping rules use the 3-tier
+ * structure in @/lib/checkout/shipping (Apr 2026 owner spec):
+ *   $0–29.99   → $9.95
+ *   $30–69.99  → $12.95
+ *   $70+       → free (continental US)
+ *
+ * The shipping.* settings keys remain in the DB for the legacy
+ * surcharge logic (HI/AK) and so admin UI can keep reading them, but
+ * the tier table itself is hardcoded — owner committed to fixed
+ * dollar amounts at the walkthrough.
  *
  * V1: zero tax. subtotal + shipping = total.
  */
@@ -22,8 +30,8 @@ const SETTING_KEYS = [
 ] as const;
 
 const DEFAULT_SHIPPING: ShippingSettings = {
-  freeThreshold: 70,
-  flatRate: 12.99,
+  freeThreshold: SHIPPING_TIERS.freeThreshold,
+  flatRate: SHIPPING_TIERS.midRate,
   hiAkSurcharge: 25,
 };
 
@@ -62,9 +70,14 @@ export function computeShipping(
   settings: ShippingSettings = DEFAULT_SHIPPING,
 ): number {
   const s = state.trim().toUpperCase();
-  if (s === 'HI' || s === 'AK') return round2(settings.flatRate + settings.hiAkSurcharge);
-  if (subtotal >= settings.freeThreshold) return 0;
-  return round2(settings.flatRate);
+  const base = calculateShipping(subtotal);
+  // HI/AK surcharge is added on top of whatever the tier rate is, so
+  // those orders still pay something even when subtotal qualifies for
+  // continental-US free shipping. The owner spec says HI/AK is "contact
+  // for quote", but until that's wired we keep the surcharge so we
+  // don't accidentally undercharge a Hawaiian order.
+  if (s === 'HI' || s === 'AK') return round2(base + settings.hiAkSurcharge);
+  return base;
 }
 
 export function round2(n: number): number {

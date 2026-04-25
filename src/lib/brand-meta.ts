@@ -11,20 +11,20 @@
  */
 
 export const BRAND_TYPOLOGY: Record<string, string> = {
-  'big-train':           'Frappé · Chai · Café',
+  'big-train':           'Frappé · Chai',
   'cafe-essentials':     'Frappé · Chai · Cocoa',
-  'david-rio':           'Chai · Gourmet',
+  'david-rio':           'Gourmet Chai',
   'davinci-gourmet':     'Syrups · Sauces',
   'dr-smoothie':         'Chai · Refreshers',
-  'lotus-plant-energy':  'Energy · Protein',
-  'mocafe':              'Chai · Matcha',
+  'lotus-plant-power':   'Energy · Plant-Based',
+  'mocafe':              'Chai · Matcha · Cocoa',
   'modern-oats':         'Oatmeal',
   'monin':               'Syrups · Sauces',
   'mylk-labs':           'Oatmeal',
   'oregon-chai':         'Chai',
-  'smartfruit':          'Smoothie Bases',
+  'smartfruit':          'Purees · Refreshers',
   'sunny-sky-products':  'Syrups · Sauces',
-  'tiki-breeze':         'Specialty',
+  'tiki-breeze':         'Energy · Syrups · Smoothies',
   'torani':              'Syrups · Sauces',
   'upouria':             'Syrups · Sauces',
 };
@@ -43,7 +43,7 @@ export const BRAND_COMING_SOON: ReadonlySet<string> = new Set([
   'smartfruit',
   'torani',
   'tiki-breeze',
-  'lotus-plant-energy',
+  'lotus-plant-power',
 ]);
 
 export function isBrandComingSoon(slug: string): boolean {

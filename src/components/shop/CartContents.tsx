@@ -7,6 +7,8 @@ import { Minus, Plus, X } from 'lucide-react';
 import {
   useCartStore,
   selectSubtotal,
+  selectShipping,
+  selectTotal,
   selectItemCount,
   FREE_SHIPPING_THRESHOLD,
   VOLUME_TIER_1_THRESHOLD,
@@ -18,8 +20,6 @@ import { Button } from '@/components/design-system/Button';
 
 const CREAM_BG =
   'radial-gradient(ellipse at center, var(--color-cream) 0%, var(--color-paper-2) 115%)';
-
-const SHIPPING_STANDARD = 12.99;
 
 function splitPrice(n: number): { dollars: string; cents: string } {
   const [d, c = '00'] = n.toFixed(2).split('.');
@@ -177,6 +177,8 @@ export function CartContents() {
   const [hydrated, setHydrated] = useState(false);
   const items = useCartStore((s) => s.items);
   const subtotal = useCartStore(selectSubtotal);
+  const shipping = useCartStore(selectShipping);
+  const total = useCartStore(selectTotal);
   const itemCount = useCartStore(selectItemCount);
   const reorder = useCartStore((s) => s.reorder);
   const dismissUnavailable = useCartStore((s) => s.dismissUnavailableNotice);
@@ -188,8 +190,6 @@ export function CartContents() {
   const qualifiesFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const tier1 = subtotal >= VOLUME_TIER_1_THRESHOLD;
   const tier2 = subtotal >= VOLUME_TIER_2_THRESHOLD;
-  const shipping = qualifiesFreeShipping || items.length === 0 ? 0 : SHIPPING_STANDARD;
-  const total = subtotal + shipping;
 
   return (
     <>
@@ -287,13 +287,13 @@ export function CartContents() {
                           FREE
                         </span>
                       ) : (
-                        <Price amount={SHIPPING_STANDARD} size={16} />
+                        <Price amount={shipping} size={16} />
                       )
                     }
                     note={
                       qualifiesFreeShipping
-                        ? 'Orders over $70 · continental US'
-                        : `Add ${(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2)} for free ground`
+                        ? 'Continental US, orders $70+'
+                        : `Add $${(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2)} more for free shipping`
                     }
                   />
                 </dl>

@@ -127,7 +127,7 @@ export function composeDraftEmail(input: DraftEmailInput): { subject: string; bo
   lines.push('');
   lines.push('Thanks,');
   lines.push('La Costa Gourmet');
-  lines.push('(760) 931-1028');
+  lines.push('(858) 354-1120');
 
   return { subject, body: lines.join('\n') };
 }
