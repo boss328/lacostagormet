@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ReorderButton } from '@/components/orders/ReorderButton';
 
 type Props = {
   orderNumber: string;
@@ -82,6 +83,11 @@ export function AdminOrderStatusButtons({ orderNumber, status, fulfillmentStatus
           <span>Refund</span>
           <span className="btn-arrow" aria-hidden="true">→</span>
         </button>
+        {/* Staff-assisted reorder — copies the items + shipping address
+            into the admin user's own session cart, redirects to
+            /cart/confirm-address. Customer doesn't see this; the rep
+            walks the order through checkout themselves. */}
+        <ReorderButton orderNumber={orderNumber} variant="outline" />
       </div>
 
       {showShipForm && (

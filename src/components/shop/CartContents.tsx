@@ -178,6 +178,8 @@ export function CartContents() {
   const items = useCartStore((s) => s.items);
   const subtotal = useCartStore(selectSubtotal);
   const itemCount = useCartStore(selectItemCount);
+  const reorder = useCartStore((s) => s.reorder);
+  const dismissUnavailable = useCartStore((s) => s.dismissUnavailableNotice);
 
   useEffect(() => {
     setHydrated(true);
@@ -218,6 +220,27 @@ export function CartContents() {
       </header>
 
       <section className="max-w-content mx-auto px-8 py-16 max-sm:px-5 max-sm:py-10">
+        {hydrated && reorder.unavailableNotice && reorder.unavailableNotice.length > 0 && (
+          <div
+            role="status"
+            className="bg-paper-2 mb-8 flex items-start justify-between gap-4 max-md:flex-col"
+            style={{ border: '1px solid var(--rule)', padding: '14px 18px' }}
+          >
+            <p className="type-data-mono text-ink-2">
+              <span className="text-accent">Some items from your previous order couldn&rsquo;t be added</span>{' '}
+              — they&rsquo;re no longer available:{' '}
+              <span className="text-ink">{reorder.unavailableNotice.join(' · ')}</span>.{' '}
+              Your other items are below.
+            </p>
+            <button
+              type="button"
+              onClick={dismissUnavailable}
+              className="type-label-sm text-ink-muted hover:text-accent shrink-0"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
         {!hydrated ? (
           <p className="type-label text-ink-muted">Loading cart…</p>
         ) : items.length === 0 ? (

@@ -101,6 +101,7 @@ export function CheckoutForm() {
   const items = useCartStore((s) => s.items);
   const subtotal = useCartStore(selectSubtotal);
   const itemCount = useCartStore(selectItemCount);
+  const consumePrefillAddress = useCartStore((s) => s.consumePrefillAddress);
 
   const [hydrated, setHydrated] = useState(false);
   const [email, setEmail] = useState('');
@@ -116,6 +117,13 @@ export function CheckoutForm() {
 
   useEffect(() => {
     setHydrated(true);
+    // Pull a one-shot prefill address from the cart store (set by the
+    // /cart/confirm-address page after a Reorder click). consume() also
+    // clears it so a back-button into checkout doesn't keep overwriting
+    // user edits.
+    const prefill = consumePrefillAddress();
+    if (prefill) setAddress(prefill);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const shipping = useMemo(

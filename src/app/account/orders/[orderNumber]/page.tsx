@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSessionUser } from '@/lib/supabase/auth-helpers';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { ReorderButton } from '@/components/orders/ReorderButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,18 +73,23 @@ export default async function AccountOrderDetailPage({
     <>
       <header className="mb-10">
         <p className="type-label text-accent mb-5">§ Order detail</p>
-        <h1 className="type-display-2">
-          <em className="type-accent">{o.order_number}</em>
-        </h1>
-        <p className="type-data-mono text-ink-muted mt-4">
-          {new Date(o.created_at).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}
-          {' · '}
-          {o.status.replace(/_/g, ' ')}
-        </p>
+        <div className="flex items-baseline justify-between gap-6 flex-wrap">
+          <div className="min-w-0">
+            <h1 className="type-display-2">
+              <em className="type-accent">{o.order_number}</em>
+            </h1>
+            <p className="type-data-mono text-ink-muted mt-4">
+              {new Date(o.created_at).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+              {' · '}
+              {o.status.replace(/_/g, ' ')}
+            </p>
+          </div>
+          <ReorderButton orderNumber={o.order_number} variant="solid" />
+        </div>
       </header>
 
       <div className="grid gap-10 max-lg:gap-8 lg:grid-cols-[1.5fr_0.8fr]">
