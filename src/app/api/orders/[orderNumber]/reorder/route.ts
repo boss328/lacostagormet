@@ -2,10 +2,7 @@ import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getSessionUser } from '@/lib/supabase/auth-helpers';
-import {
-  ADMIN_COOKIE,
-  computeAdminCookieToken,
-} from '@/lib/admin/auth-cookie';
+import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
 import { bcImage } from '@/lib/bcImage';
 
 export const runtime = 'nodejs';
@@ -81,11 +78,10 @@ function pickPrimaryUrl(images: ProductImage[] | null): string | null {
 }
 
 async function isAdminCookie(req: NextRequest): Promise<boolean> {
-  const expected = process.env.ADMIN_PASSWORD;
   const cookie = req.cookies.get(ADMIN_COOKIE)?.value;
-  if (!expected || !cookie) return false;
-  const expectedHash = await computeAdminCookieToken(expected);
-  return cookie === expectedHash || cookie === expected;
+  if (!cookie) return false;
+  const expected = await expectedSessionToken();
+  return Boolean(expected) && cookie === expected;
 }
 
 export async function POST(

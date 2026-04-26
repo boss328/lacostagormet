@@ -1,84 +1,62 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-// RESTORE-START — uncomment when re-enabling the admin gate below
-// import { ADMIN_COOKIE, computeAdminCookieToken } from '@/lib/admin/auth-cookie';
-// RESTORE-END
+import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
 
 /**
  * Route guards:
- *   /account/* — requires a Supabase auth session (magic-link customer login)
- *   /admin/*   — requires an admin password cookie (Phase 6 gate, Phase 7
- *                replaces this with a real admin role)
+ *   /admin/*    — single shared password (ADMIN_PASSWORD env var)
+ *                 gates the entire admin surface. Login flow at
+ *                 /admin/login/ + /api/admin/login/ + /api/admin/logout/
+ *                 is whitelisted so users can sign in without
+ *                 authentication.
+ *   /account/*  — Supabase auth session for customer accounts.
  *
- * The admin-login page + the /api/admin/login route are publicly reachable
- * so the gate itself isn't locked behind the gate.
+ * The admin cookie value is HMAC-SHA256(ADMIN_PASSWORD, ADMIN_SESSION_SECRET)
+ * — never the plaintext password. See src/lib/admin/session.ts for why.
  *
- * EVERY URL we redirect to is written WITH a trailing slash to match
- * `trailingSlash: true` in next.config.mjs. Each 308 dance in the admin
- * login flow was a chance for cookies / POST bodies to drop on Vercel's
- * edge, which produced the previous redirect loop.
- *
- * Cookie comparison accepts both the new sha256 hash AND the legacy
- * plain-password value — back-compat for sessions established before the
- * hash rollout. See src/lib/admin/auth-cookie.ts for why we hash.
+ * trailingSlash:true is set in next.config, so every redirect target
+ * is written WITH a trailing slash here — Next would otherwise issue a
+ * 308 to add it, and POST→308→re-POST chains were the source of the
+ * previous Vercel cookie-drop bug.
  */
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // ╔══════════════════════════════════════════════════════════════════╗
-  // ║ TEMP STAGING SHORTCUT — RESTORE BEFORE PROD LAUNCH               ║
-  // ║                                                                  ║
-  // ║ The admin gate is commented out so Jeff can demo without a       ║
-  // ║ working cookie round-trip on Vercel. Anyone with the /admin URL  ║
-  // ║ can reach the dashboard, including unauthenticated visitors.     ║
-  // ║                                                                  ║
-  // ║ TO RESTORE: uncomment the block below. Do NOT delete this        ║
-  // ║ marker — the restore PR should remove the entire frame.          ║
-  // ║                                                                  ║
-  // ║ Disabled: 2026-04-19 (commit body explains the cookie issue)     ║
-  // ╚══════════════════════════════════════════════════════════════════╝
-  /* RESTORE-START
+  // ── Admin gate ────────────────────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
-    // Whitelist the login surfaces — both slashed and non-slashed forms,
-    // because middleware runs before Next normalises the trailing slash.
+    // Whitelist the login surfaces — both slashed and non-slashed forms
+    // because Next's trailingSlash normaliser runs after middleware.
     if (
       pathname === '/admin/login' ||
       pathname === '/admin/login/' ||
-      pathname.startsWith('/api/admin/login')
+      pathname.startsWith('/api/admin/login') ||
+      pathname.startsWith('/api/admin/logout')
     ) {
       return NextResponse.next();
     }
 
-    const expected = process.env.ADMIN_PASSWORD;
-    const cookie = req.cookies.get(ADMIN_COOKIE)?.value;
-    let ok = false;
-    if (expected && cookie) {
-      // Modern path: hashed token. Plaintext fallback covers any session
-      // issued before the hash deploy.
-      const expectedToken = await computeAdminCookieToken(expected);
-      ok = cookie === expectedToken || cookie === expected;
+    const expected = await expectedSessionToken();
+    if (!expected) {
+      // Server is missing ADMIN_PASSWORD — surface a config error
+      // rather than a redirect loop or a wide-open admin.
+      const url = req.nextUrl.clone();
+      url.pathname = '/admin/login/';
+      url.search = '?error=config';
+      return NextResponse.redirect(url);
     }
 
-    if (!ok) {
-      // Visible in Vercel logs — `vercel logs <deployment>` will show the
-      // exact decision per request. Cheap to emit, invaluable for the
-      // next time someone has to debug this gate.
-      console.log(
-        '[admin-gate] deny path=%s cookiePresent=%s expectedSet=%s',
-        pathname,
-        Boolean(cookie),
-        Boolean(expected),
-      );
+    const cookie = req.cookies.get(ADMIN_COOKIE)?.value;
+    if (cookie !== expected) {
       const url = req.nextUrl.clone();
-      // Redirect with trailing slash directly — skips a 308 hop.
       url.pathname = '/admin/login/';
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }
+
     return NextResponse.next();
   }
-  RESTORE-END */
 
+  // ── Customer account gate ────────────────────────────────────────────
   if (pathname.startsWith('/account')) {
     const res = NextResponse.next();
     const supabase = createServerClient(

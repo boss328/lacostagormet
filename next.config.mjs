@@ -27,6 +27,9 @@ const nextConfig = {
       // Real product images migrated from BigCommerce v3 export.
       // URL shape: /s-u3ny6186xw/products/<PID>/images/<IID>/<file>.<TS>.<W>.<H>.<ext>
       { protocol: 'https', hostname: 'cdn11.bigcommerce.com', pathname: '/s-u3ny6186xw/products/**' },
+      // Admin-uploaded product images stored in the Supabase Storage
+      // `product-images` bucket. Hostname pattern covers any project ref.
+      { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' },
     ],
   },
 

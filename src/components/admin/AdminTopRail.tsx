@@ -62,7 +62,8 @@ export function AdminTopRail() {
             ⌘K · Type / to search · ? for shortcuts
           </span>
           <Link
-            href="/api/admin/logout"
+            href="/api/admin/logout/"
+            prefetch={false}
             className="font-mono uppercase text-cream/70 hover:text-gold-bright transition-colors duration-200"
             style={{ fontSize: '10px', letterSpacing: '0.22em' }}
           >

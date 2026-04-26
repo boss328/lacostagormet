@@ -89,6 +89,13 @@ export default async function AdminProductsPage({
           </h1>
           <div className="flex items-center gap-5">
             <Link
+              href="/admin/products/new/"
+              className="btn btn-solid"
+              style={{ padding: '10px 18px', fontSize: '12px' }}
+            >
+              <span>+ New Product</span>
+            </Link>
+            <Link
               href={buildHref('/api/admin/products/export', { q: search })}
               className="type-label-sm text-ink hover:text-brand-deep transition-colors duration-200"
             >
