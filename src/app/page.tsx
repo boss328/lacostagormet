@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { Reveal } from '@/components/design-system/Reveal';
 import { SectionHead } from '@/components/design-system/SectionHead';
@@ -91,7 +92,24 @@ async function fetchHomeData() {
   return { categories, featured, brands };
 }
 
-export default async function HomePage() {
+/**
+ * Magic-link rescue: if the customer arrives here with `?code=<uuid>` it
+ * means Supabase fell back to its Site URL instead of honouring the
+ * `emailRedirectTo` we passed to signInWithOtp — usually because
+ * `/auth/callback` isn't in the project's Redirect URLs allowlist.
+ * Forwarding to /auth/callback completes the exchange so the user
+ * doesn't end up stuck on the homepage holding a useless code.
+ */
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams?: { code?: string };
+}) {
+  const code = searchParams?.code;
+  if (code && /^[a-f0-9-]{20,}$/i.test(code)) {
+    redirect(`/auth/callback/?code=${encodeURIComponent(code)}&redirect=/account`);
+  }
+
   const { categories, featured, brands } = await fetchHomeData();
 
   return (

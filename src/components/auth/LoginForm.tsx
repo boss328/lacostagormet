@@ -18,8 +18,15 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
     setErrorMessage(null);
     try {
       const supabase = createClient();
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      const callback = `${origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`;
+      // Prefer the env-pinned production origin so the magic link
+      // always points at the real site, even when the customer requests
+      // it from a Vercel preview deploy. Falls back to runtime origin
+      // for local dev. Trailing slash on /auth/callback/ skips the
+      // 308 hop that trailingSlash:true would otherwise force.
+      const envOrigin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '');
+      const runtimeOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+      const origin = envOrigin || runtimeOrigin;
+      const callback = `${origin}/auth/callback/?redirect=${encodeURIComponent(redirectTo)}`;
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim().toLowerCase(),
         options: { emailRedirectTo: callback },
