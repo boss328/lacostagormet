@@ -18,6 +18,11 @@ export const US_STATES = [
 export const addressSchema = z.object({
   firstName: z.string().min(1).max(80),
   lastName:  z.string().min(1).max(80),
+  // Optional B2B field. When present, gets persisted to
+  // orders.business_name (top-level column) AND to
+  // shipping_address.company (inside the JSON blob), and shows up on
+  // its own line in admin order detail + customer/admin emails.
+  company:   z.string().max(120).optional().default(''),
   address1:  z.string().min(1).max(200),
   address2:  z.string().max(200).optional().default(''),
   city:      z.string().min(1).max(80),

@@ -56,6 +56,7 @@ function clientShipping(subtotal: number, state: string): number {
 const EMPTY_ADDRESS: AddressPayload = {
   firstName: '',
   lastName: '',
+  company: '',
   address1: '',
   address2: '',
   city: '',
@@ -304,6 +305,14 @@ export function CheckoutForm() {
                   />
                 </div>
                 <TextField
+                  id="company"
+                  label="Business name (optional)"
+                  autoComplete="organization"
+                  placeholder="e.g. Café Solana"
+                  value={address.company ?? ''}
+                  onChange={(v) => updateAddress('company', v)}
+                />
+                <TextField
                   id="address1"
                   label="Address"
                   required
@@ -513,6 +522,7 @@ function TextField({
   required = false,
   autoComplete,
   type = 'text',
+  placeholder,
 }: {
   id: string;
   label: string;
@@ -521,6 +531,7 @@ function TextField({
   required?: boolean;
   autoComplete?: string;
   type?: string;
+  placeholder?: string;
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -534,6 +545,7 @@ function TextField({
         type={type}
         required={required}
         autoComplete={autoComplete}
+        placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="bg-cream text-ink font-display"

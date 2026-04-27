@@ -241,6 +241,12 @@ export default async function AdminOrderDetailPage({
           >
             <p className="type-label text-ink mb-4">§&nbsp;&nbsp;Ship to</p>
             <address className="font-display text-ink not-italic" style={{ fontSize: '14px', lineHeight: 1.55 }}>
+              {o.shipping_address.company && (
+                <>
+                  <strong>{o.shipping_address.company}</strong>
+                  <br />
+                </>
+              )}
               {o.shipping_address.first_name} {o.shipping_address.last_name}
               <br />
               {o.shipping_address.address1}

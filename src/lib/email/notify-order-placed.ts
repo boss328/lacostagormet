@@ -73,6 +73,8 @@ export async function notifyOrderPlaced(orderId: string): Promise<void> {
   const orderDate = new Date(row.created_at);
   const isHeld = row.status === 'payment_held';
 
+  const company = (addr.company ?? '').trim() || null;
+
   // Customer email
   const customerEmail = renderOrderConfirmation({
     orderNumber: row.order_number,
@@ -84,6 +86,7 @@ export async function notifyOrderPlaced(orderId: string): Promise<void> {
     shipping: Number(row.shipping_cost),
     total: Number(row.total),
     shippingAddress: {
+      company,
       fullName,
       address1: addr.address1 ?? '',
       address2: addr.address2 ?? null,
@@ -105,6 +108,7 @@ export async function notifyOrderPlaced(orderId: string): Promise<void> {
     orderDate,
     items: items.map(({ name, sku, quantity }) => ({ name, sku, quantity })),
     shippingAddress: {
+      company,
       fullName,
       address1: addr.address1 ?? '',
       address2: addr.address2 ?? null,
@@ -144,6 +148,7 @@ export async function notifyOrderPlaced(orderId: string): Promise<void> {
 type ShippingAddressJson = {
   first_name?: string;
   last_name?: string;
+  company?: string;
   address1?: string;
   address2?: string;
   city?: string;

@@ -9,6 +9,7 @@ import { US_STATES, type AddressPayload } from '@/lib/checkout/validate';
 const EMPTY: AddressPayload = {
   firstName: '',
   lastName:  '',
+  company:   '',
   address1:  '',
   address2:  '',
   city:      '',
@@ -167,6 +168,14 @@ export default function ConfirmAddressPage() {
               />
             </div>
             <Field
+              label="Business name (optional)"
+              name="company"
+              value={address.company ?? ''}
+              onChange={(v) => update('company', v)}
+              autoComplete="organization"
+              placeholder="e.g. Café Solana"
+            />
+            <Field
               label="Street address"
               name="address1"
               value={address.address1}
@@ -276,6 +285,7 @@ function Field({
   required,
   type = 'text',
   autoComplete,
+  placeholder,
 }: {
   label: string;
   name: string;
@@ -284,6 +294,7 @@ function Field({
   required?: boolean;
   type?: string;
   autoComplete?: string;
+  placeholder?: string;
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -297,6 +308,7 @@ function Field({
         type={type}
         required={required}
         autoComplete={autoComplete}
+        placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="bg-paper text-ink font-display"

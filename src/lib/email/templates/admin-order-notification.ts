@@ -19,6 +19,8 @@ export type AdminOrderNotificationInput = {
   items: Array<{ name: string; sku: string | null; quantity: number }>;
   shippingAddress: {
     fullName: string;
+    /** Optional B2B business name; rendered above the recipient name. */
+    company?: string | null;
     address1: string;
     address2?: string | null;
     city: string;
@@ -56,7 +58,9 @@ export function renderAdminOrderNotification(input: AdminOrderNotificationInput)
     .join('\n');
 
   const addr = input.shippingAddress;
+  const company = (addr.company ?? '').trim();
   const addressText = [
+    company || null,
     addr.fullName,
     addr.address1,
     addr.address2,

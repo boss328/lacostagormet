@@ -25,6 +25,8 @@ export type OrderConfirmationInput = {
   total: number;
   shippingAddress: {
     fullName: string;
+    /** Optional B2B business name; rendered above the recipient name. */
+    company?: string | null;
     address1: string;
     address2?: string | null;
     city: string;
@@ -78,7 +80,9 @@ export function renderOrderConfirmation(input: OrderConfirmationInput) {
     .join('\n');
 
   const addr = input.shippingAddress;
+  const company = (addr.company ?? '').trim();
   const addressHtml = [
+    company ? `<strong>${escapeHtml(company)}</strong>` : null,
     escapeHtml(addr.fullName),
     escapeHtml(addr.address1),
     addr.address2 ? escapeHtml(addr.address2) : null,
@@ -88,6 +92,7 @@ export function renderOrderConfirmation(input: OrderConfirmationInput) {
     .join('<br>');
 
   const addressText = [
+    company || null,
     addr.fullName,
     addr.address1,
     addr.address2,

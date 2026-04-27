@@ -193,9 +193,11 @@ export async function POST(req: NextRequest) {
     } else {
       // Create a new pending order + items.
       const shipAddr = payload.shippingAddress;
+      const company = (shipAddr.company ?? '').trim();
       const addressJson = {
         first_name: shipAddr.firstName,
         last_name: shipAddr.lastName,
+        company,
         address1: shipAddr.address1,
         address2: shipAddr.address2 ?? '',
         city: shipAddr.city,
@@ -216,6 +218,10 @@ export async function POST(req: NextRequest) {
           total,
           shipping_address: addressJson,
           billing_address: addressJson,
+          // Top-level columns mirror the JSON's company so admin search
+          // and CSV export can filter by business without parsing JSON.
+          business_name: company || null,
+          is_business: company.length > 0,
           cart_hash: hash,
           client_ip: clientIp,
         })
