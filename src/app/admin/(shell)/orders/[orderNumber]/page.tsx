@@ -24,6 +24,10 @@ type OrderRow = {
   source: string;
   legacy_bc_order_id: string | null;
   created_at: string;
+  refunded_at: string | null;
+  refund_reason: string | null;
+  refunded_by: string | null;
+  refund_amount_cents: number | null;
 };
 
 type OrderItemRow = {
@@ -60,7 +64,7 @@ export default async function AdminOrderDetailPage({
   const { data: order } = await admin
     .from('orders')
     .select(
-      'id, order_number, status, fulfillment_status, customer_email, customer_id, subtotal, shipping_cost, tax, total, shipping_address, billing_address, admin_notes, source, legacy_bc_order_id, created_at',
+      'id, order_number, status, fulfillment_status, customer_email, customer_id, subtotal, shipping_cost, tax, total, shipping_address, billing_address, admin_notes, source, legacy_bc_order_id, created_at, refunded_at, refund_reason, refunded_by, refund_amount_cents',
     )
     .eq('order_number', params.orderNumber)
     .maybeSingle();
@@ -142,6 +146,48 @@ export default async function AdminOrderDetailPage({
         <StatBlock label="Total" value={fmtMoney(o.total)} />
         <StatBlock label="Customer" value={o.customer_email} compact />
       </section>
+
+      {o.status === 'refunded' && (
+        <section
+          className="mb-6 bg-cream"
+          style={{
+            border: '1px solid var(--color-brand)',
+            padding: '18px 22px',
+          }}
+        >
+          <div className="flex items-baseline justify-between gap-4 flex-wrap">
+            <p
+              className="font-mono uppercase"
+              style={{
+                fontSize: '11px',
+                letterSpacing: '0.22em',
+                color: 'var(--color-brand)',
+              }}
+            >
+              ⚠ Refunded
+            </p>
+            {o.refund_amount_cents != null && (
+              <p className="type-data-mono text-ink">
+                ${(o.refund_amount_cents / 100).toFixed(2)}
+              </p>
+            )}
+          </div>
+          <p className="font-display text-ink mt-2" style={{ fontSize: '15px', lineHeight: 1.5 }}>
+            Refund processed
+            {o.refunded_at ? ` ${new Date(o.refunded_at).toLocaleString('en-US')}` : ''}.
+          </p>
+          {o.refund_reason && (
+            <p className="font-display text-ink-2 mt-1" style={{ fontSize: '14px', lineHeight: 1.5 }}>
+              <span className="type-data-mono text-ink-muted mr-2">Reason:</span>
+              {o.refund_reason}
+            </p>
+          )}
+          <p className="type-data-mono text-ink-muted mt-3">
+            Reminder: complete the refund in the Authorize.Net merchant portal.
+            This page only marks the order refunded in the database.
+          </p>
+        </section>
+      )}
 
       <AdminOrderStatusButtons orderNumber={o.order_number} status={o.status} fulfillmentStatus={o.fulfillment_status} />
 
