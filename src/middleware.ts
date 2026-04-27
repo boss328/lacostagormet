@@ -1,31 +1,45 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
 
 /**
- * Route guards:
- *   /admin/*    — single shared password (ADMIN_PASSWORD env var)
- *                 gates the entire admin surface. Login flow at
- *                 /admin/login/ + /api/admin/login/ + /api/admin/logout/
- *                 is whitelisted so users can sign in without
- *                 authentication.
- *   /account/*  — Supabase auth session for customer accounts.
+ * Route guards + Supabase session refresh.
  *
- * The admin cookie value is HMAC-SHA256(ADMIN_PASSWORD, ADMIN_SESSION_SECRET)
- * — never the plaintext password. See src/lib/admin/session.ts for why.
+ * Two independent auth systems:
+ *   /admin/*    — single shared password (ADMIN_PASSWORD env). HMAC-signed
+ *                 cookie. NO Supabase involvement; the admin branch
+ *                 short-circuits before any Supabase work runs.
+ *   everything else — Supabase customer session. Middleware refreshes
+ *                 the session on every request via supabase.auth.getUser()
+ *                 so cookies don't go stale between navigations.
  *
- * trailingSlash:true is set in next.config, so every redirect target
- * is written WITH a trailing slash here — Next would otherwise issue a
- * 308 to add it, and POST→308→re-POST chains were the source of the
- * previous Vercel cookie-drop bug.
+ * The Supabase block uses the canonical @supabase/ssr v0.5+ pattern:
+ *
+ *   1. response = NextResponse.next({ request: req })
+ *   2. createServerClient with getAll / setAll cookie callbacks
+ *   3. setAll mutates req.cookies AND rebuilds response with the new
+ *      request, then writes Set-Cookie on the response. This is the
+ *      critical step — without the request mutation + rebuild, server
+ *      components read stale cookies via cookies() and getUser() returns
+ *      null on the very next request, which is exactly the "logs out
+ *      on subsequent page navigation" symptom we're fixing here.
+ *   4. await supabase.auth.getUser() — refreshes the access token if
+ *      it's expired, persists the new pair via setAll.
+ *
+ * The /account/* gate runs AFTER the refresh: if there's still no user,
+ * redirect to /login/. The redirect target inherits the response cookies
+ * we just built so any refresh attempt is preserved (cookies that
+ * Supabase wrote during getUser are passed forward even if we redirect).
+ *
+ * trailingSlash:true is set in next.config; every redirect target is
+ * written WITH a trailing slash here to skip the 308 hop that previously
+ * dropped cookies on Vercel.
  */
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // ── Admin gate ────────────────────────────────────────────────────────
+  // ── Admin gate (no Supabase) ──────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
-    // Whitelist the login surfaces — both slashed and non-slashed forms
-    // because Next's trailingSlash normaliser runs after middleware.
     if (
       pathname === '/admin/login' ||
       pathname === '/admin/login/' ||
@@ -37,8 +51,6 @@ export async function middleware(req: NextRequest) {
 
     const expected = await expectedSessionToken();
     if (!expected) {
-      // Server is missing ADMIN_PASSWORD — surface a config error
-      // rather than a redirect loop or a wide-open admin.
       const url = req.nextUrl.clone();
       url.pathname = '/admin/login/';
       url.search = '?error=config';
@@ -56,39 +68,69 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // ── Customer account gate ────────────────────────────────────────────
-  if (pathname.startsWith('/account')) {
-    const res = NextResponse.next();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return req.cookies.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            res.cookies.set({ name, value, ...options });
-          },
-          remove(name: string, options: CookieOptions) {
-            res.cookies.set({ name, value: '', ...options });
-          },
+  // ── Auth flow paths handle their own cookies — skip Supabase refresh ──
+  // /auth/callback runs exchangeCodeForSession with its own cookie
+  // wiring; /auth/signout actively clears cookies. Touching them here
+  // would either race the callback's cookie writes or undo signout.
+  if (pathname.startsWith('/auth/')) {
+    return NextResponse.next();
+  }
+
+  // ── Customer-side Supabase session refresh ────────────────────────────
+  // Canonical @supabase/ssr v0.5+ middleware pattern. See file comment.
+  let response = NextResponse.next({ request: req });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: { flowType: 'pkce' },
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          // 1. Mutate the request so downstream reads (server components
+          //    calling cookies()) see the refreshed values.
+          for (const { name, value } of cookiesToSet) {
+            req.cookies.set(name, value);
+          }
+          // 2. Rebuild the response carrying the mutated request forward.
+          response = NextResponse.next({ request: req });
+          // 3. Attach Set-Cookie headers so the browser stores the new
+          //    pair on this response trip.
+          for (const { name, value, options } of cookiesToSet) {
+            response.cookies.set(name, value, options);
+          }
         },
       },
-    );
-    const { data } = await supabase.auth.getUser();
+    },
+  );
+
+  // Refresh the session. This is the call that keeps customers signed in
+  // across page navigations — without it the access token expires and
+  // every subsequent page treats the user as logged out.
+  const { data } = await supabase.auth.getUser();
+
+  // ── /account/* gate ────────────────────────────────────────────────────
+  if (pathname.startsWith('/account')) {
     if (!data.user) {
       const url = req.nextUrl.clone();
       url.pathname = '/login/';
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }
-    return res;
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
-  matcher: ['/account/:path*', '/admin/:path*'],
+  // Run on every request EXCEPT Next's static pipeline + image
+  // optimisation + favicons + obvious static assets. Customer session
+  // refresh has to happen on every page nav, not just /account hits;
+  // narrow matchers are why customers were getting silently logged out.
+  matcher: [
+    '/((?!_next/static|_next/image|favicon\\.ico|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+  ],
 };
