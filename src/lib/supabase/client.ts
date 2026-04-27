@@ -1,26 +1,18 @@
-import { createBrowserClient } from "@supabase/ssr";
+import { createBrowserClient } from '@supabase/ssr';
 
 /**
- * Customer-side Supabase client. Uses @supabase/ssr's
- * createBrowserClient so the PKCE verifier is stored in cookies the
- * server callback can read — `@supabase/supabase-js` would default
- * to localStorage and `exchangeCodeForSession` would fail with
- * "PKCE code verifier not found in storage" after the magic-link
- * redirect.
+ * Customer-side Supabase browser client. The single thing this module
+ * does is hand back a fresh client per call — no singleton, no flow-type
+ * override, no fancy options. @supabase/ssr defaults to PKCE and
+ * cookie-based storage, which is exactly what the canonical Next.js 14
+ * pattern wants.
  *
- * `flowType: 'pkce'` is the @supabase/ssr default, but we pin it
- * explicitly so a future package upgrade can't silently flip the
- * implicit/PKCE switch on us.
- *
- * Called per-component (not a singleton) — keeps hot-reload from
- * holding stale references across edits.
+ * Used by client components (e.g. /login page) for signInWithOtp and
+ * any other browser-side Supabase calls. Never imported on the server.
  */
 export function createClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: { flowType: "pkce" },
-    },
   );
 }
