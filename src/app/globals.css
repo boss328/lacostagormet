@@ -44,6 +44,11 @@
    ========================================================================= */
 html {
   background: var(--color-paper);
+  /* Defense-in-depth: any single rogue child that bursts past the viewport
+     gets clipped at the document root rather than triggering horizontal
+     scroll on mobile. Components should still self-constrain — this is
+     the safety net, not the primary mechanism. */
+  overflow-x: hidden;
 }
 
 body {
@@ -55,6 +60,11 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* Belt + suspenders for the html overflow rule above; some mobile
+     browsers (older iOS Safari) honour the body rule but not the html
+     one when the body has min-height: 100vh. */
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 *:focus-visible {

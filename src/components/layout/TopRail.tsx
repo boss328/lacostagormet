@@ -4,9 +4,14 @@ export function TopRail() {
       className="bg-ink text-paper px-8 max-sm:px-5 py-[9px]"
       style={{ borderBottom: '1px solid rgba(212, 169, 97, 0.15)' }}
     >
-      <div className="max-w-content mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-8 max-sm:grid-cols-[1fr_auto] max-sm:gap-4">
-        <span className="type-label-sm text-paper/80 whitespace-nowrap">
+      <div className="max-w-content mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-8 max-sm:grid-cols-[1fr_auto] max-sm:gap-3">
+        {/* Long tagline desktop / short tagline mobile — the full string
+            in tracked uppercase blew past 375px viewports. */}
+        <span className="type-label-sm text-paper/80 truncate min-w-0 max-sm:hidden">
           Purveyors of specialty café provisions · Carlsbad, California
+        </span>
+        <span className="type-label-sm text-paper/80 truncate min-w-0 sm:hidden">
+          Carlsbad, California
         </span>
         <span className="type-label-sm text-paper/80 justify-self-center whitespace-nowrap max-sm:hidden flex items-center gap-3">
           Family Owned
