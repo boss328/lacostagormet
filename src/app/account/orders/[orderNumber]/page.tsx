@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getSessionUser } from '@/lib/supabase/auth-helpers';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ReorderButton } from '@/components/orders/ReorderButton';
+import { detectCarrier } from '@/lib/email/carrier';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,12 +11,15 @@ type OrderRow = {
   id: string;
   order_number: string;
   status: string;
+  fulfillment_status: string;
   customer_email: string;
   subtotal: number | string;
   shipping_cost: number | string;
   tax: number | string;
   total: number | string;
   created_at: string;
+  tracking_number: string | null;
+  shipped_at: string | null;
   shipping_address: {
     first_name?: string;
     last_name?: string;
@@ -53,7 +57,7 @@ export default async function AccountOrderDetailPage({
   const { data: order } = await admin
     .from('orders')
     .select(
-      'id, order_number, status, customer_email, subtotal, shipping_cost, tax, total, created_at, shipping_address',
+      'id, order_number, status, fulfillment_status, customer_email, subtotal, shipping_cost, tax, total, created_at, tracking_number, shipped_at, shipping_address',
     )
     .eq('order_number', params.orderNumber)
     .eq('customer_email', email)
@@ -129,6 +133,19 @@ export default async function AccountOrderDetailPage({
         </div>
 
         <aside className="flex flex-col gap-5">
+          {o.tracking_number && (
+            <div
+              className="bg-cream"
+              style={{ border: '1px solid var(--color-gold)', padding: '24px 26px' }}
+            >
+              <p className="type-label text-ink mb-3">§&nbsp;&nbsp;Tracking</p>
+              <TrackingBlock
+                tracking={o.tracking_number}
+                shippedAt={o.shipped_at}
+              />
+            </div>
+          )}
+
           <div
             className="bg-cream"
             style={{ border: '1px solid var(--rule-strong)', padding: '24px 26px' }}
@@ -196,5 +213,45 @@ function Row({ label, value }: { label: string; value: string }) {
       <dt className="type-label-sm text-ink">{label}</dt>
       <dd className="type-data-mono text-ink">{value}</dd>
     </div>
+  );
+}
+
+function TrackingBlock({
+  tracking,
+  shippedAt,
+}: {
+  tracking: string;
+  shippedAt: string | null;
+}) {
+  const detected = detectCarrier(tracking);
+  const shippedLine = shippedAt
+    ? `Shipped ${new Date(shippedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
+    : 'In transit';
+  return (
+    <>
+      <p className="type-data-mono text-ink-muted mb-2">{shippedLine}</p>
+      {detected ? (
+        <a
+          href={detected.trackingUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="font-display italic text-brand-deep hover:opacity-80 transition-opacity break-all"
+          style={{ fontSize: '17px', letterSpacing: '-0.01em', fontWeight: 500 }}
+        >
+          {tracking}
+          <span className="type-data-mono text-ink-muted ml-2">→ {detected.carrier}</span>
+        </a>
+      ) : (
+        <p
+          className="font-display italic text-brand-deep break-all"
+          style={{ fontSize: '17px', letterSpacing: '-0.01em', fontWeight: 500 }}
+        >
+          {tracking}
+        </p>
+      )}
+      <p className="type-data-mono text-ink-muted mt-2">
+        Tracking link {detected ? 'opens at the carrier site.' : 'not available — paste the number into your carrier&rsquo;s tracking page.'}
+      </p>
+    </>
   );
 }

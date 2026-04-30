@@ -6,6 +6,8 @@ type OrderRowCompactProps = {
     created_at: string;
     status: string;
     total: number | string;
+    fulfillment_status?: string | null;
+    tracking_number?: string | null;
     order_items?: Array<{ product_name: string; quantity: number }>;
   };
 };
@@ -53,6 +55,11 @@ export function OrderRowCompact({ order }: OrderRowCompactProps) {
           {items[0] ? ` · ${items[0].product_name}` : ''}
           {items.length > 1 ? ` +${items.length - 1} more` : ''}
         </p>
+        {order.tracking_number && (
+          <p className="type-data-mono text-gold mt-1">
+            ✓ Shipped · tracking added
+          </p>
+        )}
       </div>
       <span className="type-data-mono text-ink-muted max-sm:text-left">
         {fmtDate(order.created_at)}

@@ -20,9 +20,10 @@ export default async function AccountOrdersPage({
   const admin = createAdminClient();
   const { data: orders, count } = await admin
     .from('orders')
-    .select('order_number, created_at, status, total, order_items(product_name, quantity)', {
-      count: 'exact',
-    })
+    .select(
+      'order_number, created_at, status, fulfillment_status, tracking_number, total, order_items(product_name, quantity)',
+      { count: 'exact' },
+    )
     .eq('customer_email', email)
     .order('created_at', { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1);
@@ -33,6 +34,8 @@ export default async function AccountOrdersPage({
     order_number: string;
     created_at: string;
     status: string;
+    fulfillment_status: string | null;
+    tracking_number: string | null;
     total: number | string;
     order_items?: Array<{ product_name: string; quantity: number }>;
   }>;
