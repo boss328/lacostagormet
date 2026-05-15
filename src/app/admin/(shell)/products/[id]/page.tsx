@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { bcImage } from '@/lib/bcImage';
-import { EditProductForm } from '@/components/admin/EditProductForm';
+import { EditProductForm, type EditProductExistingImage } from '@/components/admin/EditProductForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,17 +21,21 @@ type ProductDetailRow = {
   primary_category_id: string | null;
   brands: { name: string; slug: string } | null;
   primary_category: { name: string; slug: string } | null;
-  product_images: Array<{ url: string; is_primary: boolean; display_order: number }> | null;
+  product_images: Array<{ id: string; url: string; is_primary: boolean; display_order: number }> | null;
 };
 
-function pickPrimaryImageUrl(
-  images: Array<{ url: string; is_primary: boolean; display_order: number }> | null,
-): string | null {
-  if (!images || images.length === 0) return null;
-  const p =
-    images.find((i) => i.is_primary) ??
-    [...images].sort((a, b) => a.display_order - b.display_order)[0];
-  return p?.url ?? null;
+function toExistingImages(
+  raw: Array<{ id: string; url: string; is_primary: boolean; display_order: number }> | null,
+): EditProductExistingImage[] {
+  if (!raw || raw.length === 0) return [];
+  return raw.map((img) => ({
+    id: img.id,
+    // Existing migrated BigCommerce images need bcImage() to resolve to a
+    // CDN size; admin-uploaded Supabase URLs are already fully qualified.
+    url: img.url.startsWith('http') ? img.url : bcImage(img.url, 'card'),
+    isPrimary: img.is_primary,
+    displayOrder: img.display_order,
+  }));
 }
 
 export default async function AdminProductEditPage({
@@ -46,7 +50,7 @@ export default async function AdminProductEditPage({
       admin
         .from('products')
         .select(
-          'id, sku, slug, name, description, meta_description, weight_lb, retail_price, is_active, is_featured, brand_id, primary_category_id, brands(name, slug), primary_category:categories!primary_category_id(name, slug), product_images(url, is_primary, display_order)',
+          'id, sku, slug, name, description, meta_description, weight_lb, retail_price, is_active, is_featured, brand_id, primary_category_id, brands(name, slug), primary_category:categories!primary_category_id(name, slug), product_images(id, url, is_primary, display_order)',
         )
         .eq('id', params.id)
         .maybeSingle(),
@@ -62,14 +66,7 @@ export default async function AdminProductEditPage({
   if (!productData) notFound();
   const p = productData as unknown as ProductDetailRow;
 
-  const rawImage = pickPrimaryImageUrl(p.product_images);
-  // Existing migrated BigCommerce images need bcImage() to resolve a CDN
-  // size; admin-uploaded Supabase URLs already contain the full path.
-  const imageUrl = rawImage
-    ? rawImage.startsWith('http')
-      ? rawImage
-      : bcImage(rawImage, 'card')
-    : null;
+  const existingImages = toExistingImages(p.product_images);
 
   const brands = (brandsData ?? []).map((b) => ({
     id: b.id as string,
@@ -130,7 +127,7 @@ export default async function AdminProductEditPage({
           metaDescription: p.meta_description ?? '',
           isActive: p.is_active,
           isFeatured: p.is_featured,
-          imageUrl,
+          existingImages,
         }}
         brands={brands}
         categories={categories}

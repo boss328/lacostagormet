@@ -1,12 +1,19 @@
 'use client';
 
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { slugify } from '@/lib/admin/slug';
+import { MultiImageEditor, type ImageItem } from '@/components/admin/MultiImageEditor';
 
 type Option = { id: string; name: string; slug: string };
+
+export type EditProductExistingImage = {
+  id: string;
+  url: string;
+  isPrimary: boolean;
+  displayOrder: number;
+};
 
 export type EditProductInitial = {
   id: string;
@@ -21,7 +28,7 @@ export type EditProductInitial = {
   metaDescription: string;
   isActive: boolean;
   isFeatured: boolean;
-  imageUrl: string | null;
+  existingImages: EditProductExistingImage[];
 };
 
 type Props = {
@@ -42,18 +49,15 @@ type FieldErrors = Partial<{
   general: string;
 }>;
 
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-
 /**
  * /admin/products/[id] edit form. Mirrors NewProductForm field-for-field
  * but pre-populates from existing product data and POSTs multipart to
  * /api/admin/products/[id]/update/.
  *
- * Image handling: shows the current image (if any) above the file input;
- * if the user picks a new file we'll replace, otherwise the current
- * image stays untouched. There is no "remove image" affordance here —
- * keeping it simple per spec.
+ * Image handling: shows all current product_images as draggable
+ * thumbnails plus newly-picked files. The form submits the COMPLETE
+ * desired state — the API route diffs against what's stored and
+ * deletes anything not in the submitted manifest.
  *
  * Delete: separate destructive section at the bottom with a single
  * confirm() guard before posting to /delete/. Backend may decline the
@@ -70,8 +74,21 @@ export function EditProductForm({ product, brands, categories }: Props) {
   const [categorySlug, setCategorySlug] = useState(product.categorySlug);
   const [brandSlug, setBrandSlug] = useState(product.brandSlug);
   const [description, setDescription] = useState(product.description);
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [images, setImages] = useState<ImageItem[]>(() =>
+    [...product.existingImages]
+      .sort((a, b) => {
+        if (a.isPrimary && !b.isPrimary) return -1;
+        if (!a.isPrimary && b.isPrimary) return 1;
+        return a.displayOrder - b.displayOrder;
+      })
+      .map((img) => ({
+        key: img.id,
+        kind: 'existing' as const,
+        id: img.id,
+        previewUrl: img.url,
+        isPrimary: img.isPrimary,
+      })),
+  );
 
   // Advanced
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -89,27 +106,6 @@ export function EditProductForm({ product, brands, categories }: Props) {
   const [message, setMessage] = useState<string | null>(null);
 
   const computedSlug = slugOverride.trim() || slugify(name);
-
-  function onImageChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    if (!file) {
-      setImage(null);
-      setImagePreview(null);
-      setErrors((p) => ({ ...p, image: undefined }));
-      return;
-    }
-    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-      setErrors((p) => ({ ...p, image: 'JPEG, PNG, or WebP only.' }));
-      return;
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      setErrors((p) => ({ ...p, image: 'Image must be under 8 MB.' }));
-      return;
-    }
-    setErrors((p) => ({ ...p, image: undefined }));
-    setImage(file);
-    setImagePreview(URL.createObjectURL(file));
-  }
 
   function validateClient(): FieldErrors {
     const next: FieldErrors = {};
@@ -158,7 +154,29 @@ export function EditProductForm({ product, brands, categories }: Props) {
       fd.set('meta_description', metaDescription.trim());
       fd.set('is_active', isActive ? 'true' : 'false');
       fd.set('is_featured', isFeatured ? 'true' : 'false');
-      if (image) fd.set('image', image);
+
+      // Submit the COMPLETE desired image state. Server diffs against
+      // what's stored: rows in `existingManifest` are kept (and their
+      // is_primary / display_order are updated); rows that disappeared
+      // get deleted. New files ride along under `newImages`, indexed
+      // into `newImagesMeta` by position.
+      const existingManifest: Array<{ id: string; isPrimary: boolean; sortOrder: number }> = [];
+      const newImagesMeta: Array<{ isPrimary: boolean; sortOrder: number }> = [];
+      images.forEach((item, idx) => {
+        if (item.kind === 'existing' && item.id) {
+          existingManifest.push({
+            id: item.id,
+            isPrimary: item.isPrimary,
+            sortOrder: idx,
+          });
+        } else if (item.kind === 'new' && item.file) {
+          newImagesMeta.push({ isPrimary: item.isPrimary, sortOrder: idx });
+          fd.append('newImages', item.file);
+        }
+      });
+
+      fd.set('existingManifest', JSON.stringify(existingManifest));
+      fd.set('newImagesMeta', JSON.stringify(newImagesMeta));
 
       const res = await fetch(`/api/admin/products/${product.id}/update/`, {
         method: 'POST',
@@ -236,8 +254,6 @@ export function EditProductForm({ product, brands, categories }: Props) {
       setDeleting(false);
     }
   }
-
-  const hasNewImage = !!image && !!imagePreview;
 
   return (
     <>
@@ -380,51 +396,16 @@ export function EditProductForm({ product, brands, categories }: Props) {
             />
           </Section>
 
-          <Section title="Image">
-            {(hasNewImage || product.imageUrl) && (
-              <div className="flex flex-col gap-3">
-                <p className="type-data-mono text-ink-muted">
-                  {hasNewImage ? 'New image (unsaved)' : 'Current image'}
-                </p>
-                <div
-                  className="relative bg-paper-2 self-start"
-                  style={{
-                    border: '1px solid var(--rule-strong)',
-                    width: 200,
-                    height: 200,
-                  }}
-                >
-                  {hasNewImage ? (
-                    <img
-                      src={imagePreview!}
-                      alt="New product image preview"
-                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                    />
-                  ) : product.imageUrl ? (
-                    <Image
-                      src={product.imageUrl}
-                      alt={product.name}
-                      width={400}
-                      height={400}
-                      sizes="200px"
-                      className="w-full h-full object-contain"
-                    />
-                  ) : null}
-                </div>
-              </div>
-            )}
-            <Field
-              label={product.imageUrl ? 'Replace image (optional)' : 'Product image (optional)'}
-              error={errors.image}
-              hint="JPEG, PNG, or WebP. Up to 8 MB. Leave blank to keep the current image."
-              input={
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={onImageChange}
-                  className="font-mono text-[12px] text-ink"
-                />
-              }
+          <Section title="Images">
+            <p className="type-data-mono text-ink-muted">
+              Up to 8 images. The starred one is the primary (shown first
+              on listings and on the product page). Use ← → to reorder,
+              × to remove. Removed images are deleted on save.
+            </p>
+            <MultiImageEditor
+              items={images}
+              onChange={setImages}
+              errorMessage={errors.image}
             />
           </Section>
 
@@ -526,8 +507,12 @@ export function EditProductForm({ product, brands, categories }: Props) {
               <Stat label="Category" value={categories.find((c) => c.slug === categorySlug)?.name ?? '—'} />
               <Stat label="Brand" value={brands.find((b) => b.slug === brandSlug)?.name ?? '—'} />
               <Stat
-                label="Image"
-                value={hasNewImage ? image!.name : product.imageUrl ? 'Current image' : '— (placeholder)'}
+                label="Images"
+                value={
+                  images.length === 0
+                    ? '— (placeholder)'
+                    : `${images.length} image${images.length === 1 ? '' : 's'}`
+                }
               />
             </dl>
           </div>

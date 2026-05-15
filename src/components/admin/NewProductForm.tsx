@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { slugify } from '@/lib/admin/slug';
+import { MultiImageEditor, type ImageItem } from '@/components/admin/MultiImageEditor';
 
 type Option = { id: string; name: string; slug: string };
 
@@ -24,9 +25,6 @@ type FieldErrors = Partial<{
   general: string;
 }>;
 
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8 MB
-const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-
 /**
  * /admin/products/new — single-screen creation form. Submits a
  * multipart payload (so the optional image rides along) to
@@ -42,7 +40,7 @@ export function NewProductForm({ brands, categories }: Props) {
   const [categorySlug, setCategorySlug] = useState(categories[0]?.slug ?? '');
   const [brandSlug, setBrandSlug] = useState('');
   const [description, setDescription] = useState('');
-  const [image, setImage] = useState<File | null>(null);
+  const [images, setImages] = useState<ImageItem[]>([]);
 
   // Advanced
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -57,25 +55,6 @@ export function NewProductForm({ brands, categories }: Props) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const computedSlug = slugOverride.trim() || slugify(name);
-
-  function onImageChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    if (!file) {
-      setImage(null);
-      setErrors((p) => ({ ...p, image: undefined }));
-      return;
-    }
-    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-      setErrors((p) => ({ ...p, image: 'JPEG, PNG, or WebP only.' }));
-      return;
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      setErrors((p) => ({ ...p, image: 'Image must be under 8 MB.' }));
-      return;
-    }
-    setErrors((p) => ({ ...p, image: undefined }));
-    setImage(file);
-  }
 
   function validateClient(): FieldErrors {
     const next: FieldErrors = {};
@@ -124,7 +103,12 @@ export function NewProductForm({ brands, categories }: Props) {
       fd.set('meta_description', metaDescription.trim());
       fd.set('is_active', isActive ? 'true' : 'false');
       fd.set('is_featured', isFeatured ? 'true' : 'false');
-      if (image) fd.set('image', image);
+
+      const primaryIndex = images.findIndex((i) => i.isPrimary);
+      fd.set('primary_index', String(primaryIndex >= 0 ? primaryIndex : 0));
+      for (const item of images) {
+        if (item.file) fd.append('images', item.file);
+      }
 
       const res = await fetch('/api/admin/products/create/', {
         method: 'POST',
@@ -303,24 +287,16 @@ export function NewProductForm({ brands, categories }: Props) {
         </Section>
 
         <Section title="Images">
-          <Field
-            label="Product image (optional)"
-            error={errors.image}
-            hint="JPEG, PNG, or WebP. Up to 8 MB. Single image initially — multi-image upload coming later."
-            input={
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={onImageChange}
-                className="font-mono text-[12px] text-ink"
-              />
-            }
+          <p className="type-data-mono text-ink-muted">
+            Optional. Pick up to 8 images. The starred one becomes the
+            primary (shown first on listings and on the product page).
+            Use ← → to reorder, × to remove.
+          </p>
+          <MultiImageEditor
+            items={images}
+            onChange={setImages}
+            errorMessage={errors.image}
           />
-          {image && (
-            <p className="type-data-mono text-ink-muted">
-              Selected: {image.name} · {(image.size / 1024).toFixed(0)} KB
-            </p>
-          )}
         </Section>
 
         <Section
@@ -422,7 +398,14 @@ export function NewProductForm({ brands, categories }: Props) {
             <Stat label="Price" value={retailPrice ? `$${retailPrice}` : '—'} />
             <Stat label="Category" value={categories.find((c) => c.slug === categorySlug)?.name ?? '—'} />
             <Stat label="Brand" value={brands.find((b) => b.slug === brandSlug)?.name ?? '—'} />
-            <Stat label="Image" value={image ? image.name : '— (placeholder will render)'} />
+            <Stat
+              label="Images"
+              value={
+                images.length === 0
+                  ? '— (placeholder will render)'
+                  : `${images.length} selected`
+              }
+            />
           </dl>
         </div>
 

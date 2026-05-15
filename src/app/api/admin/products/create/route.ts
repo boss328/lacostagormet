@@ -12,25 +12,30 @@ export const dynamic = 'force-dynamic';
  *
  * Fields (mostly mirroring NewProductForm):
  *   name, sku, retail_price, category_slug, brand_slug, description,
- *   slug, weight_lb, meta_description, is_active, is_featured, image
+ *   slug, weight_lb, meta_description, is_active, is_featured,
+ *   images (multi-file), primary_index
  *
  * Server-side responsibilities:
  *   1. Re-check the admin session cookie. Middleware already gates the
  *      surface, but the API route is a separate trust boundary.
  *   2. Validate input (mirrors the client validators with stricter
  *      length / SKU regex bounds).
- *   3. Upload the image to Supabase Storage bucket `product-images`
- *      if attached. Failure surfaces as fieldErrors.image; the rest
- *      of the form keeps its values on the client.
+ *   3. Upload each attached image to Supabase Storage bucket
+ *      `product-images` in submission order. Any upload failure surfaces
+ *      as fieldErrors.image; the rest of the form keeps its values on
+ *      the client.
  *   4. Resolve brand_slug → brand.id and category_slug → category.id.
  *   5. INSERT into products. SKU + slug uniqueness handled by DB
  *      constraints; map error code 23505 → fieldErrors.{sku|slug}.
- *   6. INSERT into product_categories (M2M) and product_images.
+ *   6. INSERT into product_categories (M2M) and one row per uploaded
+ *      file in product_images, with display_order=index and
+ *      is_primary=(index===primary_index).
  *   7. Return { ok: true, product: { id, slug, name } }.
  */
 
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_IMAGES = 8;
 const STORAGE_BUCKET = 'product-images';
 
 type FieldErrors = Partial<{
@@ -78,8 +83,14 @@ export async function POST(req: NextRequest) {
   const metaDescription = String(form.get('meta_description') ?? '').trim();
   const isActive = String(form.get('is_active') ?? 'true') === 'true';
   const isFeatured = String(form.get('is_featured') ?? 'false') === 'true';
-  const imageEntry = form.get('image');
-  const image = imageEntry instanceof File && imageEntry.size > 0 ? imageEntry : null;
+  const imageFiles = form
+    .getAll('images')
+    .filter((v): v is File => v instanceof File && v.size > 0);
+  const primaryIndexRaw = Number(form.get('primary_index') ?? '0');
+  const primaryIndex =
+    Number.isFinite(primaryIndexRaw) && primaryIndexRaw >= 0 && primaryIndexRaw < imageFiles.length
+      ? Math.floor(primaryIndexRaw)
+      : 0;
 
   // ── Validate ─────────────────────────────────────────────────────────
   const fieldErrors: FieldErrors = {};
@@ -112,11 +123,18 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  if (image) {
-    if (!ALLOWED_IMAGE_TYPES.has(image.type)) {
-      fieldErrors.image = 'Image must be JPEG, PNG, or WebP.';
-    } else if (image.size > MAX_IMAGE_BYTES) {
-      fieldErrors.image = 'Image must be under 8 MB.';
+  if (imageFiles.length > MAX_IMAGES) {
+    fieldErrors.image = `Up to ${MAX_IMAGES} images per product.`;
+  } else {
+    for (const f of imageFiles) {
+      if (!ALLOWED_IMAGE_TYPES.has(f.type)) {
+        fieldErrors.image = `${f.name}: must be JPEG, PNG, or WebP.`;
+        break;
+      }
+      if (f.size > MAX_IMAGE_BYTES) {
+        fieldErrors.image = `${f.name}: must be under 8 MB.`;
+        break;
+      }
     }
   }
 
@@ -143,18 +161,19 @@ export async function POST(req: NextRequest) {
   }
   if (!category) return fail(400, 'Validation failed.', { category_slug: 'Unknown category.' });
 
-  // ── Upload image (if any) ─────────────────────────────────────────────
-  let imageUrl: string | null = null;
-  if (image) {
-    const ext = image.name.split('.').pop()?.toLowerCase() ?? 'jpg';
+  // ── Upload images (if any) ───────────────────────────────────────────
+  const imageUrls: string[] = [];
+  for (let i = 0; i < imageFiles.length; i++) {
+    const file = imageFiles[i];
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
     const safeExt = /^(jpg|jpeg|png|webp)$/.test(ext) ? ext : 'jpg';
-    const key = `${slug}-${Date.now()}.${safeExt}`;
+    const key = `${slug}-${Date.now()}-${i}.${safeExt}`;
 
-    const buffer = Buffer.from(await image.arrayBuffer());
+    const buffer = Buffer.from(await file.arrayBuffer());
     const { error: upErr } = await admin.storage
       .from(STORAGE_BUCKET)
       .upload(key, buffer, {
-        contentType: image.type,
+        contentType: file.type,
         cacheControl: '31536000',
         upsert: false,
       });
@@ -163,12 +182,12 @@ export async function POST(req: NextRequest) {
       console.error('[products/create] storage upload failed', upErr);
       const msg = upErr.message?.toLowerCase().includes('bucket')
         ? `Image upload failed — Supabase storage bucket "${STORAGE_BUCKET}" missing. Create it in the Supabase dashboard with public read access.`
-        : `Image upload failed: ${upErr.message}`;
+        : `Image upload failed (${file.name}): ${upErr.message}`;
       return fail(500, msg, { image: msg });
     }
 
     const { data: pub } = admin.storage.from(STORAGE_BUCKET).getPublicUrl(key);
-    imageUrl = pub?.publicUrl ?? null;
+    if (pub?.publicUrl) imageUrls.push(pub.publicUrl);
   }
 
   // ── INSERT product ────────────────────────────────────────────────────
@@ -206,14 +225,15 @@ export async function POST(req: NextRequest) {
     .from('product_categories')
     .insert({ product_id: created.id, category_id: category.id });
 
-  if (imageUrl) {
-    await admin.from('product_images').insert({
+  if (imageUrls.length > 0) {
+    const rows = imageUrls.map((url, i) => ({
       product_id: created.id,
-      url: imageUrl,
+      url,
       alt_text: name,
-      display_order: 0,
-      is_primary: true,
-    });
+      display_order: i,
+      is_primary: i === primaryIndex,
+    }));
+    await admin.from('product_images').insert(rows);
   }
 
   return NextResponse.json({

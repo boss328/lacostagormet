@@ -22,6 +22,7 @@ export const BRAND_TYPOLOGY: Record<string, string> = {
   'monin':               'Syrups · Sauces',
   'mylk-labs':           'Oatmeal',
   'oregon-chai':         'Chai',
+  'possmei':             'Boba',
   'smartfruit':          'Purees · Refreshers',
   'sunny-sky-products':  'Syrups · Sauces',
   'tiki-breeze':         'Energy · Syrups · Smoothies',
@@ -44,6 +45,7 @@ export const BRAND_COMING_SOON: ReadonlySet<string> = new Set([
   'torani',
   'tiki-breeze',
   'lotus-plant-power',
+  'possmei',
 ]);
 
 export function isBrandComingSoon(slug: string): boolean {
