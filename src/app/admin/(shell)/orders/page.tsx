@@ -145,6 +145,12 @@ export default async function AdminOrdersPage({
           </h1>
           <div className="flex items-center gap-5">
             <Link
+              href="/admin/orders/new/"
+              className="type-label-sm text-ink hover:text-brand-deep transition-colors duration-200"
+            >
+              + New order
+            </Link>
+            <Link
               href={buildHref('/api/admin/orders/export', {
                 view: filterKey === 'all' ? undefined : filterKey,
                 q: search,

@@ -24,6 +24,7 @@ export function AdminOrderStatusButtons({ orderNumber, status, fulfillmentStatus
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [refunding, setRefunding] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [trackingInput, setTrackingInput] = useState('');
   const [showShipForm, setShowShipForm] = useState(false);
@@ -40,6 +41,7 @@ export function AdminOrderStatusButtons({ orderNumber, status, fulfillmentStatus
     status === 'paid' || status === 'payment_held';
   const alreadyRefunded =
     status === 'refunded' || status === 'partially_refunded';
+  const canCancel = status === 'pending' || status === 'payment_held';
 
   async function markShipped(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -63,6 +65,41 @@ export function AdminOrderStatusButtons({ orderNumber, status, fulfillmentStatus
       setMessage('Network error.');
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function cancelOrder() {
+    if (cancelling) return;
+    const ok = window.confirm(
+      `Cancel order #${orderNumber}? This is for orders that never completed payment — paid orders should be refunded instead.`,
+    );
+    if (!ok) return;
+    setCancelling(true);
+    setMessage(null);
+    try {
+      const res = await fetch(
+        `/api/admin/orders/${encodeURIComponent(orderNumber)}/cancel/`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({}),
+        },
+      );
+      const body = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        errorMessage?: string;
+      };
+      if (!res.ok || !body.ok) {
+        setMessage(body.errorMessage ?? 'Could not cancel order.');
+        return;
+      }
+      setMessage('Order cancelled.');
+      router.refresh();
+    } catch (e) {
+      console.error('[admin cancel]', e);
+      setMessage('Network error.');
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -164,6 +201,24 @@ export function AdminOrderStatusButtons({ orderNumber, status, fulfillmentStatus
           >
             Already refunded
           </span>
+        )}
+        {canCancel && (
+          <button
+            type="button"
+            onClick={cancelOrder}
+            disabled={cancelling || submitting || refunding}
+            className={`type-label inline-flex items-center gap-2 ${cancelling ? 'opacity-60 cursor-wait' : ''}`}
+            style={{
+              padding: '12px 20px',
+              border: '1px solid var(--accent)',
+              color: 'var(--color-accent)',
+              background: 'transparent',
+              minHeight: 44,
+            }}
+            title="Cancel an order that never completed payment"
+          >
+            {cancelling ? 'Cancelling…' : 'Cancel order'}
+          </button>
         )}
         {/* Staff-assisted reorder — copies the items + shipping address
             into the admin user's own session cart, redirects to

@@ -53,7 +53,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
                 {link.label}
               </Link>
             ))}
-            <form method="POST" action="/auth/sign-out" className="py-3">
+            <form method="POST" action="/auth/sign-out/" className="py-3">
               <button
                 type="submit"
                 className="type-label text-ink-muted hover:text-accent transition-colors duration-200"

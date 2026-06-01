@@ -62,6 +62,10 @@ export async function middleware(req: NextRequest) {
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }
+    // Personalised pages must never be cached. Without this the browser
+    // (or its bfcache) can show a stale signed-in /account view after
+    // sign-out, which reads as "I clicked Sign out but I'm still logged in".
+    response.headers.set('Cache-Control', 'no-store, must-revalidate');
   }
 
   return response;
