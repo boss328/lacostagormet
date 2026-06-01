@@ -10,8 +10,8 @@
  *   - For categories, populate categories.image_url and delete map entries here
  *   - For hero/story, swap the constants below
  *
- * April 2026: category restructure 6 → 5 —
- *   chai-tea, specialty-beverages, smoothies, oatmeal, protein-and-energy.
+ * Current categories:
+ *   chai-and-matcha, specialty-beverages, smoothies, oatmeal, protein-and-energy.
  */
 
 type PlaceholderImage = { src: string; alt: string };
@@ -22,7 +22,7 @@ const UNSPLASH = (id: string) =>
 // Keyed by categories.slug. All IDs 200-verified and confirmed visually via
 // Unsplash search alt-text scrapes (Apr 2026).
 export const CATEGORY_IMAGES: Record<string, PlaceholderImage> = {
-  'chai-tea': {
+  'chai-and-matcha': {
     src: UNSPLASH('1571934811356-5cc061b6821f'),
     alt: 'Steaming chai latte in a ceramic cup',
   },

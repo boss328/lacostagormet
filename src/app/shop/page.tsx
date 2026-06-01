@@ -17,7 +17,7 @@ type ShopPageProps = {
 export const metadata = {
   title: 'The Catalog',
   description:
-    'Bulk cafe supplies — chai, cocoa, frappé bases, smoothies, syrups. Fourteen brands, shipped from Carlsbad since 2003.',
+    'Bulk cafe supplies — chai, cocoa, frappé bases, smoothies, syrups. Over one hundred products from more than fifteen brands, shipped from Carlsbad since 2003.',
 };
 
 export default async function ShopPage({ searchParams }: ShopPageProps) {
@@ -58,7 +58,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         breadcrumb={[{ href: '/', label: 'Home' }, { label: 'The Catalog' }]}
         eyebrow="§ THE CATALOG"
         title={italicLastWord('All products.')}
-        lede="One hundred twenty-one active SKUs across fourteen brands, shipped from Carlsbad since 2003."
+        lede="Over one hundred products from more than fifteen brands, shipped from Carlsbad since 2003."
       />
 
       <FilterBar

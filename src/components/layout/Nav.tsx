@@ -8,7 +8,7 @@ import { CartBadge } from '@/components/layout/CartBadge';
 import logo from '../../../public/logo.png';
 
 const NAV_LINKS: Array<{ href: string; label: string }> = [
-  { href: '/shop/chai-tea', label: 'Chai Tea' },
+  { href: '/shop/chai-and-matcha', label: 'Chai & Matcha' },
   { href: '/shop/specialty-beverages', label: 'Specialty' },
   { href: '/shop/smoothies', label: 'Smoothies' },
   { href: '/shop/oatmeal', label: 'Oatmeal' },

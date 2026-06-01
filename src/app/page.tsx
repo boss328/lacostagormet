@@ -203,7 +203,7 @@ export default async function HomePage({
           <SectionHead
             numeral="III"
             eyebrow="The directory"
-            title="Fourteen brands, {italic}one roof{/italic}."
+            title="Over sixteen brands, {italic}made in the USA{/italic}."
             link={{ href: '/brand', label: 'All Brands' }}
           />
           <div

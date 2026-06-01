@@ -5,7 +5,7 @@ import { HERO_IMAGE } from '@/lib/placeholder-images';
 const HERO_STATS: Array<{ value: string; label: string }> = [
   { value: '22',  label: 'Years in Trade' },
   { value: '42%', label: 'Reorder Rate'  },
-  { value: '14',  label: 'Brands Stocked' },
+  { value: '16+', label: 'Brands Stocked' },
 ];
 
 export function HomeHero() {
@@ -56,12 +56,13 @@ export function HomeHero() {
               backgroundPosition: 'left top',
             }}
           >
-            Stock your kitchen with the same chai, cocoa, frappé mixes, and
-            smoothie bases that independent coffee shops have been pouring for
-            their customers since 2003. Big Train. Mocafe. David Rio. Torani.
-            Monin. The brands you&rsquo;ve ordered at your favorite café — now
-            available for your home, your office, or your next event.
-            Shipping in 3 to 5 business days from our warehouses across the US.
+            Stock your kitchen with the same chai, matcha, cocoa, frappés,
+            smoothies, specialty syrups, and protein &amp; energy drinks that
+            independent coffee shops have been pouring for their customers
+            since 2003. Big Train. Mocafe. David Rio. Torani. Monin. The
+            brands you&rsquo;ve ordered at your favorite café — now available
+            for your home, your office, or your next event. Shipping in 3 to
+            5 business days from our warehouses across the US.
           </p>
 
           <div className="stagger-4 flex flex-wrap items-center gap-3.5">

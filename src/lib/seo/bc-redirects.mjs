@@ -16,9 +16,12 @@
 
 export const bcRedirects = [
   // ───── Apr 2026 category restructure (6 → 5) ─────
-  // teas-and-chai → chai-tea
-  { source: '/shop/teas-and-chai/',      destination: '/shop/chai-tea/',            permanent: true },
-  { source: '/shop/teas-and-chai',       destination: '/shop/chai-tea',             permanent: true },
+  // teas-and-chai → chai-and-matcha (chai-tea renamed May 2026)
+  { source: '/shop/teas-and-chai/',      destination: '/shop/chai-and-matcha/',     permanent: true },
+  { source: '/shop/teas-and-chai',       destination: '/shop/chai-and-matcha',      permanent: true },
+  // May 2026 rename: chai-tea → chai-and-matcha (slug + display name)
+  { source: '/shop/chai-tea/',           destination: '/shop/chai-and-matcha/',     permanent: true },
+  { source: '/shop/chai-tea',            destination: '/shop/chai-and-matcha',      permanent: true },
   // oatmeal-and-grains → oatmeal
   { source: '/shop/oatmeal-and-grains/', destination: '/shop/oatmeal/',             permanent: true },
   { source: '/shop/oatmeal-and-grains',  destination: '/shop/oatmeal',              permanent: true },
@@ -85,7 +88,7 @@ export const bcRedirects = [
   { source: '/brand-names/tiki-breeze/', destination: '/brand', permanent: true },
 
   // ───── Categories → teas-and-chai ─────
-  { source: '/teas/', destination: '/shop/chai-tea', permanent: true },
+  { source: '/teas/', destination: '/shop/chai-and-matcha', permanent: true },
   { source: '/teas/two-leaves-and-a-bud/', destination: '/brand', permanent: true },
   { source: '/teas/numi-tea/', destination: '/brand', permanent: true },
   { source: '/chai-tea/mocafe-chai-tea/', destination: '/brand/mocafe', permanent: true },

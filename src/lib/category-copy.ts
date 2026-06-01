@@ -5,16 +5,16 @@
  *
  * Keyed by categories.slug. Missing keys fall back to an empty string.
  *
- * April 2026 restructure: 6 → 5 categories.
- *   chai-tea                   (was teas-and-chai)
- *   specialty-beverages        (merged cocoa + frappés + syrups-and-sauces)
+ * Current top-level categories:
+ *   chai-and-matcha            (was chai-tea, renamed May 2026)
+ *   specialty-beverages        (display name "Specialty Beverages & Frappes" — merged cocoa + frappés + syrups-and-sauces)
  *   smoothies                  (was smoothie-bases)
  *   oatmeal                    (was oatmeal-and-grains)
- *   protein-and-energy         (new — renamed from protein-and-supplements)
+ *   protein-and-energy         (renamed from protein-and-supplements)
  */
 
 export const CATEGORY_COPY: Record<string, string> = {
-  'chai-tea':
+  'chai-and-matcha':
     'The chai concentrates, matcha lattes, and loose teas our café customers reorder every six weeks.',
   'specialty-beverages':
     'Cocoa powders, frappé mixes, and flavored syrups — forty-plus blended-drink bases from Big Train, Mocafe, Torani, and Monin.',

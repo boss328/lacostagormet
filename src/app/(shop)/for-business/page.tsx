@@ -148,8 +148,8 @@ export default function ForBusinessPage() {
               style={{ fontSize: '18px', lineHeight: 1.65 }}
             >
               Twenty-two years stocking independent coffee shops, bagel counters, and
-              office kitchens across the country — one hundred twenty-one SKUs,
-              fourteen brands, and a named person who answers the phone. Our café
+              office kitchens across the country — over one hundred products, more
+              than fifteen brands, and a named person who answers the phone. Our café
               customers reorder the same cases every six weeks like clockwork, because
               it works and because we know them by name.
             </p>
@@ -198,7 +198,7 @@ export default function ForBusinessPage() {
                 className="font-display text-cream mb-6 max-md:!text-[17px] max-md:mb-3"
                 style={{ fontSize: '22px', lineHeight: 1.3, letterSpacing: '-0.01em' }}
               >
-                Fourteen brands. One warehouse. No ticket queue.
+                Over sixteen brands. One warehouse. No ticket queue.
               </p>
               <p
                 className="font-display italic text-gold-bright mb-8 max-md:!text-[14px] max-md:mb-4"
@@ -212,7 +212,7 @@ export default function ForBusinessPage() {
                 style={{ borderTop: '1px solid rgba(184, 138, 72, 0.3)' }}
               >
                 <DarkStat label="Customers" value="Independent cafés & offices" />
-                <DarkStat label="Catalog" value="121 SKUs · 14 brands" />
+                <DarkStat label="Catalog" value="100+ products · 16+ brands" />
                 <DarkStat label="Based" value="Carlsbad, California" />
                 <DarkStat label="Years" value="Twenty-two and counting" />
               </dl>
