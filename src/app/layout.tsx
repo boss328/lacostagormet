@@ -4,6 +4,7 @@ import "./globals.css";
 import { TopRail } from "@/components/layout/TopRail";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 
 // Fraunces — drop 600 (unused) and pin to actually-used weights.
 // 300 stays because HomeHero uses it; 400 + 500 cover the rest.
@@ -48,6 +49,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${fraunces.variable} ${jetbrainsMono.variable}`}>
       <body className="bg-paper text-ink-2 font-display antialiased min-h-screen flex flex-col">
+        <GoogleAnalytics />
         <TopRail />
         <Nav />
         <div className="flex-1">{children}</div>

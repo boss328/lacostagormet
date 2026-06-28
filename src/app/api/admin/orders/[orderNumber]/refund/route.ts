@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
 import { sendTransactionalEmail } from '@/lib/email/send';
 import { renderOrderRefunded } from '@/lib/email/templates/order-refunded';
+import { sendGa4RefundEvent } from '@/lib/analytics/ga-measurement-protocol';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -65,7 +66,7 @@ export async function POST(
   const { data: order, error: fetchErr } = await admin
     .from('orders')
     .select(
-      'id, order_number, status, customer_email, total, shipping_address, admin_notes',
+      'id, order_number, status, source, customer_email, total, shipping_address, admin_notes',
     )
     .eq('order_number', orderNumber)
     .maybeSingle();
@@ -82,6 +83,7 @@ export async function POST(
     id: string;
     order_number: string;
     status: string;
+    source: string | null;
     customer_email: string;
     total: number | string;
     shipping_address: { first_name?: string } | null;
@@ -153,6 +155,20 @@ export async function POST(
     refundAmount: amountDollars,
     reason,
   });
+
+  // ── Net the refunded amount in GA4 (and any GA4-imported Ads conversion) ──
+  // Only storefront orders fired a client-side purchase event. Admin manual
+  // orders (source='manual') never load the customer confirmation page, so a
+  // refund for one would be a phantom negative against a transaction GA4 never
+  // recorded — skip those. Awaited so it sends before the serverless function
+  // returns; never throws.
+  if (row.source !== 'manual') {
+    await sendGa4RefundEvent({
+      orderNumber: row.order_number,
+      value: amountDollars,
+      currency: 'USD',
+    });
+  }
 
   return NextResponse.json({
     ok: true,

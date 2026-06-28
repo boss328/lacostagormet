@@ -207,6 +207,15 @@ async function handle(req: NextRequest): Promise<NextResponse> {
       error_detail: payInsErr.message,
       source: 'hosted_callback',
     });
+    // The charge succeeded (money moved) even though the forensic payments row
+    // failed to write — so still advance the order to paid/payment_held.
+    // Leaving it 'pending' would strand a real sale: mis-stated in revenue
+    // analytics and skipped by the order-confirmation purchase conversion
+    // (which only fires on paid/payment_held).
+    await admin
+      .from('orders')
+      .update({ status: nextOrderStatus })
+      .eq('id', orderRow.id);
     // Still redirect to thank-you — money moved, customer gets their number.
     return redirectTo(origin, `/order/${orderRow.order_number}`, {
       warning: 'payment_record_failed',

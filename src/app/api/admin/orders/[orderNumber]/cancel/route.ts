@@ -2,6 +2,7 @@ import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
+import { sendGa4RefundEvent } from '@/lib/analytics/ga-measurement-protocol';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -47,7 +48,7 @@ export async function POST(
 
   const { data: order, error: fetchErr } = await admin
     .from('orders')
-    .select('id, order_number, status, admin_notes')
+    .select('id, order_number, status, source, total, admin_notes')
     .eq('order_number', orderNumber)
     .maybeSingle();
 
@@ -63,6 +64,8 @@ export async function POST(
     id: string;
     order_number: string;
     status: string;
+    source: string | null;
+    total: number | string;
     admin_notes: string | null;
   };
 
@@ -94,6 +97,19 @@ export async function POST(
       { ok: false, errorMessage: updErr.message ?? 'Update failed.' },
       { status: 500 },
     );
+  }
+
+  // A storefront 'payment_held' order fired a purchase conversion when it was
+  // placed, so voiding it nets that revenue back out (full total). 'pending'
+  // orders never fired one, and admin manual orders (source='manual') never
+  // load the confirmation page — neither should emit a refund. Awaited so it
+  // sends reliably before the function returns; never throws.
+  if (row.status === 'payment_held' && row.source !== 'manual') {
+    await sendGa4RefundEvent({
+      orderNumber: row.order_number,
+      value: Number(row.total),
+      currency: 'USD',
+    });
   }
 
   return NextResponse.json({

@@ -6,6 +6,15 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { Button } from '@/components/design-system/Button';
 import { formatPackSize } from '@/lib/pack-size';
 import { bcImage } from '@/lib/bcImage';
+import { analyticsEnabled } from '@/components/analytics/analytics-config';
+import { PurchaseConversion } from '@/components/analytics/PurchaseConversion';
+
+// Order statuses that represent a real, completed sale. Mirrors the revenue
+// definition used across admin analytics (lib/admin/analytics.ts etc.):
+// 'paid' = payment captured, 'payment_held' = captured but under fraud review
+// (counts as revenue; voided ones are later refunded). 'pending' is a created-
+// but-unpaid order and must NOT fire a conversion.
+const CONVERSION_STATUSES = new Set(['paid', 'payment_held']);
 
 type Params = { orderNumber: string };
 
@@ -148,8 +157,27 @@ export default async function OrderConfirmationPage({ params }: { params: Params
   const { order, items, payment } = data;
   const held = order.status === 'payment_held';
 
+  // Fire the GA4 purchase conversion once per real sale (production only).
+  const trackPurchase = analyticsEnabled() && CONVERSION_STATUSES.has(order.status);
+
   return (
     <>
+      {trackPurchase && (
+        <PurchaseConversion
+          transactionId={order.order_number}
+          value={Number(order.total)}
+          tax={Number(order.tax)}
+          shipping={Number(order.shipping_cost)}
+          currency="USD"
+          items={items.map((item) => ({
+            item_id: item.product_sku,
+            item_name: item.product_name,
+            quantity: item.quantity,
+            price: Number(item.unit_price),
+          }))}
+        />
+      )}
+
       {/* Header — cream band, big order number */}
       <header className="bg-cream border-b border-rule">
         <div className="max-w-content mx-auto px-8 pt-14 pb-12 max-sm:px-5 max-sm:pt-10 max-sm:pb-10">
