@@ -11,16 +11,20 @@
  */
 
 export const BRAND_TYPOLOGY: Record<string, string> = {
+  '1883-maison-routin':  'Syrups · Sauces',
   'big-train':           'Frappé · Chai',
-  'cafe-essentials':     'Frappé · Chai · Cocoa',
   'david-rio':           'Gourmet Chai',
   'davinci-gourmet':     'Syrups · Sauces',
   'dr-smoothie':         'Chai · Refreshers',
+  'finest-call':         'Syrup · Purée',
+  'ghirardelli':         'Chocolate · Sauce',
+  'gosh-thats-good':     'Flavors · Base Mix',
+  'hollander-chocolate': 'Chocolate · Sauces',
+  'lion-coffee':         'Coffee',
   'lotus-plant-power':   'Energy · Plant-Based',
   'mocafe':              'Chai · Matcha · Cocoa',
   'modern-oats':         'Oatmeal',
   'monin':               'Syrups · Sauces',
-  'mylk-labs':           'Oatmeal',
   'oregon-chai':         'Chai',
   'possmei':             'Boba',
   'smartfruit':          'Purees · Refreshers',
@@ -46,6 +50,13 @@ export const BRAND_COMING_SOON: ReadonlySet<string> = new Set([
   'tiki-breeze',
   'lotus-plant-power',
   'possmei',
+  // June 2026 lineup additions — brand stubs with no SKUs yet.
+  'lion-coffee',
+  '1883-maison-routin',
+  'gosh-thats-good',
+  'hollander-chocolate',
+  'finest-call',
+  'ghirardelli',
 ]);
 
 export function isBrandComingSoon(slug: string): boolean {

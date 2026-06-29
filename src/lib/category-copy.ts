@@ -21,7 +21,7 @@ export const CATEGORY_COPY: Record<string, string> = {
   'smoothies':
     'Fruit purees and smoothie bases from Dr. Smoothie and Sunny Sky.',
   'oatmeal':
-    'Steel-cut oats and single-serve cups from Modern Oats and Mylk Labs.',
+    'Steel-cut oats and single-serve cups from Modern Oats.',
   'protein-and-energy':
     'Protein powders and energy drinks — new category, products landing soon.',
 };
