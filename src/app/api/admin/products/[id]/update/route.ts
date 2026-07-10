@@ -87,6 +87,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const description = String(form.get('description') ?? '').trim();
   const slugRaw = String(form.get('slug') ?? '').trim();
   const weightLbRaw = String(form.get('weight_lb') ?? '0').trim();
+  const upc = String(form.get('upc') ?? '').trim();
   const metaDescription = String(form.get('meta_description') ?? '').trim();
   const isActive = String(form.get('is_active') ?? 'true') === 'true';
   const isFeatured = String(form.get('is_featured') ?? 'false') === 'true';
@@ -236,6 +237,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       description,
       retail_price: retailPrice,
       weight_lb: weightLb,
+      upc: upc || null,
       meta_description: metaDescription || null,
       is_active: isActive,
       is_featured: isFeatured,

@@ -45,6 +45,7 @@ export function NewProductForm({ brands, categories }: Props) {
   // Advanced
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [weightLb, setWeightLb] = useState('');
+  const [upc, setUpc] = useState('');
   const [slugOverride, setSlugOverride] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
@@ -100,6 +101,7 @@ export function NewProductForm({ brands, categories }: Props) {
       fd.set('description', description.trim());
       fd.set('slug', computedSlug);
       fd.set('weight_lb', weightLb.trim() || '0');
+      fd.set('upc', upc.trim());
       fd.set('meta_description', metaDescription.trim());
       fd.set('is_active', isActive ? 'true' : 'false');
       fd.set('is_featured', isFeatured ? 'true' : 'false');
@@ -340,6 +342,19 @@ export function NewProductForm({ brands, categories }: Props) {
                   }
                 />
               </div>
+              <Field
+                label="UPC Code"
+                hint="Optional. Product barcode (UPC-A / GTIN-12)."
+                input={
+                  <input
+                    value={upc}
+                    onChange={(e) => setUpc(e.target.value)}
+                    maxLength={64}
+                    className={inputClass}
+                    style={{ ...inputStyle, fontFamily: 'var(--font-mono)' }}
+                  />
+                }
+              />
               <Field
                 label="Meta description"
                 hint="For search engines and social previews. 50–160 characters is ideal."

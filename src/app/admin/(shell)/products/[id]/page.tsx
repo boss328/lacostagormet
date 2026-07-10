@@ -14,6 +14,7 @@ type ProductDetailRow = {
   description: string | null;
   meta_description: string | null;
   weight_lb: number | string | null;
+  upc: string | null;
   retail_price: number | string;
   is_active: boolean;
   is_featured: boolean;
@@ -50,7 +51,7 @@ export default async function AdminProductEditPage({
       admin
         .from('products')
         .select(
-          'id, sku, slug, name, description, meta_description, weight_lb, retail_price, is_active, is_featured, brand_id, primary_category_id, brands(name, slug), primary_category:categories!primary_category_id(name, slug), product_images(id, url, is_primary, display_order)',
+          'id, sku, slug, name, description, meta_description, weight_lb, upc, retail_price, is_active, is_featured, brand_id, primary_category_id, brands(name, slug), primary_category:categories!primary_category_id(name, slug), product_images(id, url, is_primary, display_order)',
         )
         .eq('id', params.id)
         .maybeSingle(),
@@ -123,6 +124,7 @@ export default async function AdminProductEditPage({
           brandSlug: p.brands?.slug ?? '',
           description: p.description ?? '',
           weightLb: p.weight_lb != null ? Number(p.weight_lb) : null,
+          upc: p.upc ?? '',
           slug: p.slug,
           metaDescription: p.meta_description ?? '',
           isActive: p.is_active,

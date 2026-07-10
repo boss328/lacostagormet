@@ -6,6 +6,7 @@
  * Keyed by categories.slug. Missing keys fall back to an empty string.
  *
  * Current top-level categories:
+ *   syrups                     (new category, added Jul 2026)
  *   chai-and-matcha            (was chai-tea, renamed May 2026)
  *   specialty-beverages        (display name "Specialty Beverages & Frappes" — merged cocoa + frappés + syrups-and-sauces)
  *   smoothies                  (was smoothie-bases)
@@ -14,6 +15,8 @@
  */
 
 export const CATEGORY_COPY: Record<string, string> = {
+  'syrups':
+    'Flavored syrups and sauces for lattes, sodas, and blended drinks — new category, products landing soon.',
   'chai-and-matcha':
     'The chai concentrates, matcha lattes, and loose teas our café customers reorder every six weeks.',
   'specialty-beverages':

@@ -24,6 +24,7 @@ export type EditProductInitial = {
   brandSlug: string;
   description: string;
   weightLb: number | null;
+  upc: string;
   slug: string;
   metaDescription: string;
   isActive: boolean;
@@ -95,6 +96,7 @@ export function EditProductForm({ product, brands, categories }: Props) {
   const [weightLb, setWeightLb] = useState(
     product.weightLb != null ? String(product.weightLb) : '',
   );
+  const [upc, setUpc] = useState(product.upc);
   const [slugOverride, setSlugOverride] = useState(product.slug);
   const [metaDescription, setMetaDescription] = useState(product.metaDescription);
   const [isActive, setIsActive] = useState(product.isActive);
@@ -151,6 +153,7 @@ export function EditProductForm({ product, brands, categories }: Props) {
       fd.set('description', description.trim());
       fd.set('slug', computedSlug);
       fd.set('weight_lb', weightLb.trim() || '0');
+      fd.set('upc', upc.trim());
       fd.set('meta_description', metaDescription.trim());
       fd.set('is_active', isActive ? 'true' : 'false');
       fd.set('is_featured', isFeatured ? 'true' : 'false');
@@ -448,6 +451,19 @@ export function EditProductForm({ product, brands, categories }: Props) {
                     }
                   />
                 </div>
+                <Field
+                  label="UPC Code"
+                  hint="Optional. Product barcode (UPC-A / GTIN-12)."
+                  input={
+                    <input
+                      value={upc}
+                      onChange={(e) => setUpc(e.target.value)}
+                      maxLength={64}
+                      className={inputClass}
+                      style={{ ...inputStyle, fontFamily: 'var(--font-mono)' }}
+                    />
+                  }
+                />
                 <Field
                   label="Meta description"
                   hint="For search engines and social previews."

@@ -11,7 +11,7 @@
  *   - For hero/story, swap the constants below
  *
  * Current categories:
- *   chai-and-matcha, specialty-beverages, smoothies, oatmeal, protein-and-energy.
+ *   syrups, chai-and-matcha, specialty-beverages, smoothies, oatmeal, protein-and-energy.
  */
 
 type PlaceholderImage = { src: string; alt: string };
@@ -22,6 +22,13 @@ const UNSPLASH = (id: string) =>
 // Keyed by categories.slug. All IDs 200-verified and confirmed visually via
 // Unsplash search alt-text scrapes (Apr 2026).
 export const CATEGORY_IMAGES: Record<string, PlaceholderImage> = {
+  'syrups': {
+    // New category (Jul 2026). Colourful flavoured iced drinks read as
+    // "syrups" the same way the other tiles show the drink the category
+    // enables. Placeholder — swap for Jeff's product shoot like the rest.
+    src: UNSPLASH('1563227812-0ea4c22e6cc8'),
+    alt: 'Iced flavored drinks garnished with citrus and mint',
+  },
   'chai-and-matcha': {
     src: UNSPLASH('1571934811356-5cc061b6821f'),
     alt: 'Steaming chai latte in a ceramic cup',

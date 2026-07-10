@@ -24,6 +24,7 @@ type ProductRow = {
   units_per_pack: number | null;
   weight_lb: number | string | null;
   retail_price: number | string;
+  upc: string | null;
   brand_id: string | null;
   primary_category_id: string | null;
   brands: { id: string; name: string; slug: string } | null;
@@ -41,7 +42,7 @@ type ProductRow = {
 
 const PRODUCT_SELECT = `
   id, slug, sku, name, description, short_description, pack_size, units_per_pack,
-  weight_lb, retail_price, brand_id, primary_category_id,
+  weight_lb, retail_price, upc, brand_id, primary_category_id,
   brands(id, name, slug),
   primary_category:categories!primary_category_id(id, name, slug),
   product_images(url, alt_text, is_primary, display_order),
@@ -355,6 +356,9 @@ export default async function ProductPage({ params }: { params: Params }) {
                   <DetailRow label="Units / pack" value={String(product.units_per_pack)} />
                 )}
                 <DetailRow label="SKU" value={product.sku} />
+                {product.upc && (
+                  <DetailRow label="UPC" value={product.upc} />
+                )}
               </dl>
             </aside>
           </div>
