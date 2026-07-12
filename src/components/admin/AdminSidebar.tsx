@@ -32,6 +32,8 @@ const NAV: NavItem[] = [
   { href: '/admin/purchase-orders/', label: 'Purchase Orders', numeral: 'VI',    shortcut: 'g u' },
   { href: '/admin/inquiries/',       label: 'Inquiries',       numeral: 'VII',   shortcut: 'g n' },
   { href: '/admin/imports/',         label: 'Imports',         numeral: 'VIII',  shortcut: 'g i' },
+  { href: '/admin/categories/',      label: 'Categories',      numeral: 'IX',    shortcut: '' },
+  { href: '/admin/brands/',          label: 'Brands',          numeral: 'X',     shortcut: '' },
 ];
 
 export function AdminSidebar() {

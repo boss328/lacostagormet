@@ -22,7 +22,12 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // ── Admin gate (no Supabase) ──────────────────────────────────────────
-  if (pathname.startsWith('/admin')) {
+  // Covers the admin PAGES (/admin/*) AND the admin API (/api/admin/*).
+  // The `/api/admin/*` arm is load-bearing: without it those mutation
+  // endpoints are reachable unauthenticated (startsWith('/admin') does not
+  // match '/api/admin'). The /api/admin/login|logout exclusions below were
+  // already written in anticipation of this.
+  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
     if (
       pathname === '/admin/login' ||
       pathname === '/admin/login/' ||
