@@ -2,7 +2,6 @@ import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
-import { slugify } from '@/lib/admin/slug';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,8 +27,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const name = String(fd.get('name') ?? '').trim();
   if (!name) return new NextResponse('Brand name is required.', { status: 400 });
 
-  const slugInput = String(fd.get('slug') ?? '').trim();
-  const slug = (slugInput ? slugify(slugInput) : slugify(name)) || 'brand';
+  // slug is intentionally NOT editable here — brand slugs are wired into
+  // /brand/[slug] links. Rename the display name freely; the URL stays put.
   const description = String(fd.get('description') ?? '').trim() || null;
   const primaryVendorId = String(fd.get('primary_vendor_id') ?? '').trim() || null;
 
@@ -41,7 +40,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     .from('brands')
     .update({
       name,
-      slug,
       description,
       primary_vendor_id: primaryVendorId,
       is_active: isActive,

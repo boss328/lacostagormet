@@ -2,7 +2,6 @@ import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
-import { slugify } from '@/lib/admin/slug';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,8 +27,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const name = String(fd.get('name') ?? '').trim();
   if (!name) return new NextResponse('Category name is required.', { status: 400 });
 
-  const slugInput = String(fd.get('slug') ?? '').trim();
-  const slug = (slugInput ? slugify(slugInput) : slugify(name)) || 'category';
+  // slug is intentionally NOT editable here — it's wired into the hardcoded
+  // header nav and the code-keyed CATEGORY_IMAGES/CATEGORY_COPY maps, so
+  // changing it silently breaks storefront links. Rename the display name freely.
   const description = String(fd.get('description') ?? '').trim() || null;
   const metaTitle = String(fd.get('meta_title') ?? '').trim() || null;
   const metaDescription = String(fd.get('meta_description') ?? '').trim() || null;
@@ -46,7 +46,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     .from('categories')
     .update({
       name,
-      slug,
       description,
       display_order: displayOrder,
       is_active: isActive,

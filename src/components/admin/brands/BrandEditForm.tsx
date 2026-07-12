@@ -92,7 +92,19 @@ export function BrandEditForm({
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <Field name="name" label="Name" defaultValue={brand.name} required />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field name="slug" label="URL slug" defaultValue={brand.slug} mono />
+            <div className="flex flex-col gap-1.5">
+              <label className="type-label-sm text-ink">
+                URL slug <span className="type-data-mono text-ink-muted">· fixed</span>
+              </label>
+              <input
+                defaultValue={brand.slug}
+                readOnly
+                aria-readonly="true"
+                title="The URL slug is wired into /brand/[slug] links and can't be changed here. Ask a dev to change it."
+                className="bg-paper-2 text-ink-muted"
+                style={{ border: '1px solid var(--rule-strong)', padding: '9px 14px', fontSize: '13.5px', fontFamily: 'var(--font-mono)', cursor: 'not-allowed' }}
+              />
+            </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="primary_vendor_id" className="type-label-sm text-ink">
                 Preferred vendor
