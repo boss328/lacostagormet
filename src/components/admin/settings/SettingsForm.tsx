@@ -20,7 +20,7 @@ export function SettingsForm({ initial }: { initial: Settings }) {
     e.preventDefault();
     setMsg(null);
     start(async () => {
-      const res = await fetch('/api/admin/settings/vendor-po', {
+      const res = await fetch('/api/admin/settings/vendor-po/', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(state),

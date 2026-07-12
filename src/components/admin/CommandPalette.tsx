@@ -106,7 +106,7 @@ export function CommandPalette() {
 
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/admin/search?q=${encodeURIComponent(q)}`, {
+        const res = await fetch(`/api/admin/search/?q=${encodeURIComponent(q)}`, {
           signal: ctrl.signal,
         });
         if (!res.ok) throw new Error('search failed');

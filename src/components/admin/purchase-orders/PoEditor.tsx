@@ -79,7 +79,7 @@ export function PoEditor({
     fd.append('body', body);
     if (warehouseId) fd.append('warehouse_id', warehouseId);
     start(async () => {
-      const res = await fetch(`/api/admin/purchase-orders/${poId}/${action}`, {
+      const res = await fetch(`/api/admin/purchase-orders/${poId}/${action}/`, {
         method: 'POST',
         body: fd,
       });

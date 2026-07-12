@@ -21,7 +21,7 @@ export function InquiryRowActions({ id, status }: { id: string; status: Status }
     start(async () => {
       const fd = new FormData();
       fd.append('status', next);
-      const res = await fetch(`/api/admin/inquiries/${id}/status`, {
+      const res = await fetch(`/api/admin/inquiries/${id}/status/`, {
         method: 'POST',
         body: fd,
       });

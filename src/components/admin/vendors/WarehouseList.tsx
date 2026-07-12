@@ -40,18 +40,18 @@ export function WarehouseList({
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     fd.append('vendor_id', vendorId);
-    call('/api/admin/warehouses', 'POST', fd);
+    call('/api/admin/warehouses/', 'POST', fd);
   }
 
   function setPrimary(id: string) {
     const fd = new FormData();
     fd.append('is_primary', 'true');
-    call(`/api/admin/warehouses/${id}`, 'PATCH', fd);
+    call(`/api/admin/warehouses/${id}/`, 'PATCH', fd);
   }
 
   function remove(id: string) {
     if (!confirm('Delete this warehouse? Drafts pointing to it will fall back to no warehouse.')) return;
-    call(`/api/admin/warehouses/${id}`, 'DELETE');
+    call(`/api/admin/warehouses/${id}/`, 'DELETE');
   }
 
   return (

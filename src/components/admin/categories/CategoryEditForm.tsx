@@ -37,7 +37,7 @@ export function CategoryEditForm({
     const fd = new FormData(e.currentTarget);
     fd.set('is_active', isActive ? 'true' : 'false');
     start(async () => {
-      const res = await fetch(`/api/admin/categories/${category.id}`, { method: 'PATCH', body: fd });
+      const res = await fetch(`/api/admin/categories/${category.id}/`, { method: 'PATCH', body: fd });
       if (!res.ok) {
         setError((await res.text()) || 'Save failed');
         return;
@@ -59,7 +59,7 @@ export function CategoryEditForm({
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch(`/api/admin/categories/${category.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/categories/${category.id}/`, { method: 'DELETE' });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         deleted?: boolean;

@@ -96,7 +96,7 @@ export default async function AdminProductsPage({
               <span>+ New Product</span>
             </Link>
             <Link
-              href={buildHref('/api/admin/products/export', { q: search })}
+              href={buildHref('/api/admin/products/export/', { q: search })}
               className="type-label-sm text-ink hover:text-brand-deep transition-colors duration-200"
             >
               Export CSV →

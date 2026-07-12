@@ -48,7 +48,7 @@ export function AdminOrderStatusButtons({ orderNumber, status, fulfillmentStatus
     setSubmitting(true);
     setMessage(null);
     try {
-      const res = await fetch(`/api/admin/orders/${encodeURIComponent(orderNumber)}/ship`, {
+      const res = await fetch(`/api/admin/orders/${encodeURIComponent(orderNumber)}/ship/`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ tracking_number: trackingInput.trim() }),

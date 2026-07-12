@@ -25,7 +25,7 @@ export function VendorEditForm({ vendor }: { vendor: Vendor }) {
     setSaved(false);
     const fd = new FormData(e.currentTarget);
     start(async () => {
-      const res = await fetch(`/api/admin/vendors/${vendor.id}`, {
+      const res = await fetch(`/api/admin/vendors/${vendor.id}/`, {
         method: 'PATCH',
         body: fd,
       });

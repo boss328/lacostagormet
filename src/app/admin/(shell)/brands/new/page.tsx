@@ -57,7 +57,7 @@ export default async function NewBrandPage({
       )}
 
       <form
-        action="/api/admin/brands/create"
+        action="/api/admin/brands/create/"
         method="POST"
         className="max-w-[640px] flex flex-col gap-5"
       >

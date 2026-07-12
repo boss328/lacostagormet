@@ -47,7 +47,7 @@ export default function NewCategoryPage({
       )}
 
       <form
-        action="/api/admin/categories/create"
+        action="/api/admin/categories/create/"
         method="POST"
         className="max-w-[640px] flex flex-col gap-5"
       >

@@ -22,7 +22,7 @@ export default function NewVendorPage() {
       </header>
 
       <form
-        action="/api/admin/vendors/create"
+        action="/api/admin/vendors/create/"
         method="POST"
         className="max-w-[640px] flex flex-col gap-5"
       >

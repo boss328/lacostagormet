@@ -79,7 +79,7 @@ export default async function AdminCustomersPage({
           </h1>
           <div className="flex items-center gap-5">
             <Link
-              href={buildHref('/api/admin/customers/export', { q: search })}
+              href={buildHref('/api/admin/customers/export/', { q: search })}
               className="type-label-sm text-ink hover:text-brand-deep transition-colors duration-200"
             >
               Export CSV →
