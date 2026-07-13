@@ -4,6 +4,7 @@ import "./globals.css";
 import { TopRail } from "@/components/layout/TopRail";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
+import { StorefrontChrome } from "@/components/layout/StorefrontChrome";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 
 // Fraunces — drop 600 (unused) and pin to actually-used weights.
@@ -50,10 +51,14 @@ export default function RootLayout({
     <html lang="en" className={`${fraunces.variable} ${jetbrainsMono.variable}`}>
       <body className="bg-paper text-ink-2 font-display antialiased min-h-screen flex flex-col">
         <GoogleAnalytics />
-        <TopRail />
-        <Nav />
+        <StorefrontChrome>
+          <TopRail />
+          <Nav />
+        </StorefrontChrome>
         <div className="flex-1">{children}</div>
-        <Footer />
+        <StorefrontChrome>
+          <Footer />
+        </StorefrontChrome>
       </body>
     </html>
   );
