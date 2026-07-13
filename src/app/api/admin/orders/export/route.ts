@@ -2,6 +2,7 @@ import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { toCsv, csvFilename } from '@/lib/admin/csv';
+import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,8 +19,8 @@ export const dynamic = 'force-dynamic';
  * analytics query, not a CSV export.
  */
 export async function GET(req: NextRequest) {
-  const cookie = req.cookies.get('lcg_admin')?.value;
-  const expected = process.env.ADMIN_PASSWORD;
+  const cookie = req.cookies.get(ADMIN_COOKIE)?.value;
+  const expected = await expectedSessionToken();
   if (!expected || cookie !== expected) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }

@@ -151,6 +151,7 @@ export default async function AdminOrdersPage({
               + New order
             </Link>
             <Link
+              prefetch={false}
               href={buildHref('/api/admin/orders/export/', {
                 view: filterKey === 'all' ? undefined : filterKey,
                 q: search,
