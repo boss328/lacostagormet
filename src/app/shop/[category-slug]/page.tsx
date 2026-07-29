@@ -13,6 +13,7 @@ import {
 } from '@/lib/catalog-query';
 import { categoryCopy } from '@/lib/category-copy';
 import { CATEGORY_IMAGES } from '@/lib/placeholder-images';
+import { listingCanonical } from '@/lib/seo/canonical';
 
 type CategoryPageProps = {
   params: { 'category-slug': string };
@@ -29,7 +30,7 @@ export async function generateStaticParams() {
   return (data ?? []).map((c) => ({ 'category-slug': c.slug }));
 }
 
-export async function generateMetadata({ params }: CategoryPageProps) {
+export async function generateMetadata({ params, searchParams }: CategoryPageProps) {
   const supabase = createStaticClient();
   const slug = params['category-slug'];
   const { data } = await supabase
@@ -42,6 +43,7 @@ export async function generateMetadata({ params }: CategoryPageProps) {
   return {
     title: data.name,
     description: data.description ?? categoryCopy(slug),
+    alternates: { canonical: listingCanonical(`/shop/${slug}`, searchParams) },
   };
 }
 

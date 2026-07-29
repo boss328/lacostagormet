@@ -9,6 +9,7 @@ export const metadata = {
   title: 'For Business',
   description:
     'Volume pricing, reliable supply, and a named contact for cafés, offices, and independent kitchens. Family-run from Carlsbad since 2003.',
+  alternates: { canonical: '/for-business/' },
 };
 
 type Tier = {

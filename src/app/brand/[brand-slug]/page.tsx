@@ -11,6 +11,7 @@ import {
   firstValue,
 } from '@/lib/catalog-query';
 import { brandTypology, isBrandComingSoon } from '@/lib/brand-meta';
+import { listingCanonical } from '@/lib/seo/canonical';
 
 type BrandPageProps = {
   params: { 'brand-slug': string };
@@ -26,7 +27,7 @@ export async function generateStaticParams() {
   return (data ?? []).map((b) => ({ 'brand-slug': b.slug }));
 }
 
-export async function generateMetadata({ params }: BrandPageProps) {
+export async function generateMetadata({ params, searchParams }: BrandPageProps) {
   const supabase = createStaticClient();
   const slug = params['brand-slug'];
   const { data } = await supabase
@@ -40,6 +41,7 @@ export async function generateMetadata({ params }: BrandPageProps) {
     title: data.name,
     description:
       data.description ?? `${data.name} products shipped from Carlsbad since 2003.`,
+    alternates: { canonical: listingCanonical(`/brand/${slug}`, searchParams) },
   };
 }
 

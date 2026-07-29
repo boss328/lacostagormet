@@ -4,6 +4,7 @@ export const metadata = {
   title: 'Shipping',
   description:
     'Five warehouses, coast to coast. Orders ship in 3 to 5 business days. Free shipping on continental US orders over $70.',
+  alternates: { canonical: '/shipping/' },
 };
 
 export default function ShippingPage() {

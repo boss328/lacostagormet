@@ -164,7 +164,11 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const description =
     product.short_description ??
     `${product.name} from La Costa Gourmet. Bulk café supplies shipped from Carlsbad since 2003.`;
-  return { title, description };
+  return {
+    title,
+    description,
+    alternates: { canonical: `/product/${params.slug}/` },
+  };
 }
 
 export default async function ProductPage({ params }: { params: Params }) {

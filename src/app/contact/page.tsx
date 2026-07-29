@@ -4,6 +4,7 @@ export const metadata = {
   title: 'Contact',
   description:
     'Reach La Costa Gourmet — Carlsbad, California. (858) 354-1120 · Monday through Friday, 9–5 Pacific.',
+  alternates: { canonical: '/contact/' },
 };
 
 export default function ContactPage() {

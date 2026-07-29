@@ -9,6 +9,7 @@ export const metadata = {
   title: 'Brands',
   description:
     'Every label we carry — Big Train, David Rio, Mocafe, Monin, Torani, and the rest of the family. Bulk café supplies shipped from Carlsbad since 2003.',
+  alternates: { canonical: '/brand/' },
 };
 
 /**

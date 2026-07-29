@@ -9,16 +9,20 @@ import {
   parsePage,
   firstValue,
 } from '@/lib/catalog-query';
+import { listingCanonical } from '@/lib/seo/canonical';
 
 type ShopPageProps = {
   searchParams: Record<string, string | string[] | undefined>;
 };
 
-export const metadata = {
-  title: 'The Catalog',
-  description:
-    'Bulk cafe supplies — chai, cocoa, frappé bases, smoothies, syrups. Over one hundred products from more than fifteen brands, shipped from Carlsbad since 2003.',
-};
+export function generateMetadata({ searchParams }: ShopPageProps) {
+  return {
+    title: 'The Catalog',
+    description:
+      'Bulk cafe supplies — chai, cocoa, frappé bases, smoothies, syrups. Over one hundred products from more than fifteen brands, shipped from Carlsbad since 2003.',
+    alternates: { canonical: listingCanonical('/shop', searchParams) },
+  };
+}
 
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const brandSlug = firstValue(searchParams.brand);

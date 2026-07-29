@@ -11,6 +11,10 @@ import { CategoryTile, type CategoryTileData } from '@/components/shop/CategoryT
 import { BrandRow, type BrandRowData } from '@/components/shop/BrandRow';
 import { CATEGORY_IMAGES } from '@/lib/placeholder-images';
 
+export const metadata = {
+  alternates: { canonical: '/' },
+};
+
 const TICKER_ITEMS = [
   'Free shipping over $70 · continental US',
   'Volume pricing at $400 & $700',
