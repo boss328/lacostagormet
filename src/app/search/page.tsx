@@ -9,6 +9,9 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Search',
   description: 'Search the La Costa Gourmet catalog by product name, brand, or SKU.',
+  // Search results are infinite URL space (?q=anything) — keep them out of
+  // the index; the catalog itself is covered by /shop + the sitemap.
+  robots: { index: false, follow: true },
 };
 
 const RESULT_LIMIT = 50;
