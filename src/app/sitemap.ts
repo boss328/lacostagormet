@@ -38,7 +38,9 @@ const STATIC_PAGES: Array<{
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = createStaticClient();
+  // noStore: without it these anon reads land in Vercel's Data Cache and the
+  // sitemap re-serves a stale catalog forever (missing-syrups bug, 2026-07).
+  const supabase = createStaticClient({ noStore: true });
   const now = new Date();
 
   const [categoriesRes, brandsRes, productsRes] = await Promise.all([
