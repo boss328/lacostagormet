@@ -12,6 +12,7 @@
  *   smoothies                  (was smoothie-bases)
  *   oatmeal                    (was oatmeal-and-grains)
  *   protein-and-energy         (renamed from protein-and-supplements)
+ *   boba                       (new category, added Jul 2026)
  */
 
 export const CATEGORY_COPY: Record<string, string> = {
@@ -27,6 +28,8 @@ export const CATEGORY_COPY: Record<string, string> = {
     'Steel-cut oats and single-serve cups from Modern Oats.',
   'protein-and-energy':
     'Protein powders and energy drinks — new category, products landing soon.',
+  'boba':
+    'Tapioca pearls, popping boba, and milk-tea bases — new category, products landing soon.',
 };
 
 export function categoryCopy(slug: string): string {

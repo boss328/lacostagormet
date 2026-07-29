@@ -11,7 +11,8 @@
  *   - For hero/story, swap the constants below
  *
  * Current categories:
- *   syrups, chai-and-matcha, specialty-beverages, smoothies, oatmeal, protein-and-energy.
+ *   syrups, chai-and-matcha, specialty-beverages, smoothies, oatmeal,
+ *   protein-and-energy, boba.
  */
 
 type PlaceholderImage = { src: string; alt: string };
@@ -52,6 +53,12 @@ export const CATEGORY_IMAGES: Record<string, PlaceholderImage> = {
     // search — alt "a jar of protein powder next to a scoop of protein powder".
     src: UNSPLASH('1704650311190-7eeb9c4f6e11'),
     alt: 'Protein powder jar and scoop',
+  },
+  'boba': {
+    // New category (Jul 2026), no products yet. 200-verified and confirmed
+    // visually: brown-sugar boba milk tea with tapioca pearls.
+    src: UNSPLASH('1558857563-b371033873b8'),
+    alt: 'Brown sugar boba milk tea with tapioca pearls',
   },
 };
 

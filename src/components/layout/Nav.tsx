@@ -14,6 +14,7 @@ const NAV_LINKS: Array<{ href: string; label: string }> = [
   { href: '/shop/smoothies', label: 'Smoothies' },
   { href: '/shop/oatmeal', label: 'Oatmeal' },
   { href: '/shop/protein-and-energy', label: 'Protein' },
+  { href: '/shop/boba', label: 'Boba' },
   { href: '/brand', label: 'Brands' },
   { href: '/for-business', label: 'For Business' },
 ];
