@@ -8,6 +8,7 @@ import { ProductCard, type ProductCardData } from '@/components/shop/ProductCard
 import { ProductGallery, type GalleryImage } from '@/components/shop/ProductGallery';
 import { ProductAddPanel } from '@/components/shop/ProductAddPanel';
 import { ProductDescription } from '@/components/shop/ProductDescription';
+import { ProductJsonLd } from '@/components/shop/ProductJsonLd';
 import { bcImage } from '@/lib/bcImage';
 import { formatPackSize } from '@/lib/pack-size';
 
@@ -25,6 +26,7 @@ type ProductRow = {
   weight_lb: number | string | null;
   retail_price: number | string;
   upc: string | null;
+  stock_status: string | null;
   brand_id: string | null;
   primary_category_id: string | null;
   brands: { id: string; name: string; slug: string } | null;
@@ -42,7 +44,7 @@ type ProductRow = {
 
 const PRODUCT_SELECT = `
   id, slug, sku, name, description, short_description, pack_size, units_per_pack,
-  weight_lb, retail_price, upc, brand_id, primary_category_id,
+  weight_lb, retail_price, upc, stock_status, brand_id, primary_category_id,
   brands(id, name, slug),
   primary_category:categories!primary_category_id(id, name, slug),
   product_images(url, alt_text, is_primary, display_order),
@@ -164,10 +166,18 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const description =
     product.short_description ??
     `${product.name} from La Costa Gourmet. Bulk café supplies shipped from Carlsbad since 2003.`;
+  const primary = sortImages(product.product_images)[0] ?? null;
   return {
     title,
     description,
     alternates: { canonical: `/product/${params.slug}/` },
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      url: `/product/${params.slug}/`,
+      images: primary ? [{ url: bcImage(primary.url, 'hero') }] : undefined,
+    },
   };
 }
 
@@ -211,6 +221,8 @@ export default async function ProductPage({ params }: { params: Params }) {
 
   return (
     <>
+      <ProductJsonLd product={product} />
+
       {/* Breadcrumb */}
       <section className="bg-paper">
         <div className="max-w-content mx-auto px-8 pt-10 pb-2 max-md:px-4 max-md:pt-4">
