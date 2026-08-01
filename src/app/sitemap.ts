@@ -21,6 +21,14 @@ const SITE = (
   process.env.NEXT_PUBLIC_SITE_URL ?? 'https://lacostagourmet.com'
 ).replace(/\/$/, '');
 
+/**
+ * next.config sets `trailingSlash: true`, so every canonical URL ends
+ * in a slash and the slash-less variant 301s. Sitemap <loc> values must
+ * match the canonical exactly — a sitemap full of redirects is how we
+ * ended up with Search Console's "Page with redirect" bucket.
+ */
+const loc = (path: string) => `${SITE}${path.endsWith('/') ? path : `${path}/`}`;
+
 export const dynamic = 'force-dynamic';
 
 const STATIC_PAGES: Array<{
@@ -54,7 +62,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select('slug, updated_at')
       .eq('is_active', true),
     (async () => {
-      // Page through products — there are ~600+ active SKUs, just under the
+      // Page through products — ~240 active SKUs today, well under the
       // default 1000-row limit, but page anyway in case the catalog grows.
       const all: Array<{ slug: string; updated_at: string }> = [];
       const pageSize = 1000;
@@ -77,7 +85,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const p of STATIC_PAGES) {
     entries.push({
-      url: `${SITE}${p.path}`,
+      url: loc(p.path),
       lastModified: now,
       changeFrequency: p.changeFrequency,
       priority: p.priority,
@@ -86,7 +94,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const c of categoriesRes.data ?? []) {
     entries.push({
-      url: `${SITE}/shop/${c.slug}`,
+      url: loc(`/shop/${c.slug}`),
       lastModified: c.updated_at ? new Date(c.updated_at) : now,
       changeFrequency: 'weekly',
       priority: 0.8,
@@ -95,7 +103,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const b of brandsRes.data ?? []) {
     entries.push({
-      url: `${SITE}/brand/${b.slug}`,
+      url: loc(`/brand/${b.slug}`),
       lastModified: b.updated_at ? new Date(b.updated_at) : now,
       changeFrequency: 'weekly',
       priority: 0.7,
@@ -104,7 +112,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const p of productsRes.data ?? []) {
     entries.push({
-      url: `${SITE}/product/${p.slug}`,
+      url: loc(`/product/${p.slug}`),
       lastModified: p.updated_at ? new Date(p.updated_at) : now,
       changeFrequency: 'weekly',
       priority: 0.6,
