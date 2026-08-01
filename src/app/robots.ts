@@ -4,7 +4,9 @@ import type { MetadataRoute } from 'next';
  * /robots.txt — emitted by Next from this MetadataRoute.
  *
  * Disallows the private surfaces (admin / account / api / cart /
- * checkout). Everything else is open. Sitemap pointer uses the same
+ * checkout). Everything else is open. The Merchant Center product feed
+ * is the one /api path explicitly allowed — longest-match wins, so the
+ * Allow beats the /api Disallow. Sitemap pointer uses the same
  * NEXT_PUBLIC_SITE_URL the sitemap route uses, kept in sync via the
  * shared env var.
  */
@@ -18,7 +20,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
+        allow: ['/', '/api/google-feed.xml'],
         disallow: ['/admin', '/account', '/api', '/cart', '/checkout'],
       },
     ],
