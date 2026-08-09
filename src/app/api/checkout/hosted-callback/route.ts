@@ -3,8 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { fetchTransactionDetails } from '@/lib/authnet/hosted';
 import { safeJson } from '@/lib/authnet/safe-json';
-import { autoDraftVendorPosForOrder } from '@/lib/admin/vendor-po';
-import { notifyOrderPlaced } from '@/lib/email/notify-order-placed';
+import { finalizeOrderPayment, type FinalizableOrder } from '@/lib/checkout/finalize-payment';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,13 +18,22 @@ export const dynamic = 'force-dynamic';
  *   1. Extract the transId from the POST body.
  *   2. Re-fetch the transaction from Auth.net via
  *      getTransactionDetailsRequest using our server-side transaction key.
- *   3. Verify the refId on the authoritative transaction matches our
- *      order_number (which we passed in the ?orderNumber=... query param).
- *   4. Verify the amount matches our recorded order total within 1¢.
+ *   3. Resolve OUR order and verify the authoritative transaction's
+ *      refId/invoice and amount match it (finalize-payment.ts).
  *
- * Only after all three checks do we write the payments row + update the
- * order status. Then HTTP 303 redirect the customer to the thank-you
- * page.
+ * The four months of stranded 'pending' orders (Apr–Aug 2026) died one
+ * hop before this file: the return URL lacked its trailing slash, so
+ * Next's trailingSlash redirect answered Auth.net's POST with a 308
+ * that its delivery never follows (fixed at the token request in
+ * checkout/create). Hardening from that incident lives here anyway:
+ * order resolution does NOT depend on the ?orderNumber= query param —
+ * the transaction itself carries our order number as its invoice (we
+ * set refId + invoiceNumber at token time), so the authoritative
+ * lookup needs nothing from the redirect; the query param is only a
+ * hint. Every dead-end below writes a payment_audit_log row (order_id
+ * null when unresolvable) so a silent miss can't happen again. The
+ * Auth.net webhook (/api/webhooks/authnet/) finalises independently
+ * of this route.
  *
  * Error paths redirect back to /checkout with an error param so the user
  * sees a recoverable state rather than a stuck POST.
@@ -52,15 +60,12 @@ function originOf(req: NextRequest): string {
   return `${proto}://${host}`;
 }
 
+const ORDER_SELECT = 'id, order_number, status, total, customer_email';
+
 async function handle(req: NextRequest): Promise<NextResponse> {
   const origin = originOf(req);
   const url = new URL(req.url);
-  const orderNumber = url.searchParams.get('orderNumber');
-
-  if (!orderNumber) {
-    console.error('[hosted-callback] missing orderNumber query');
-    return redirectTo(origin, '/checkout', { error: 'callback-missing-order' });
-  }
+  const orderNumberHint = url.searchParams.get('orderNumber');
 
   let form: FormData;
   try {
@@ -70,50 +75,30 @@ async function handle(req: NextRequest): Promise<NextResponse> {
   }
 
   const transId = extractTransId(form);
-
   const admin = createAdminClient();
-  const { data: order, error: orderFetchErr } = await admin
-    .from('orders')
-    .select('id, order_number, status, total, customer_email')
-    .eq('order_number', orderNumber)
-    .maybeSingle();
-
-  if (orderFetchErr || !order) {
-    console.error('[hosted-callback] order lookup failed', orderFetchErr, { orderNumber });
-    return redirectTo(origin, '/checkout', { error: 'callback-order-missing' });
-  }
-
-  const orderRow = order as {
-    id: string;
-    order_number: string;
-    status: string;
-    total: number | string;
-    customer_email: string;
-  };
-
-  // Short-circuit: already finalised (idempotent replay).
-  if (orderRow.status === 'paid' || orderRow.status === 'payment_held') {
-    return redirectTo(origin, `/order/${orderRow.order_number}`);
-  }
 
   if (!transId) {
+    // Nothing to verify against. Record the arrival (previously this path
+    // was invisible) and bounce to checkout.
     void admin.from('payment_audit_log').insert({
-      order_id: orderRow.id,
+      order_id: null,
       event_type: 'callback_missing_transid',
       source: 'hosted_callback',
-      error_detail: 'Callback POST had no transId field',
+      error_detail: `Callback had no transId field; orderNumber=${orderNumberHint ?? '(absent)'}`,
     });
-    return redirectTo(origin, '/checkout', { error: 'callback-no-transid' });
+    return redirectTo(origin, '/checkout', {
+      error: orderNumberHint ? 'callback-no-transid' : 'callback-missing-order',
+    });
   }
 
-  // Fetch authoritative transaction from Auth.net.
+  // Authoritative transaction first — order resolution flows from it.
   const fetchRes = await fetchTransactionDetails(transId);
   if (!fetchRes.ok) {
     void admin.from('payment_audit_log').insert({
-      order_id: orderRow.id,
+      order_id: null,
       event_type: 'callback_lookup_failed',
       transaction_id: transId,
-      error_detail: fetchRes.errorMessage,
+      error_detail: `${fetchRes.errorMessage}; orderNumber=${orderNumberHint ?? '(absent)'}`,
       raw_response: safeJson((fetchRes as { raw?: unknown }).raw),
       source: 'hosted_callback',
     });
@@ -121,144 +106,64 @@ async function handle(req: NextRequest): Promise<NextResponse> {
   }
 
   const tx = fetchRes.details;
-  const expectedTotal = Number(orderRow.total);
-  const amountCents = Math.round(expectedTotal * 100);
 
-  // Spoof checks.
-  if (tx.refId && tx.refId !== orderRow.order_number) {
-    void admin.from('payment_audit_log').insert({
-      order_id: orderRow.id,
-      event_type: 'callback_refid_mismatch',
-      transaction_id: transId,
-      amount_cents: amountCents,
-      raw_response: safeJson(tx.raw),
-      error_detail: `refId=${tx.refId} order_number=${orderRow.order_number}`,
-      source: 'hosted_callback',
-    });
-    return redirectTo(origin, '/checkout', { error: 'callback-refid-mismatch' });
-  }
-
-  if (tx.amount !== null && Math.abs(tx.amount - expectedTotal) > 0.01) {
-    void admin.from('payment_audit_log').insert({
-      order_id: orderRow.id,
-      event_type: 'callback_amount_mismatch',
-      transaction_id: transId,
-      amount_cents: amountCents,
-      raw_response: safeJson(tx.raw),
-      error_detail: `authnet=${tx.amount} expected=${expectedTotal}`,
-      source: 'hosted_callback',
-    });
-    return redirectTo(origin, '/checkout', { error: 'callback-amount-mismatch' });
-  }
-
-  // Map Auth.net responseCode → our order/payment status.
-  const approved = tx.responseCode === '1';
-  const held = tx.responseCode === '4';
-  const declined = tx.responseCode === '2';
-
-  if (!approved && !held) {
-    // Declined / error — record and send customer back to checkout.
-    void admin.from('payment_audit_log').insert({
-      order_id: orderRow.id,
-      event_type: declined ? 'auth_net_declined' : 'auth_net_error',
-      transaction_id: transId,
-      amount_cents: amountCents,
-      raw_response: safeJson(tx.raw),
-      error_detail: tx.responseReason ?? `responseCode=${tx.responseCode}`,
-      source: 'hosted_callback',
-    });
-    await admin
+  // Resolve the order: query-param hint first, else the invoice number the
+  // transaction itself carries.
+  const lookupNumber = orderNumberHint ?? tx.refId;
+  let order: FinalizableOrder | null = null;
+  if (lookupNumber) {
+    const { data } = await admin
       .from('orders')
-      .update({ status: 'cancelled' })
-      .eq('id', orderRow.id);
-    return redirectTo(origin, '/checkout', { error: 'declined' });
+      .select(ORDER_SELECT)
+      .eq('order_number', lookupNumber)
+      .maybeSingle();
+    order = (data as FinalizableOrder | null) ?? null;
   }
-
-  // Approved or held — write payments row, update order, audit.
-  const paymentStatus = approved ? 'succeeded' : 'held_for_review';
-  const nextOrderStatus = approved ? 'paid' : 'payment_held';
-  const masked = tx.accountNumber ?? '';
-  const cardLastFour = masked ? masked.replace(/\D/g, '').slice(-4) || null : null;
-
-  const { error: payInsErr } = await admin.from('payments').insert({
-    order_id: orderRow.id,
-    type: 'auth_capture',
-    amount: expectedTotal,
-    status: paymentStatus,
-    authnet_transaction_id: tx.transId,
-    authnet_response_code: tx.responseCode,
-    authnet_response_reason: tx.responseReason,
-    authnet_avs_result: tx.avsResultCode,
-    authnet_cvv_result: tx.cvvResultCode,
-    fraud_held: held,
-    fraud_reason: held ? tx.responseReason : null,
-    card_last_four: cardLastFour,
-    card_brand: tx.accountType,
-    raw_response: safeJson(tx.raw),
-  });
-
-  if (payInsErr) {
-    void admin.from('payment_audit_log').insert({
-      order_id: orderRow.id,
-      event_type: 'payment_insert_failed',
-      transaction_id: tx.transId,
-      amount_cents: amountCents,
-      raw_response: safeJson(tx.raw),
-      error_detail: payInsErr.message,
-      source: 'hosted_callback',
-    });
-    // The charge succeeded (money moved) even though the forensic payments row
-    // failed to write — so still advance the order to paid/payment_held.
-    // Leaving it 'pending' would strand a real sale: mis-stated in revenue
-    // analytics and skipped by the order-confirmation purchase conversion
-    // (which only fires on paid/payment_held).
-    await admin
+  // Hint present but stale/wrong? Fall back to the transaction's invoice.
+  if (!order && orderNumberHint && tx.refId && tx.refId !== orderNumberHint) {
+    const { data } = await admin
       .from('orders')
-      .update({ status: nextOrderStatus })
-      .eq('id', orderRow.id);
-    // Still redirect to thank-you — money moved, customer gets their number.
-    return redirectTo(origin, `/order/${orderRow.order_number}`, {
-      warning: 'payment_record_failed',
-    });
+      .select(ORDER_SELECT)
+      .eq('order_number', tx.refId)
+      .maybeSingle();
+    order = (data as FinalizableOrder | null) ?? null;
   }
 
-  const { error: statusErr } = await admin
-    .from('orders')
-    .update({ status: nextOrderStatus })
-    .eq('id', orderRow.id);
-
-  if (statusErr) {
+  if (!order) {
     void admin.from('payment_audit_log').insert({
-      order_id: orderRow.id,
-      event_type: 'status_update_failed',
-      transaction_id: tx.transId,
-      amount_cents: amountCents,
+      order_id: null,
+      event_type: 'callback_order_not_found',
+      transaction_id: transId,
       raw_response: safeJson(tx.raw),
-      error_detail: `intended='${nextOrderStatus}'; ${statusErr.message}`,
+      error_detail: `No order matches refId=${tx.refId ?? '(none)'} orderNumber=${orderNumberHint ?? '(absent)'}`,
       source: 'hosted_callback',
     });
+    return redirectTo(origin, '/checkout', { error: 'callback-order-missing' });
   }
 
-  void admin.from('payment_audit_log').insert({
-    order_id: orderRow.id,
-    event_type: 'payment_inserted',
-    transaction_id: tx.transId,
-    amount_cents: amountCents,
-    raw_response: safeJson(tx.raw),
+  const result = await finalizeOrderPayment({
+    admin,
+    order,
+    tx,
     source: 'hosted_callback',
   });
 
-  // Fire-and-forget: auto-draft vendor POs for this order. Customer redirect
-  // never waits — even if drafting takes a few seconds, the success page
-  // renders immediately. Errors are swallowed inside the function.
-  void autoDraftVendorPosForOrder(orderRow.id);
-
-  // Same fire-and-forget pattern: customer confirmation + admin
-  // notification emails. Email failures are logged inside the helper
-  // and never bubble up; the customer still hits the thank-you page.
-  void notifyOrderPlaced(orderRow.id);
-
-  return redirectTo(origin, `/order/${orderRow.order_number}`);
+  switch (result.outcome) {
+    case 'already_final':
+      return redirectTo(origin, `/order/${order.order_number}`);
+    case 'refid_mismatch':
+      return redirectTo(origin, '/checkout', { error: 'callback-refid-mismatch' });
+    case 'amount_mismatch':
+      return redirectTo(origin, '/checkout', { error: 'callback-amount-mismatch' });
+    case 'declined':
+      return redirectTo(origin, '/checkout', { error: 'declined' });
+    case 'finalized':
+      return redirectTo(
+        origin,
+        `/order/${order.order_number}`,
+        result.paymentRecordFailed ? { warning: 'payment_record_failed' } : {},
+      );
+  }
 }
 
 export async function POST(req: NextRequest) {
