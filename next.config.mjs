@@ -14,6 +14,13 @@ const nextConfig = {
   // makes self-hosted dev / preview environments behave the same.
   compress: true,
   poweredByHeader: false,
+  // WARNING: load-bearing and dangerous. This setting 308-redirects any extension-less
+  // route, which has broken production THREE times: stale build-time Data Cache category
+  // slugs, sitemap URLs 301ing (0 pages indexed), and every Authorize.net payment callback
+  // from Apr–Aug 2026 (silent 308 = no order ever marked paid).
+  // Any new API route consumed by an EXTERNAL service must either end in a trailing slash
+  // everywhere it is referenced, or contain a dot in its final path segment.
+  // After ANY deploy touching routes, run: npm run smoke
   trailingSlash: true,
 
   images: {
