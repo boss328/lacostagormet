@@ -256,6 +256,13 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Fetch Auth.net form token.
+    //
+    // Both URLs MUST carry the trailing slash: next.config sets
+    // `trailingSlash: true`, so the slash-less form answers 308 — and
+    // Auth.net's transaction-result POST does not follow redirects. Four
+    // months of orders stranded at 'pending' (Apr–Aug 2026) trace to this
+    // returnUrl missing its slash: every callback died as an unfollowed
+    // 308 at the edge, before the handler could run or log anything.
     const origin = originOf(req);
     const token = await getHostedPaymentToken({
       orderNumber: order.order_number,
@@ -263,8 +270,8 @@ export async function POST(req: NextRequest) {
       customerEmail: payload.email,
       billingAddress: payload.shippingAddress,
       shippingAddress: payload.shippingAddress,
-      returnUrl: `${origin}/api/checkout/hosted-callback?orderNumber=${encodeURIComponent(order.order_number)}`,
-      cancelUrl: `${origin}/checkout`,
+      returnUrl: `${origin}/api/checkout/hosted-callback/?orderNumber=${encodeURIComponent(order.order_number)}`,
+      cancelUrl: `${origin}/checkout/`,
     });
 
     if (!token.ok) {
