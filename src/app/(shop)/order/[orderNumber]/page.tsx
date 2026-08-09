@@ -8,6 +8,7 @@ import { formatPackSize } from '@/lib/pack-size';
 import { bcImage } from '@/lib/bcImage';
 import { analyticsEnabled } from '@/components/analytics/analytics-config';
 import { PurchaseConversion } from '@/components/analytics/PurchaseConversion';
+import { ClearCartOnConfirmation } from '@/components/checkout/ClearCartOnConfirmation';
 
 // Order statuses that represent a real, completed sale. Mirrors the revenue
 // definition used across admin analytics (lib/admin/analytics.ts etc.):
@@ -156,12 +157,14 @@ export default async function OrderConfirmationPage({ params }: { params: Params
 
   const { order, items, payment } = data;
   const held = order.status === 'payment_held';
+  const pending = order.status === 'pending';
 
   // Fire the GA4 purchase conversion once per real sale (production only).
   const trackPurchase = analyticsEnabled() && CONVERSION_STATUSES.has(order.status);
 
   return (
     <>
+      <ClearCartOnConfirmation />
       {trackPurchase && (
         <PurchaseConversion
           transactionId={order.order_number}
@@ -197,7 +200,9 @@ export default async function OrderConfirmationPage({ params }: { params: Params
           >
             {held
               ? "We've received your order and are doing a quick review of the payment — you'll hear from us within a business day."
-              : 'Your order is in. We\u2019ll be in touch with tracking as soon as it leaves Carlsbad.'}
+              : pending
+                ? "We're confirming your payment with our card processor. You'll receive an email receipt the moment it clears — if you haven't heard from us within the hour, please contact us before placing the order again."
+                : 'Your order is in. We\u2019ll be in touch with tracking as soon as it leaves Carlsbad.'}
           </p>
 
           <div
