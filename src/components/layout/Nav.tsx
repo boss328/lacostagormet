@@ -7,13 +7,16 @@ import { Menu, Search, User, X, ShoppingBag } from 'lucide-react';
 import { CartBadge } from '@/components/layout/CartBadge';
 import logo from '../../../public/logo.png';
 
+// Order mirrors the homepage category tiles (owner spec, Aug 2026).
+// Labels are shortened where the full DB name would crowd the rail —
+// the tiles carry the full names.
 const NAV_LINKS: Array<{ href: string; label: string }> = [
-  { href: '/shop/syrups', label: 'Syrups & Sauces' },
   { href: '/shop/chai-and-matcha', label: 'Chai & Matcha' },
-  { href: '/shop/specialty-beverages', label: 'Specialty' },
-  { href: '/shop/smoothies', label: 'Smoothies' },
+  { href: '/shop/specialty-beverages', label: 'Frappe & Cocoa & Coffee' },
+  { href: '/shop/smoothies', label: 'Smoothies & Refreshers' },
   { href: '/shop/oatmeal', label: 'Oatmeal' },
   { href: '/shop/protein-and-energy', label: 'Protein' },
+  { href: '/shop/syrups', label: 'Syrups & Sauces' },
   { href: '/shop/boba', label: 'Boba' },
   { href: '/brand', label: 'Brands' },
   { href: '/for-business', label: 'For Business' },
@@ -42,7 +45,7 @@ export function Nav() {
   return (
     <nav className="bg-cream border-b border-rule px-8 max-md:px-5 pt-6 pb-5 max-md:pt-3 max-md:pb-3 relative z-40">
         <div className="max-w-content mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-10 max-lg:grid-cols-[auto_auto] max-lg:justify-between max-md:gap-4">
-          {/* Logo wordmark + tagline */}
+          {/* Logo wordmark */}
           <Link href="/" className="flex items-center gap-4 group" onClick={close}>
             <Image
               src={logo}
@@ -52,10 +55,6 @@ export function Nav() {
               placeholder="blur"
               className="h-12 max-sm:h-9 w-auto"
             />
-            <span className="h-7 w-px bg-rule max-sm:hidden" aria-hidden="true" />
-            <span className="type-label-sm text-ink-muted max-w-[180px] leading-tight max-sm:hidden">
-              Purveyors of specialty café provisions
-            </span>
           </Link>
 
           {/* Center nav links — desktop only */}
