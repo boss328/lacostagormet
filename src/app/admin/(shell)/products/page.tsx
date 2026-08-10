@@ -102,6 +102,12 @@ export default async function AdminProductsPage({
             >
               Export CSV →
             </Link>
+            <Link
+              href="/admin/products/import/"
+              className="type-label-sm text-ink hover:text-brand-deep transition-colors duration-200"
+            >
+              Import CSV →
+            </Link>
             <span className="type-data-mono text-ink-muted">
               {(count ?? 0).toLocaleString()} active + inactive
             </span>
