@@ -25,3 +25,50 @@ export function csvFilename(prefix: string): string {
   const now = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
   return `${prefix}-${now}.csv`;
 }
+
+/**
+ * RFC 4180 parser — the inverse of toCsv, tolerant of what spreadsheet
+ * apps hand back: optional BOM, CRLF or LF line ends, quoted cells with
+ * embedded commas / quotes / newlines (product descriptions are HTML and
+ * contain all three). Returns rows of cells; fully-empty rows dropped.
+ */
+export function parseCsv(text: string): string[][] {
+  const src = text.replace(/^\uFEFF/, '');
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (src[i + 1] === '"') {
+          cell += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        cell += ch; // includes \r\n inside quoted cells
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ',') {
+      row.push(cell);
+      cell = '';
+    } else if (ch === '\n') {
+      row.push(cell);
+      cell = '';
+      rows.push(row);
+      row = [];
+    } else if (ch !== '\r') {
+      cell += ch;
+    }
+  }
+  if (cell.length > 0 || row.length > 0) {
+    row.push(cell);
+    rows.push(row);
+  }
+  return rows.filter((r) => r.some((c) => c.trim() !== ''));
+}
