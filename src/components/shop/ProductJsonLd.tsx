@@ -4,6 +4,7 @@ import {
   plainTextDescription,
   sortProductImages,
 } from '@/lib/seo/product-schema';
+import { calculateShipping } from '@/lib/checkout/shipping';
 
 /**
  * schema.org Product JSON-LD for the product detail page.
@@ -74,6 +75,41 @@ export function ProductJsonLd({ product }: { product: JsonLdProduct }) {
           : 'https://schema.org/InStock',
       seller: { '@type': 'Organization', name: 'La Costa Gourmet' },
       priceValidUntil: new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10),
+
+      // Search Console flags "Missing field hasMerchantReturnPolicy"
+      // without this. Values mirror /returns/ and the Merchant Center
+      // policy: 30 days, by mail, customer pays return shipping, US only.
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'US',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        merchantReturnDays: 30,
+        returnMethod: 'https://schema.org/ReturnByMail',
+        returnFees: 'https://schema.org/ReturnShippingFees',
+      },
+
+      // Google pairs this with the return policy for full merchant-listing
+      // treatment. The rate comes from the same calculateShipping the cart
+      // uses (single-item order of this product), so markup and checkout
+      // cannot drift. Handling 3–5 + transit 2–5 days = the 5–10 day
+      // total published in Merchant Center; keep those two in sync.
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingRate: {
+          '@type': 'MonetaryAmount',
+          value: calculateShipping(price).toFixed(2),
+          currency: 'USD',
+        },
+        shippingDestination: {
+          '@type': 'DefinedRegion',
+          addressCountry: 'US',
+        },
+        deliveryTime: {
+          '@type': 'ShippingDeliveryTime',
+          handlingTime: { '@type': 'QuantitativeValue', minValue: 3, maxValue: 5, unitCode: 'DAY' },
+          transitTime: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 5, unitCode: 'DAY' },
+        },
+      },
     },
   };
 
