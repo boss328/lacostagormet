@@ -36,12 +36,15 @@ async function fetchHomeData() {
         .eq('is_active', true)
         .order('display_order'),
 
+      // Featured products first (admin checkbox), newest arrivals backfill
+      // the remaining slots so the section is never sparse.
       supabase
         .from('products')
         .select(
           'id, slug, sku, name, pack_size, retail_price, brands(name, slug), product_images(url, alt_text, is_primary, display_order)',
         )
         .eq('is_active', true)
+        .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(4),
 
@@ -154,7 +157,7 @@ export default async function HomePage({
         </div>
       </Reveal>
 
-      {/* [4] Featured / New Arrivals */}
+      {/* [4] Featured products — hand-picked in admin, newest backfill */}
       <Reveal
         as="section"
         className="relative"
@@ -179,9 +182,9 @@ export default async function HomePage({
           <div className="relative max-w-content mx-auto px-8 pt-20 pb-16 max-md:px-5 max-md:pt-10 max-md:pb-10">
             <SectionHead
               numeral="II"
-              eyebrow="Fresh on the shelf"
-              title="New {italic}arrivals{/italic}."
-              link={{ href: '/shop?sort=new', label: 'Shop New' }}
+              eyebrow="The proprietor's picks"
+              title="Featured {italic}selections{/italic}."
+              link={{ href: '/shop', label: 'Shop All' }}
             />
             {featured.length > 0 ? (
               <div className="grid gap-5 max-lg:grid-cols-2 max-md:gap-3 lg:grid-cols-4">
