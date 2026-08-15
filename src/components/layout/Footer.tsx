@@ -17,6 +17,8 @@ const SERVICE_LINKS = [
   { href: '/account', label: 'Your Account' },
   { href: '/account/orders', label: 'Track Order' },
   { href: '/returns', label: 'Returns' },
+  { href: '/privacy', label: 'Privacy' },
+  { href: '/terms', label: 'Terms' },
 ];
 
 const TRUST_BADGES = [

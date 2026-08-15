@@ -43,6 +43,8 @@ const STATIC_PAGES: Array<{
   { path: '/for-business',     priority: 0.7, changeFrequency: 'monthly' },
   { path: '/shipping',         priority: 0.3, changeFrequency: 'yearly' },
   { path: '/returns',          priority: 0.3, changeFrequency: 'yearly' },
+  { path: '/privacy',          priority: 0.3, changeFrequency: 'yearly' },
+  { path: '/terms',            priority: 0.3, changeFrequency: 'yearly' },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
