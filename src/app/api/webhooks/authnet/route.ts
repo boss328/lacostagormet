@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
   const admin = createAdminClient();
 
   if (!verifySignature(rawBody, req.headers.get('x-anet-signature'), signatureKey)) {
-    void admin.from('payment_audit_log').insert({
+    await admin.from('payment_audit_log').insert({
       order_id: null,
       event_type: 'webhook_invalid_signature',
       source: 'authnet_webhook',
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
   const transId = String(payload.id);
   const fetchRes = await fetchTransactionDetails(transId);
   if (!fetchRes.ok) {
-    void admin.from('payment_audit_log').insert({
+    await admin.from('payment_audit_log').insert({
       order_id: null,
       event_type: 'webhook_lookup_failed',
       transaction_id: transId,
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
   const tx = fetchRes.details;
 
   if (!tx.refId) {
-    void admin.from('payment_audit_log').insert({
+    await admin.from('payment_audit_log').insert({
       order_id: null,
       event_type: 'webhook_order_not_found',
       transaction_id: transId,
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
 
   if (!orderRow) {
-    void admin.from('payment_audit_log').insert({
+    await admin.from('payment_audit_log').insert({
       order_id: null,
       event_type: 'webhook_order_not_found',
       transaction_id: transId,
@@ -151,9 +151,6 @@ export async function POST(req: NextRequest) {
     order: orderRow as FinalizableOrder,
     tx,
     source: 'authnet_webhook',
-    // No customer is waiting on this response, and fire-and-forget work
-    // can be frozen when a serverless handler returns — await it all.
-    awaitSideEffects: true,
   });
 
   return NextResponse.json({ received: true, outcome: result.outcome });

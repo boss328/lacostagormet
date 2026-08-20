@@ -16,6 +16,13 @@ import { notifyOrderPlaced } from '@/lib/email/notify-order-placed';
  * out of 'pending' — whichever caller wins the claim writes the payments
  * row and sends the emails; the loser sees 'already_final' and does
  * nothing. payments.authnet_transaction_id is UNIQUE as a second fence.
+ *
+ * Every write in here is awaited — no `void` discards. Two reasons, both
+ * learned the hard way (2026-08-20): supabase-js query builders are lazy
+ * PromiseLikes, so a `void`-discarded insert never even sends the request
+ * (months of audit rows silently never existed); and on Vercel the
+ * function can suspend once the response returns, freezing any genuinely
+ * fire-and-forget promise mid-flight.
  */
 
 export type FinalizableOrder = {
@@ -40,15 +47,8 @@ export async function finalizeOrderPayment(opts: {
   admin: SupabaseClient;
   order: FinalizableOrder;
   tx: TransactionDetails;
-  /** payment_audit_log.source — 'hosted_callback' | 'authnet_webhook' */
+  /** payment_audit_log.source — 'hosted_callback' | 'authnet_webhook' | 'status_poll' */
   source: string;
-  /**
-   * Await vendor-PO drafting + emails instead of fire-and-forget. The
-   * webhook awaits (no customer waiting, and returning early on a
-   * serverless runtime can freeze the work); the browser callback keeps
-   * them fire-and-forget so the redirect isn't delayed.
-   */
-  awaitSideEffects?: boolean;
 }): Promise<FinalizeResult> {
   const { admin, order, tx, source } = opts;
 
@@ -61,7 +61,7 @@ export async function finalizeOrderPayment(opts: {
 
   // Spoof checks — the transaction must be the one we created for this order.
   if (tx.refId && tx.refId !== order.order_number) {
-    void admin.from('payment_audit_log').insert({
+    await admin.from('payment_audit_log').insert({
       order_id: order.id,
       event_type: 'callback_refid_mismatch',
       transaction_id: tx.transId,
@@ -74,7 +74,7 @@ export async function finalizeOrderPayment(opts: {
   }
 
   if (tx.amount !== null && Math.abs(tx.amount - expectedTotal) > 0.01) {
-    void admin.from('payment_audit_log').insert({
+    await admin.from('payment_audit_log').insert({
       order_id: order.id,
       event_type: 'callback_amount_mismatch',
       transaction_id: tx.transId,
@@ -91,7 +91,7 @@ export async function finalizeOrderPayment(opts: {
   const declined = tx.responseCode === '2';
 
   if (!approved && !held) {
-    void admin.from('payment_audit_log').insert({
+    await admin.from('payment_audit_log').insert({
       order_id: order.id,
       event_type: declined ? 'auth_net_declined' : 'auth_net_error',
       transaction_id: tx.transId,
@@ -122,7 +122,7 @@ export async function finalizeOrderPayment(opts: {
     .select('id');
 
   if (claimErr) {
-    void admin.from('payment_audit_log').insert({
+    await admin.from('payment_audit_log').insert({
       order_id: order.id,
       event_type: 'status_update_failed',
       transaction_id: tx.transId,
@@ -165,7 +165,7 @@ export async function finalizeOrderPayment(opts: {
   const paymentRecordFailed = Boolean(payInsErr) && payInsErr!.code !== '23505';
 
   if (paymentRecordFailed) {
-    void admin.from('payment_audit_log').insert({
+    await admin.from('payment_audit_log').insert({
       order_id: order.id,
       event_type: 'payment_insert_failed',
       transaction_id: tx.transId,
@@ -175,7 +175,7 @@ export async function finalizeOrderPayment(opts: {
       source,
     });
   } else if (!payInsErr) {
-    void admin.from('payment_audit_log').insert({
+    await admin.from('payment_audit_log').insert({
       order_id: order.id,
       event_type: 'payment_inserted',
       transaction_id: tx.transId,
@@ -186,15 +186,10 @@ export async function finalizeOrderPayment(opts: {
   }
 
   // Vendor PO draft + customer/admin emails. Both swallow their own errors.
-  const sideEffects = Promise.all([
-    autoDraftVendorPosForOrder(order.id),
-    notifyOrderPlaced(order.id),
-  ]);
-  if (opts.awaitSideEffects) {
-    await sideEffects;
-  } else {
-    void sideEffects;
-  }
+  // Always awaited: a fire-and-forget promise can be frozen when the
+  // serverless handler returns, and a second or two before the customer's
+  // redirect is a fair price for emails that actually send.
+  await Promise.all([autoDraftVendorPosForOrder(order.id), notifyOrderPlaced(order.id)]);
 
   return { outcome: 'finalized', orderStatus: nextOrderStatus, paymentRecordFailed };
 }

@@ -9,6 +9,7 @@ import { bcImage } from '@/lib/bcImage';
 import { analyticsEnabled } from '@/components/analytics/analytics-config';
 import { PurchaseConversion } from '@/components/analytics/PurchaseConversion';
 import { ClearCartOnConfirmation } from '@/components/checkout/ClearCartOnConfirmation';
+import { PendingPaymentPoller } from '@/components/checkout/PendingPaymentPoller';
 
 // Order statuses that represent a real, completed sale. Mirrors the revenue
 // definition used across admin analytics (lib/admin/analytics.ts etc.):
@@ -165,6 +166,7 @@ export default async function OrderConfirmationPage({ params }: { params: Params
   return (
     <>
       <ClearCartOnConfirmation />
+      {pending && <PendingPaymentPoller orderNumber={order.order_number} />}
       {trackPurchase && (
         <PurchaseConversion
           transactionId={order.order_number}
@@ -201,7 +203,7 @@ export default async function OrderConfirmationPage({ params }: { params: Params
             {held
               ? "We've received your order and are doing a quick review of the payment — you'll hear from us within a business day."
               : pending
-                ? "We're confirming your payment with our card processor. You'll receive an email receipt the moment it clears — if you haven't heard from us within the hour, please contact us before placing the order again."
+                ? "We're confirming your payment with our card processor — this page will update on its own the moment it clears, and you'll receive an email receipt. If you haven't heard from us within the hour, please contact us before placing the order again."
                 : 'Your order is in. We\u2019ll be in touch with tracking as soon as it leaves Carlsbad.'}
           </p>
 

@@ -67,6 +67,21 @@ const CRITICAL_ENDPOINTS = [
     },
   },
   {
+    name: 'POST /api/checkout/payment-status/',
+    method: 'POST',
+    url: `${SITE}/api/checkout/payment-status/`,
+    body: '{"orderNumber":"SMOKE-TEST"}',
+    validate(status) {
+      // SMOKE-TEST deliberately fails the order-number format check, so a
+      // reached handler answers 400 without touching Auth.net or the DB.
+      if (status === 400) return { ok: true, note: '400 (handler reached, input rejected as designed)' };
+      if (status >= 300 && status < 400) {
+        return { ok: false, note: `${status} — redirected at the edge, handler never ran` };
+      }
+      return { ok: false, note: `${status} — expected 400 from the format check` };
+    },
+  },
+  {
     name: 'GET  /api/google-feed.xml',
     method: 'GET',
     url: `${SITE}/api/google-feed.xml`,

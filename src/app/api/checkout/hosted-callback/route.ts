@@ -4,43 +4,45 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { fetchTransactionDetails } from '@/lib/authnet/hosted';
 import { safeJson } from '@/lib/authnet/safe-json';
 import { finalizeOrderPayment, type FinalizableOrder } from '@/lib/checkout/finalize-payment';
+import { verifyPendingOrderPayment } from '@/lib/checkout/verify-pending-payment';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * Auth.net Accept Hosted callback.
+ * Auth.net Accept Hosted return trip.
  *
- * Auth.net POSTs here (form-encoded) after the customer completes payment
- * on the hosted page. We cannot trust the POST body — anyone on the
- * internet could POST arbitrary data. Anti-spoof approach:
+ * What actually arrives here (learned 2026-08-20, the incident's second
+ * layer): in the full-page-redirect integration, Auth.net returns the
+ * customer with NO transaction data — a bare GET against returnUrl. The
+ * transId-bearing transactResponse exists only in the iframe/communicator
+ * integration. For four months after the trailing-slash 308 fix (the first
+ * layer, Apr–Aug 2026) this handler kept waiting for a transId that
+ * structurally could never arrive, telling every paying customer to
+ * "please retry".
  *
- *   1. Extract the transId from the POST body.
- *   2. Re-fetch the transaction from Auth.net via
- *      getTransactionDetailsRequest using our server-side transaction key.
- *   3. Resolve OUR order and verify the authoritative transaction's
- *      refId/invoice and amount match it (finalize-payment.ts).
+ * So this route treats the return as a SIGNAL, not a message:
  *
- * The four months of stranded 'pending' orders (Apr–Aug 2026) died one
- * hop before this file: the return URL lacked its trailing slash, so
- * Next's trailingSlash redirect answered Auth.net's POST with a 308
- * that its delivery never follows (fixed at the token request in
- * checkout/create). Hardening from that incident lives here anyway:
- * order resolution does NOT depend on the ?orderNumber= query param —
- * the transaction itself carries our order number as its invoice (we
- * set refId + invoiceNumber at token time), so the authoritative
- * lookup needs nothing from the redirect; the query param is only a
- * hint. Every dead-end below writes a payment_audit_log row (order_id
- * null when unresolvable) so a silent miss can't happen again. The
- * Auth.net webhook (/api/webhooks/authnet/) finalises independently
- * of this route.
+ *   1. transId present anyway (future iframe integration, or Auth.net
+ *      changes the redirect): use it — re-fetch the authoritative
+ *      transaction and finalize. Never trust the POST body itself.
+ *   2. No transId (the normal case): resolve our order from the
+ *      ?orderNumber= hint, then actively verify server-side — scan
+ *      Auth.net's unsettled list for our invoice number and finalize
+ *      through the same idempotent path the webhook uses.
+ *   3. Verification found nothing yet: land the customer on the order
+ *      page's honest 'pending' state, where a poller keeps re-verifying
+ *      and the webhook races alongside. Never bounce them to checkout
+ *      with a "retry" message — if the charge DID go through, a retry is
+ *      a double charge.
  *
- * Error paths redirect back to /checkout with an error param so the user
- * sees a recoverable state rather than a stuck POST.
+ * Every dead-end writes a payment_audit_log row — awaited, never `void`:
+ * supabase-js builders are lazy PromiseLikes, so a void-discarded insert
+ * never even sends its request (which is why this route's forensics were
+ * blank while it misbehaved).
  */
 
 function extractTransId(form: FormData): string | null {
-  // Auth.net posts either transId or x_trans_id depending on config era.
   for (const key of ['transId', 'x_trans_id', 'transactionId']) {
     const v = form.get(key);
     if (typeof v === 'string' && v.trim()) return v.trim();
@@ -71,98 +73,152 @@ async function handle(req: NextRequest): Promise<NextResponse> {
   try {
     form = await req.formData();
   } catch {
+    // The expected case: a GET (or bodyless POST) return has no form data.
     form = new FormData();
   }
 
   const transId = extractTransId(form);
   const admin = createAdminClient();
 
-  if (!transId) {
-    // Nothing to verify against. Record the arrival (previously this path
-    // was invisible) and bounce to checkout.
-    void admin.from('payment_audit_log').insert({
+  // ---- Path 1: a transId arrived. Verify it authoritatively. -------------
+  if (transId) {
+    const fetchRes = await fetchTransactionDetails(transId);
+    if (!fetchRes.ok) {
+      await admin.from('payment_audit_log').insert({
+        order_id: null,
+        event_type: 'callback_lookup_failed',
+        transaction_id: transId,
+        error_detail: `${fetchRes.errorMessage}; orderNumber=${orderNumberHint ?? '(absent)'}`,
+        raw_response: safeJson((fetchRes as { raw?: unknown }).raw),
+        source: 'hosted_callback',
+      });
+      return redirectTo(origin, '/checkout', { error: 'callback-lookup-failed' });
+    }
+
+    const tx = fetchRes.details;
+
+    // Resolve the order: query-param hint first, else the invoice number
+    // the transaction itself carries.
+    const lookupNumber = orderNumberHint ?? tx.refId;
+    let order: FinalizableOrder | null = null;
+    if (lookupNumber) {
+      const { data } = await admin
+        .from('orders')
+        .select(ORDER_SELECT)
+        .eq('order_number', lookupNumber)
+        .maybeSingle();
+      order = (data as FinalizableOrder | null) ?? null;
+    }
+    // Hint present but stale/wrong? Fall back to the transaction's invoice.
+    if (!order && orderNumberHint && tx.refId && tx.refId !== orderNumberHint) {
+      const { data } = await admin
+        .from('orders')
+        .select(ORDER_SELECT)
+        .eq('order_number', tx.refId)
+        .maybeSingle();
+      order = (data as FinalizableOrder | null) ?? null;
+    }
+
+    if (!order) {
+      await admin.from('payment_audit_log').insert({
+        order_id: null,
+        event_type: 'callback_order_not_found',
+        transaction_id: transId,
+        raw_response: safeJson(tx.raw),
+        error_detail: `No order matches refId=${tx.refId ?? '(none)'} orderNumber=${orderNumberHint ?? '(absent)'}`,
+        source: 'hosted_callback',
+      });
+      return redirectTo(origin, '/checkout', { error: 'callback-order-missing' });
+    }
+
+    const result = await finalizeOrderPayment({
+      admin,
+      order,
+      tx,
+      source: 'hosted_callback',
+    });
+
+    switch (result.outcome) {
+      case 'already_final':
+        return redirectTo(origin, `/order/${order.order_number}`);
+      case 'refid_mismatch':
+        return redirectTo(origin, '/checkout', { error: 'callback-refid-mismatch' });
+      case 'amount_mismatch':
+        return redirectTo(origin, '/checkout', { error: 'callback-amount-mismatch' });
+      case 'declined':
+        return redirectTo(origin, '/checkout', { error: 'declined' });
+      case 'finalized':
+        return redirectTo(
+          origin,
+          `/order/${order.order_number}`,
+          result.paymentRecordFailed ? { warning: 'payment_record_failed' } : {},
+        );
+    }
+  }
+
+  // ---- Path 2: the normal data-less return. ------------------------------
+  if (!orderNumberHint) {
+    // No transId AND no hint — nothing to anchor on (stray probe, or a
+    // return URL mangled beyond recognition).
+    await admin.from('payment_audit_log').insert({
       order_id: null,
       event_type: 'callback_missing_transid',
       source: 'hosted_callback',
-      error_detail: `Callback had no transId field; orderNumber=${orderNumberHint ?? '(absent)'}`,
+      error_detail: 'return carried no transId and no orderNumber hint',
     });
-    return redirectTo(origin, '/checkout', {
-      error: orderNumberHint ? 'callback-no-transid' : 'callback-missing-order',
-    });
+    return redirectTo(origin, '/checkout', { error: 'callback-missing-order' });
   }
 
-  // Authoritative transaction first — order resolution flows from it.
-  const fetchRes = await fetchTransactionDetails(transId);
-  if (!fetchRes.ok) {
-    void admin.from('payment_audit_log').insert({
-      order_id: null,
-      event_type: 'callback_lookup_failed',
-      transaction_id: transId,
-      error_detail: `${fetchRes.errorMessage}; orderNumber=${orderNumberHint ?? '(absent)'}`,
-      raw_response: safeJson((fetchRes as { raw?: unknown }).raw),
-      source: 'hosted_callback',
-    });
-    return redirectTo(origin, '/checkout', { error: 'callback-lookup-failed' });
-  }
-
-  const tx = fetchRes.details;
-
-  // Resolve the order: query-param hint first, else the invoice number the
-  // transaction itself carries.
-  const lookupNumber = orderNumberHint ?? tx.refId;
-  let order: FinalizableOrder | null = null;
-  if (lookupNumber) {
-    const { data } = await admin
-      .from('orders')
-      .select(ORDER_SELECT)
-      .eq('order_number', lookupNumber)
-      .maybeSingle();
-    order = (data as FinalizableOrder | null) ?? null;
-  }
-  // Hint present but stale/wrong? Fall back to the transaction's invoice.
-  if (!order && orderNumberHint && tx.refId && tx.refId !== orderNumberHint) {
-    const { data } = await admin
-      .from('orders')
-      .select(ORDER_SELECT)
-      .eq('order_number', tx.refId)
-      .maybeSingle();
-    order = (data as FinalizableOrder | null) ?? null;
-  }
+  const { data } = await admin
+    .from('orders')
+    .select(ORDER_SELECT)
+    .eq('order_number', orderNumberHint)
+    .maybeSingle();
+  const order = (data as FinalizableOrder | null) ?? null;
 
   if (!order) {
-    void admin.from('payment_audit_log').insert({
+    await admin.from('payment_audit_log').insert({
       order_id: null,
       event_type: 'callback_order_not_found',
-      transaction_id: transId,
-      raw_response: safeJson(tx.raw),
-      error_detail: `No order matches refId=${tx.refId ?? '(none)'} orderNumber=${orderNumberHint ?? '(absent)'}`,
       source: 'hosted_callback',
+      error_detail: `data-less return; no order matches orderNumber=${orderNumberHint}`,
     });
     return redirectTo(origin, '/checkout', { error: 'callback-order-missing' });
   }
 
-  const result = await finalizeOrderPayment({
+  if (order.status === 'paid' || order.status === 'payment_held') {
+    // Webhook (or an earlier arrival) already finalised — straight to the
+    // thank-you page.
+    return redirectTo(origin, `/order/${order.order_number}`);
+  }
+
+  if (order.status !== 'pending') {
+    // 'cancelled' etc. — a previous decline closed this order.
+    return redirectTo(origin, '/checkout', { error: 'declined' });
+  }
+
+  const verify = await verifyPendingOrderPayment({
     admin,
     order,
-    tx,
     source: 'hosted_callback',
+    auditNoTransaction: true,
   });
 
-  switch (result.outcome) {
+  switch (verify.outcome) {
+    case 'finalized':
     case 'already_final':
       return redirectTo(origin, `/order/${order.order_number}`);
+    case 'declined':
+      return redirectTo(origin, '/checkout', { error: 'declined' });
     case 'refid_mismatch':
       return redirectTo(origin, '/checkout', { error: 'callback-refid-mismatch' });
     case 'amount_mismatch':
       return redirectTo(origin, '/checkout', { error: 'callback-amount-mismatch' });
-    case 'declined':
-      return redirectTo(origin, '/checkout', { error: 'declined' });
-    case 'finalized':
-      return redirectTo(
-        origin,
-        `/order/${order.order_number}`,
-        result.paymentRecordFailed ? { warning: 'payment_record_failed' } : {},
-      );
+    case 'no_transaction':
+    case 'lookup_failed':
+      // Can't confirm (yet). The order page's pending state says so
+      // honestly and keeps polling; the webhook may land any second.
+      return redirectTo(origin, `/order/${order.order_number}`);
   }
 }
 
@@ -170,8 +226,8 @@ export async function POST(req: NextRequest) {
   return handle(req);
 }
 
-// Auth.net sometimes sends a GET preflight with the return URL (browser
-// back button, e.g.). Accept both.
+// The redirect return is typically a GET; POST kept for completeness and
+// for any future integration mode that sends one.
 export async function GET(req: NextRequest) {
   return handle(req);
 }

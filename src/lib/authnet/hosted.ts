@@ -1,14 +1,25 @@
 import 'server-only';
 import { apiEndpoint, hostedPaymentUrl, resolveAuthnetEnv } from '@/lib/authnet/environment';
 import type { Address } from '@/lib/authnet/server';
+import {
+  pickTransactionForInvoice,
+  type UnsettledTransactionSummary,
+} from '@/lib/authnet/pick-transaction';
 
 /**
  * Auth.net Accept Hosted — the customer enters card details on Auth.net's
  * domain, not ours. We POST a merchant-authed request that includes the
  * transaction spec; Auth.net returns a short-lived form token. Our browser
  * then POSTs the token to the hosted-payment URL, where Auth.net renders
- * the card-entry page and, on success, POSTs the transaction result back
- * to a callback URL we specify.
+ * the card-entry page.
+ *
+ * CRITICAL (learned 2026-08-20): in this full-page-redirect integration
+ * the return trip to returnUrl carries NO transaction data — it is a bare
+ * browser GET. Only the iframe/communicator integration receives a
+ * transactResponse. Transaction outcomes therefore reach us exclusively
+ * server-side: the webhook, or an active lookup by invoice number
+ * (findUnsettledTransactionByInvoice below). Never build logic that
+ * expects a transId in the return request.
  *
  * We bypass the `authorizenet` SDK here and POST raw JSON — the SDK's
  * wrapper methods silently drop fields on the async-callback path (see
@@ -198,6 +209,74 @@ export async function getHostedPaymentToken(
   }
 
   return { ok: true, formToken: response.token, hostedUrl: hostedPaymentUrl(env) };
+}
+
+/**
+ * Looks up the newest transaction carrying one of our invoice numbers in
+ * Auth.net's unsettled-transaction list. This is how the redirect return
+ * trip (which carries no data — see header) gets verified server-side:
+ * a just-completed transaction sits in the unsettled list until the daily
+ * settlement batch, which comfortably covers the seconds-to-minutes window
+ * between the customer's return and finalization. Older transactions are
+ * the webhook's job.
+ *
+ * ok + transId null means Auth.net answered and no transaction matches —
+ * i.e. the customer likely never completed payment (distinct from a
+ * lookup failure, where we simply don't know yet).
+ */
+export type FindTxResult =
+  | { ok: true; transId: string | null }
+  | { ok: false; errorMessage: string };
+
+export async function findUnsettledTransactionByInvoice(
+  invoiceNumber: string,
+): Promise<FindTxResult> {
+  const env = resolveAuthnetEnv(process.env.AUTHNET_ENVIRONMENT);
+  const endpoint = apiEndpoint(env);
+  const apiLoginId = process.env.AUTHNET_API_LOGIN_ID;
+  const transactionKey = process.env.AUTHNET_TRANSACTION_KEY;
+  if (!apiLoginId || !transactionKey) {
+    return { ok: false, errorMessage: 'Auth.net credentials not configured' };
+  }
+
+  // Field order matters to Auth.net's XML-derived JSON API — keep
+  // merchantAuthentication first, then sorting, then paging.
+  const body = {
+    getUnsettledTransactionListRequest: {
+      merchantAuthentication: { name: apiLoginId, transactionKey },
+      sorting: { orderBy: 'submitTimeUTC', orderDescending: true },
+      paging: { limit: '1000', offset: '1' },
+    },
+  };
+
+  let response: {
+    transactions?: UnsettledTransactionSummary[];
+    messages?: AuthnetMessages;
+  };
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const raw = await res.text();
+    response = parseAuthnetJson(raw) as typeof response;
+  } catch (e) {
+    console.error('[authnet-hosted] unsettled-list fetch failed', e);
+    return { ok: false, errorMessage: 'Could not reach payment provider.' };
+  }
+
+  if (response.messages?.resultCode !== 'Ok') {
+    return {
+      ok: false,
+      errorMessage: response.messages?.message?.[0]?.text ?? 'Unsettled-transaction lookup failed',
+    };
+  }
+
+  return {
+    ok: true,
+    transId: pickTransactionForInvoice(response.transactions ?? [], invoiceNumber),
+  };
 }
 
 /**

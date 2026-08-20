@@ -65,12 +65,19 @@ const EMPTY_ADDRESS: AddressPayload = {
   phone: '',
 };
 
+// Never tell a customer to "retry" unless we KNOW no charge happened
+// (declined, mismatch-blocked): the payment may have succeeded even when
+// the return trip couldn't confirm it, and a retry then is a double
+// charge. 'callback-no-transid' is no longer emitted (data-less returns
+// verify server-side now) but stays mapped for stale links/history.
 const ERROR_MESSAGES: Record<string, string> = {
   declined: 'Your payment was declined. Try a different card or contact your bank.',
   'callback-missing-order': 'We lost track of your order on the return trip — please retry.',
   'callback-order-missing': 'That order could not be found. Please retry.',
-  'callback-no-transid': 'Payment provider returned without a transaction id. Please retry.',
-  'callback-lookup-failed': 'We could not verify your payment. Please retry.',
+  'callback-no-transid':
+    'We could not confirm your payment. If you completed it, check your email for a receipt before trying again — or contact us.',
+  'callback-lookup-failed':
+    'We could not confirm your payment. If you completed it, check your email for a receipt before trying again — or contact us.',
   'callback-refid-mismatch': 'Security check failed — payment was not applied. Please retry.',
   'callback-amount-mismatch': 'Amount mismatch on the return trip. Please retry.',
 };
