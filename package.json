@@ -10,6 +10,7 @@
     "smoke": "node scripts/smoke-test.mjs"
   },
   "dependencies": {
+    "@amazonpay/amazon-pay-api-sdk-nodejs": "2.3.4",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.3",
     "authorizenet": "^1.0.10",
@@ -23,6 +24,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@next/bundle-analyzer": "^16.2.4",
     "@types/node": "^20",
     "@types/react": "^18",

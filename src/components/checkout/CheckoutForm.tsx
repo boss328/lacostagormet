@@ -14,11 +14,12 @@ import {
 } from '@/stores/cart';
 import { US_STATES, type AddressPayload } from '@/lib/checkout/validate';
 import { formatPackSize } from '@/lib/pack-size';
+import { WalletPayments } from './WalletPayments';
+import { calculateShipping } from '@/lib/checkout/shipping';
 
 const CREAM_BG =
   'radial-gradient(ellipse at center, var(--color-cream) 0%, var(--color-paper-2) 115%)';
 
-const SHIPPING_STANDARD = 12.99;
 const HI_AK_SURCHARGE = 25;
 
 function splitPrice(n: number): { dollars: string; cents: string } {
@@ -48,9 +49,8 @@ function Price({ amount, size = 22 }: { amount: number; size?: number }) {
 
 function clientShipping(subtotal: number, state: string): number {
   const s = state.trim().toUpperCase();
-  if (s === 'HI' || s === 'AK') return SHIPPING_STANDARD + HI_AK_SURCHARGE;
-  if (subtotal >= FREE_SHIPPING_THRESHOLD) return 0;
-  return SHIPPING_STANDARD;
+  const base = calculateShipping(subtotal);
+  return s === 'HI' || s === 'AK' ? base + HI_AK_SURCHARGE : base;
 }
 
 const EMPTY_ADDRESS: AddressPayload = {
@@ -71,6 +71,7 @@ const EMPTY_ADDRESS: AddressPayload = {
 // charge. 'callback-no-transid' is no longer emitted (data-less returns
 // verify server-side now) but stays mapped for stale links/history.
 const ERROR_MESSAGES: Record<string, string> = {
+  'wallet-unconfirmed': 'Your wallet payment could not yet be confirmed. If you approved payment, do not pay again; check your order or contact us.',
   declined: 'Your payment was declined. Try a different card or contact your bank.',
   'callback-missing-order': 'We lost track of your order on the return trip — please retry.',
   'callback-order-missing': 'That order could not be found. Please retry.',
@@ -115,6 +116,7 @@ export function CheckoutForm() {
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState<AddressPayload>(EMPTY_ADDRESS);
   const [submitting, setSubmitting] = useState(false);
+  const [walletActive, setWalletActive] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Surface any error from the hosted-callback redirect.
@@ -165,7 +167,7 @@ export function CheckoutForm() {
   }, [hydrated, items.length, submitting, router]);
 
   async function handleContinue() {
-    if (!canContinue) return;
+    if (!canContinue || walletActive) return;
     setSubmitting(true);
     setErrorMessage(null);
     try {
@@ -272,6 +274,7 @@ export function CheckoutForm() {
               </div>
             )}
 
+            <fieldset disabled={walletActive} className="contents">
             <FormSection roman="I" label="Contact">
               <div className="flex flex-col gap-2">
                 <label htmlFor="email" className="type-label-sm text-ink">
@@ -385,6 +388,7 @@ export function CheckoutForm() {
               </div>
             </FormSection>
 
+            </fieldset>
             <FormSection roman="III" label="Payment">
               <p
                 className="font-display text-ink-2 mb-3"
@@ -394,8 +398,12 @@ export function CheckoutForm() {
                 step. Card details never reach our server.
               </p>
               <p className="type-data-mono text-ink-muted">
-                Supports browser autofill · SSL throughout · 3D Secure when your bank requires it
+                Credit and debit cards are processed securely by Authorize.net.
               </p>
+              <WalletPayments disabled={!canContinue} onActiveChange={setWalletActive} payload={{
+                email, shippingAddress: address, clientSubtotal: subtotal,
+                items: items.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
+              }} />
             </FormSection>
           </div>
 
@@ -458,15 +466,15 @@ export function CheckoutForm() {
                 <button
                   type="button"
                   onClick={handleContinue}
-                  disabled={!canContinue}
-                  className={`btn btn-solid w-full justify-center ${!canContinue ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  disabled={!canContinue || walletActive}
+                  className={`btn btn-solid w-full justify-center ${!canContinue || walletActive ? 'opacity-60 cursor-not-allowed' : ''}`}
                   style={{ padding: '18px 26px' }}
                   aria-busy={submitting}
                 >
                   <span>
                     {submitting
                       ? 'Redirecting to payment…'
-                      : `Continue to payment — $${total.toFixed(2)}`}
+                      : `Pay by card — $${total.toFixed(2)}`}
                   </span>
                   <span className="btn-arrow" aria-hidden="true">→</span>
                 </button>

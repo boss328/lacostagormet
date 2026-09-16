@@ -1,5 +1,7 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { reconcileWalletPayment } from '@/lib/wallets/finalize';
+import type { WalletAttempt } from '@/lib/wallets/verification';
 import { fetchTransactionDetails, findUnsettledTransactionByInvoice } from '@/lib/authnet/hosted';
 import {
   finalizeOrderPayment,
@@ -44,6 +46,17 @@ export async function verifyPendingOrderPayment(opts: {
   auditNoTransaction?: boolean;
 }): Promise<VerifyPendingResult> {
   const { admin, order, source } = opts;
+
+  if (process.env.WALLET_CHECKOUT_ENABLED === 'true') {
+    const { data: wallet, error } = await admin.from('wallet_checkout_attempts').select('*').eq('order_id', order.id).maybeSingle();
+    if (error) return { outcome: 'lookup_failed' };
+    if (wallet) {
+      try {
+        const status = await reconcileWalletPayment(wallet as WalletAttempt);
+        return status === 'paid' ? { outcome: 'already_final' } : { outcome: 'no_transaction' };
+      } catch { return { outcome: 'lookup_failed' }; }
+    }
+  }
 
   const found = await findUnsettledTransactionByInvoice(order.order_number);
   if (!found.ok) {
