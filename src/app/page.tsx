@@ -1,233 +1,263 @@
+import Image from 'next/image';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { Reveal } from '@/components/design-system/Reveal';
-import { SectionHead } from '@/components/design-system/SectionHead';
-import { Ticker } from '@/components/layout/Ticker';
-import { HomeHero } from '@/components/home/HomeHero';
-import { HomeStory } from '@/components/home/HomeStory';
-import { HomeB2BBand } from '@/components/home/HomeB2BBand';
-import { ProductCard, type ProductCardData } from '@/components/shop/ProductCard';
-import { CategoryTile, type CategoryTileData } from '@/components/shop/CategoryTile';
-import { BrandRow, type BrandRowData } from '@/components/shop/BrandRow';
-import { CATEGORY_IMAGES } from '@/lib/placeholder-images';
-
-export const metadata = {
-  alternates: { canonical: '/' },
-};
-
-const TICKER_ITEMS = [
-  'Free shipping over $70 · continental US',
-  'Volume pricing at $400 & $700',
-  'Family-owned since 2003',
-  'Carlsbad, California · Shipping nationwide',
-  'Monday thru Friday, 9–5 PT',
-];
-
-/** Assemble home data in parallel — anon client, RLS handles visibility. */
-async function fetchHomeData() {
-  const supabase = createClient();
-
-  const [categoriesRes, productsRes, brandsRes, categoryCountsRes, brandCountsRes] =
-    await Promise.all([
-      supabase
-        .from('categories')
-        .select('id, name, slug, display_order')
-        .is('parent_id', null)
-        .eq('is_active', true)
-        .order('display_order'),
-
-      // Featured products first (admin checkbox), newest arrivals backfill
-      // the remaining slots so the section is never sparse.
-      supabase
-        .from('products')
-        .select(
-          'id, slug, sku, name, pack_size, retail_price, brands(name, slug), product_images(url, alt_text, is_primary, display_order)',
-        )
-        .eq('is_active', true)
-        .order('is_featured', { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(4),
-
-      supabase
-        .from('brands')
-        .select('id, name, slug')
-        .eq('is_active', true)
-        .order('name'),
-
-      // Per-category item count via m2m join table
-      supabase
-        .from('product_categories')
-        .select('category_id, products!inner(is_active)')
-        .eq('products.is_active', true),
-
-      // Per-brand item count via FK
-      supabase
-        .from('products')
-        .select('brand_id')
-        .eq('is_active', true),
-    ]);
-
-  const categoryCounts = new Map<string, number>();
-  for (const row of categoryCountsRes.data ?? []) {
-    categoryCounts.set(row.category_id, (categoryCounts.get(row.category_id) ?? 0) + 1);
-  }
-
-  const brandCounts = new Map<string, number>();
-  for (const row of brandCountsRes.data ?? []) {
-    if (row.brand_id) {
-      brandCounts.set(row.brand_id, (brandCounts.get(row.brand_id) ?? 0) + 1);
-    }
-  }
-
-  const categories: CategoryTileData[] = (categoriesRes.data ?? []).map((c) => ({
-    id: c.id,
-    name: c.name,
-    slug: c.slug,
-    display_order: c.display_order,
-    itemCount: categoryCounts.get(c.id) ?? 0,
-  }));
-
-  const featured = (productsRes.data ?? []) as unknown as ProductCardData[];
-
-  const brands: BrandRowData[] = (brandsRes.data ?? []).map((b) => ({
-    id: b.id,
-    name: b.name,
-    slug: b.slug,
-    itemCount: brandCounts.get(b.id) ?? 0,
-  }));
-
-  return { categories, featured, brands };
-}
-
-/**
- * Magic-link rescue: if the customer arrives here with `?code=<uuid>` it
- * means Supabase fell back to its Site URL instead of honouring the
- * `emailRedirectTo` we passed to signInWithOtp — usually because
- * `/auth/callback` isn't in the project's Redirect URLs allowlist.
- * Forwarding to /auth/callback completes the exchange so the user
- * doesn't end up stuck on the homepage holding a useless code.
- */
+import { getCatalog } from '@/lib/catalog-query';
+import { COLLECTIONS } from '@/lib/collections';
+import { SHIPPING_TIERS } from '@/lib/checkout/shipping';
+import { ProductCard } from '@/components/shop/ProductCard';
+import { FeaturedCarousel } from '@/components/home/FeaturedCarousel';
+export const metadata = { alternates: { canonical: '/' } };
+export const dynamic = 'force-dynamic';
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams?: { code?: string };
+  searchParams: Record<string, string | string[] | undefined>;
 }) {
-  const code = searchParams?.code;
-  if (code && /^[a-f0-9-]{20,}$/i.test(code)) {
-    redirect(`/auth/callback/?code=${encodeURIComponent(code)}&redirect=/account`);
-  }
-
-  const { categories, featured, brands } = await fetchHomeData();
-
+  if (typeof searchParams.code === 'string')
+    redirect(`/auth/callback?code=${encodeURIComponent(searchParams.code)}`);
+  const catalog = await getCatalog();
+  const featured = [...catalog.products]
+    .sort(
+      (a, b) =>
+        Number(b.is_featured) - Number(a.is_featured) ||
+        b.created_at.localeCompare(a.created_at) ||
+        a.id.localeCompare(b.id),
+    )
+    .slice(0, 8);
+  const brandSlugs = [
+    'big-train',
+    'david-rio',
+    'mocafe',
+    'monin',
+    '1883-maison-routin',
+    'dr-smoothie',
+  ];
   return (
-    <>
-      {/* [1] Hero — page-load stagger */}
-      <HomeHero />
-
-      {/* [2] Ticker */}
-      <Ticker items={TICKER_ITEMS} />
-
-      {/* [3] Categories */}
-      <Reveal as="section" className="bg-paper">
-        <div className="max-w-content mx-auto px-8 pt-20 pb-14 max-md:px-5 max-md:pt-10 max-md:pb-8">
-          <SectionHead
-            numeral="I"
-            eyebrow="The Departments"
-            title="Shop by {italic}category{/italic}."
-            link={{ href: '/shop', label: 'View All' }}
+    <main>
+      <section className="home-hero">
+        <div className="wrap">
+          <h1>
+            Café favorites.
+            <br />
+            Yours to make.
+          </h1>
+          <p>
+            Chai, matcha, coffee and more. The brands you love, delivered to
+            your home or business.
+          </p>
+          <div className="hero-actions">
+            <Link href="/shop" className="btn btn-solid">
+              Shop all products
+            </Link>
+            <a className="text-link" href="#categories">
+              Find your drink ›
+            </a>
+          </div>
+        </div>
+        <div className="hero-stage">
+          <Image
+            src="/storefront/hero-hot-coffees.webp"
+            alt="Hot latte, pumpkin spice latte and flat white with latte art"
+            width={1400}
+            height={933}
+            sizes="100vw"
+            priority
           />
-          <div
-            className="grid gap-px max-lg:grid-cols-3 max-sm:grid-cols-2 lg:grid-cols-5"
-            style={{ background: 'var(--rule)' }}
-          >
-            {categories.map((cat, i) => (
-              <CategoryTile
-                key={cat.id}
-                category={cat}
-                image={
-                  CATEGORY_IMAGES[cat.slug] ?? {
-                    src: 'https://images.unsplash.com/photo-1542990253-0b8be8040f3a?w=1200&auto=format&fit=crop&q=80',
-                    alt: cat.name,
-                  }
-                }
-                index={i}
+        </div>
+      </section>
+      <section id="categories" className="home-section wrap">
+        <div className="section-heading">
+          <h2>What are you making?</h2>
+          <Link href="/shop" className="text-link">
+            View all ›
+          </Link>
+        </div>
+        <div className="category-grid">
+          {COLLECTIONS.map((c) => (
+            <Link
+              className="category-card"
+              href={`/shop/${c.slug}`}
+              key={c.slug}
+            >
+              <Image
+                src={`/storefront/${c.image}.webp`}
+                alt={c.alt}
+                width={600}
+                height={600}
+                sizes="(min-width: 800px) 280px, 45vw"
               />
+              <span>
+                {c.name}
+                <b aria-hidden="true">›</b>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+      <section className="featured-section">
+        <div className="home-section wrap">
+          <div className="section-heading">
+            <h2>
+              Featured favorites.
+              <br />
+              <span>Ready for your next restock.</span>
+            </h2>
+            <Link href="/shop" className="text-link">
+              Shop all products ›
+            </Link>
+          </div>
+          <FeaturedCarousel count={featured.length}>
+            {featured.map((p) => (
+              <ProductCard key={p.id} product={p} />
             ))}
+          </FeaturedCarousel>
+        </div>
+      </section>
+      <section className="home-section wrap">
+        <div className="section-heading">
+          <h2>
+            Your go-to brands.
+            <br />
+            <span>All in one place.</span>
+          </h2>
+          <Link href="/brand" className="text-link">
+            Explore our brands ›
+          </Link>
+        </div>
+        <div className="brand-list">
+          {brandSlugs.map((slug) => {
+            const b = catalog.brands.find((b) => b.slug === slug);
+            return b ? (
+              <Link href={`/brand/${slug}`} key={slug}>
+                {b.name}
+              </Link>
+            ) : null;
+          })}
+        </div>
+      </section>
+      <section className="wrap business-panel">
+        <div>
+          <p className="eyebrow">La Costa Gourmet for business</p>
+          <h2>
+            Your menu.
+            <br />
+            Our kind of business.
+          </h2>
+          <p>
+            Keep your café, coffee cart or office stocked with the brands your
+            customers come back for.
+          </p>
+          <Link href="/for-business" className="btn btn-solid">
+            Talk to our team
+          </Link>
+        </div>
+        <div className="business-facts">
+          <div>
+            <h3>
+              Four warehouses.
+              <br />
+              One reliable source.
+            </h3>
+            <p>A nationwide supply network for your everyday essentials.</p>
+          </div>
+          <div>
+            <h3>Buying more? Let’s talk volume pricing.</h3>
+            <p>Ask about pricing tiers for orders of $400 and $700+.</p>
+          </div>
+          <div>
+            <h3>A real person to help.</h3>
+            <p>
+              Product selection, pack sizes, your next order.
+              <br />
+              <a className="text-link" href="tel:+18583541120">
+                Call (858) 354-1120 ↗
+              </a>
+            </p>
           </div>
         </div>
-      </Reveal>
-
-      {/* [4] Featured products — hand-picked in admin, newest backfill */}
-      <Reveal
-        as="section"
-        className="relative"
-      >
-        <div
-          className="relative"
-          style={{
-            background: 'linear-gradient(to bottom, var(--color-paper-2) 0%, var(--color-paper) 100%)',
-            borderTop: '1px solid var(--rule)',
-            borderBottom: '1px solid var(--rule)',
-          }}
-        >
-          {/* Subtle 45deg diagonal texture */}
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage:
-                'repeating-linear-gradient(45deg, rgba(26, 17, 10, 0.015) 0 1px, transparent 1px 6px)',
-            }}
-          />
-          <div className="relative max-w-content mx-auto px-8 pt-20 pb-16 max-md:px-5 max-md:pt-10 max-md:pb-10">
-            <SectionHead
-              numeral="II"
-              eyebrow="The proprietor's picks"
-              title="Featured {italic}selections{/italic}."
-              link={{ href: '/shop', label: 'Shop All' }}
-            />
-            {featured.length > 0 ? (
-              <div className="grid gap-5 max-lg:grid-cols-2 max-md:gap-3 lg:grid-cols-4">
-                {featured.map((p) => (
-                  <ProductCard key={p.id} product={p} showJustIn />
-                ))}
-              </div>
-            ) : (
-              <p className="type-body text-ink-muted">No products yet. Add one from the admin.</p>
-            )}
-          </div>
+      </section>
+      <section className="home-section wrap service-grid">
+        <div>
+          <h3>
+            A little more.
+            <br />
+            Shipping’s on us.
+          </h3>
+          <p>
+            Free ground shipping on orders ${SHIPPING_TIERS.freeThreshold}+
+            within the contiguous U.S.
+          </p>
+          <Link href="/shipping" className="text-link">
+            Shipping details ›
+          </Link>
         </div>
-      </Reveal>
-
-      {/* [5] Story */}
-      <Reveal>
-        <HomeStory />
-      </Reveal>
-
-      {/* [6] Brands directory */}
-      <Reveal as="section" className="bg-paper">
-        <div className="max-w-content mx-auto px-8 pt-20 pb-16 max-sm:px-5 max-sm:pt-14">
-          <SectionHead
-            numeral="III"
-            eyebrow="The directory"
-            title="Over sixteen brands, {italic}made in the USA{/italic}."
-            link={{ href: '/brand', label: 'All Brands' }}
-          />
-          <div
-            className="grid gap-px max-lg:grid-cols-2 max-sm:grid-cols-1 lg:grid-cols-4"
-            style={{ background: 'var(--rule)' }}
+        <div>
+          <h3>
+            Family-owned.
+            <br />
+            Since 2003.
+          </h3>
+          <p>
+            From Carlsbad, California to home kitchens and café counters
+            nationwide.
+          </p>
+          <a
+            href="mailto:customercare@lacostagourmet.com"
+            className="text-link"
           >
-            {brands.map((b) => (
-              <BrandRow key={b.id} brand={b} />
-            ))}
-          </div>
+            Email our family team ›
+          </a>
         </div>
-      </Reveal>
-
-      {/* [7] B2B band */}
-      <Reveal>
-        <HomeB2BBand />
-      </Reveal>
-    </>
+        <div>
+          <h3>
+            A question?
+            <br />
+            We’re here for it.
+          </h3>
+          <p>
+            Get personal help choosing ingredients or checking on your order.
+          </p>
+          <Link className="text-link" href="/contact">
+            Get in touch ›
+          </Link>
+        </div>
+      </section>
+      <section className="faq-section">
+        <div className="faq-inner">
+          <h2>A few good answers.</h2>
+          {[
+            [
+              'Why buy from La Costa Gourmet?',
+              'Great customer service, with attention to checking every order for accuracy and freshness.',
+            ],
+            [
+              'Will my order have a shipping charge?',
+              `Ground shipping is free on orders of $${SHIPPING_TIERS.freeThreshold} or more within the contiguous United States.`,
+            ],
+            [
+              'When will my order ship?',
+              'Most orders placed by 2 PM will ship within 2 to 3 business days.',
+            ],
+            [
+              'What if my order is lost or damaged?',
+              'Contact customer service within 2 weeks to report the problem.',
+            ],
+            [
+              'Can I trust La Costa Gourmet?',
+              'La Costa Gourmet has been trusted by coffee shops and customers for over 20 years.',
+            ],
+            [
+              'Will my information be shared?',
+              'We do not sell your personal information. Read our privacy policy for details.',
+            ],
+          ].map(([q, a]) => (
+            <details key={q}>
+              <summary>{q}</summary>
+              <p>{a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+    </main>
   );
 }

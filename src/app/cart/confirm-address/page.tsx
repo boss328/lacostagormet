@@ -79,7 +79,7 @@ export default function ConfirmAddressPage() {
           className="bg-cream max-w-[560px] mx-auto text-center"
           style={{ border: '1px solid var(--rule-strong)', padding: '40px 32px' }}
         >
-          <p className="type-label text-accent mb-4">§ Cart is empty</p>
+          <p className="type-label text-accent mb-4">Cart is empty</p>
           <p
             className="font-display italic text-brand-deep mb-5"
             style={{ fontSize: '24px', lineHeight: 1.1, fontWeight: 500 }}
@@ -99,7 +99,7 @@ export default function ConfirmAddressPage() {
     <section className="max-w-content mx-auto px-8 pt-12 pb-20 max-md:px-4 max-md:pt-6 max-md:pb-10">
       <header className="mb-8 max-md:mb-6">
         <p className="type-label text-accent mb-3">
-          § Reorder
+          Reorder
           {reorder.sourceOrderNumber ? (
             <>
               {' · '}
@@ -147,7 +147,7 @@ export default function ConfirmAddressPage() {
           className="bg-cream"
           style={{ border: '1px solid var(--rule-strong)', padding: '28px' }}
         >
-          <p className="type-label text-ink mb-5">§ Ship to</p>
+          <p className="type-label text-ink mb-5">Ship to</p>
           <div className="grid gap-5 max-md:gap-3">
             <div className="grid gap-5 max-md:gap-3 sm:grid-cols-2">
               <Field
@@ -242,7 +242,7 @@ export default function ConfirmAddressPage() {
             className="bg-paper-2"
             style={{ border: '1px solid var(--rule)', padding: '20px 22px' }}
           >
-            <p className="type-label text-ink mb-3">§ Cart</p>
+            <p className="type-label text-ink mb-3">Cart</p>
             <p className="type-data-mono text-ink-2">
               {itemCount} item{itemCount === 1 ? '' : 's'} ready for checkout.
             </p>

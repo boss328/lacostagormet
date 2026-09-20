@@ -76,7 +76,7 @@ export default async function AccountOrderDetailPage({
   return (
     <>
       <header className="mb-10">
-        <p className="type-label text-accent mb-5">§ Order detail</p>
+        <p className="type-label text-accent mb-5">Order detail</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <div className="min-w-0">
             <h1 className="type-display-2">
@@ -102,7 +102,7 @@ export default async function AccountOrderDetailPage({
             className="flex items-baseline justify-between pb-4 mb-2"
             style={{ borderBottom: '1px solid var(--rule-strong)' }}
           >
-            <span className="type-label text-ink">§&nbsp;&nbsp;What was ordered</span>
+            <span className="type-label text-ink">&nbsp;&nbsp;What was ordered</span>
             <span className="type-data-mono text-ink-muted">
               {rows.length} {rows.length === 1 ? 'line' : 'lines'}
             </span>
@@ -138,7 +138,7 @@ export default async function AccountOrderDetailPage({
               className="bg-cream"
               style={{ border: '1px solid var(--color-gold)', padding: '24px 26px' }}
             >
-              <p className="type-label text-ink mb-3">§&nbsp;&nbsp;Tracking</p>
+              <p className="type-label text-ink mb-3">&nbsp;&nbsp;Tracking</p>
               <TrackingBlock
                 tracking={o.tracking_number}
                 shippedAt={o.shipped_at}
@@ -150,7 +150,7 @@ export default async function AccountOrderDetailPage({
             className="bg-cream"
             style={{ border: '1px solid var(--rule-strong)', padding: '24px 26px' }}
           >
-            <p className="type-label text-ink mb-5">§&nbsp;&nbsp;Ship to</p>
+            <p className="type-label text-ink mb-5">&nbsp;&nbsp;Ship to</p>
             <address className="font-display text-ink not-italic" style={{ fontSize: '15px', lineHeight: 1.55 }}>
               {o.shipping_address.first_name} {o.shipping_address.last_name}
               <br />
@@ -172,7 +172,7 @@ export default async function AccountOrderDetailPage({
             className="bg-cream"
             style={{ border: '1px solid var(--rule-strong)', padding: '24px 26px' }}
           >
-            <p className="type-label text-ink mb-5">§&nbsp;&nbsp;Totals</p>
+            <p className="type-label text-ink mb-5">&nbsp;&nbsp;Totals</p>
             <dl className="flex flex-col" style={{ borderTop: '1px solid var(--rule)' }}>
               <Row label="Subtotal" value={fmt(o.subtotal)} />
               <Row label="Shipping" value={Number(o.shipping_cost) === 0 ? 'FREE' : fmt(o.shipping_cost)} />

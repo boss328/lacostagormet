@@ -47,13 +47,13 @@ export default async function AdminBrandsPage() {
   return (
     <>
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ X. Brands</p>
+        <p className="type-label text-accent mb-3">Brands</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
             className="font-display text-ink max-md:!text-[24px]"
             style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em', fontWeight: 400 }}
           >
-            The <em className="type-accent">makers</em>.
+            Brands
           </h1>
           <div className="flex items-center gap-5">
             <Link

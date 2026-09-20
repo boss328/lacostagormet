@@ -1,5 +1,7 @@
 import 'server-only';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { readAllRows } from '@/lib/admin/read-all-rows';
+import { applyDateRange } from '@/lib/admin/analytics-filter';
 import type { Range } from '@/lib/admin/range';
 
 /**
@@ -11,8 +13,18 @@ import type { Range } from '@/lib/admin/range';
  */
 
 export type RevenuePoint = { date: string; revenue: number; orders: number };
-export type TopProduct = { sku: string; name: string; revenue: number; units: number };
-export type LtvBucket = { label: string; min: number; max: number; count: number };
+export type TopProduct = {
+  sku: string;
+  name: string;
+  revenue: number;
+  units: number;
+};
+export type LtvBucket = {
+  label: string;
+  min: number;
+  max: number;
+  count: number;
+};
 export type StockAlert = {
   id: string;
   sku: string;
@@ -61,17 +73,28 @@ export async function loadDashSummary(): Promise<DashSummary> {
   const today = startOfDay(new Date());
   const yesterday = startOfDay(daysAgo(1));
   const thirtyAgo = daysAgo(30).toISOString();
-  const sixtyAgo = daysAgo(60).toISOString();
 
-  const [todayRes, yestRes, unfRes, custRes, orderRes, ltRevRes, aovRes, prior24Res] =
+  const [todayRes, yestRes, unfRes, custRes, orderRes, ltRevRes, aovRes] =
     await Promise.all([
-      admin.from('orders').select('total').eq('status', 'paid').gte('created_at', today),
-      admin
-        .from('orders')
-        .select('total')
-        .eq('status', 'paid')
-        .gte('created_at', yesterday)
-        .lt('created_at', today),
+      readAllRows((from, to) =>
+        admin
+          .from('orders')
+          .select('total')
+          .eq('status', 'paid')
+          .gte('created_at', today)
+          .order('id')
+          .range(from, to),
+      ),
+      readAllRows((from, to) =>
+        admin
+          .from('orders')
+          .select('total')
+          .eq('status', 'paid')
+          .gte('created_at', yesterday)
+          .lt('created_at', today)
+          .order('id')
+          .range(from, to),
+      ),
       admin
         .from('orders')
         .select('id', { count: 'exact', head: true })
@@ -79,19 +102,31 @@ export async function loadDashSummary(): Promise<DashSummary> {
         .not('fulfillment_status', 'in', '(shipped,delivered)'),
       admin.from('customers').select('id', { count: 'exact', head: true }),
       admin.from('orders').select('id', { count: 'exact', head: true }),
-      admin.from('orders').select('total').in('status', ['paid', 'payment_held']),
-      admin
-        .from('orders')
-        .select('total')
-        .in('status', ['paid', 'payment_held'])
-        .gte('created_at', thirtyAgo),
-      admin
-        .from('orders')
-        .select('id', { count: 'exact', head: true })
-        .in('status', ['paid', 'payment_held'])
-        .gte('created_at', sixtyAgo)
-        .lt('created_at', thirtyAgo),
+      readAllRows((from, to) =>
+        admin
+          .from('orders')
+          .select('total')
+          .in('status', ['paid', 'payment_held'])
+          .order('id')
+          .range(from, to),
+      ),
+      readAllRows((from, to) =>
+        admin
+          .from('orders')
+          .select('total')
+          .in('status', ['paid', 'payment_held'])
+          .gte('created_at', thirtyAgo)
+          .order('id')
+          .range(from, to),
+      ),
     ]);
+
+  if (
+    [todayRes, yestRes, unfRes, custRes, orderRes, ltRevRes, aovRes].some(
+      (result) => result.error,
+    )
+  )
+    throw new Error('Unable to load store summary.');
 
   const sum = (rows: Array<{ total: number | string }> | null) =>
     (rows ?? []).reduce((s, r) => s + Number(r.total ?? 0), 0);
@@ -99,14 +134,16 @@ export async function loadDashSummary(): Promise<DashSummary> {
   const todaysRevenue = round2(sum(todayRes.data));
   const yestRevenue = round2(sum(yestRes.data));
   const aov30 = aovRes.data
-    ? (aovRes.data.length > 0
-        ? round2(sum(aovRes.data) / aovRes.data.length)
-        : 0)
+    ? aovRes.data.length > 0
+      ? round2(sum(aovRes.data) / aovRes.data.length)
+      : 0
     : 0;
   const ordersLast24h = (todayRes.data ?? []).length;
-  const priorOrders = prior24Res.count ?? 0;
+  const priorOrders = (yestRes.data ?? []).length;
   const ordersDeltaPct =
-    priorOrders === 0 ? 0 : round2(((ordersLast24h - priorOrders) / priorOrders) * 100);
+    priorOrders === 0
+      ? 0
+      : round2(((ordersLast24h - priorOrders) / priorOrders) * 100);
 
   return {
     todaysRevenue,
@@ -135,9 +172,12 @@ export async function loadRevenueSeries(days = 90): Promise<RevenuePoint[]> {
       .in('status', ['paid', 'payment_held'])
       .gte('created_at', since)
       .order('created_at', { ascending: true })
+      .order('id')
       .range(from, from + pageSize - 1);
     const rows = data ?? [];
-    all.push(...(rows as Array<{ total: number | string; created_at: string }>));
+    all.push(
+      ...(rows as Array<{ total: number | string; created_at: string }>),
+    );
     if (rows.length < pageSize) break;
   }
 
@@ -160,11 +200,13 @@ export async function loadRevenueSeries(days = 90): Promise<RevenuePoint[]> {
 }
 
 /**
- * Range-aware revenue series. Auto-buckets to grain (day / week / month).
+ * Range-aware daily revenue series. Clients aggregate daily points into weeks/months.
  * For all-time, fetches every paid/payment_held order. For windowed ranges,
  * filters to range.since / range.until.
  */
-export async function loadRevenueSeriesForRange(range: Range): Promise<RevenuePoint[]> {
+export async function loadRevenueSeriesForRange(
+  range: Range,
+): Promise<RevenuePoint[]> {
   const admin = createAdminClient();
   const all: Array<{ total: number | string; created_at: string }> = [];
   const pageSize = 1000;
@@ -174,23 +216,18 @@ export async function loadRevenueSeriesForRange(range: Range): Promise<RevenuePo
       .select('total, created_at')
       .in('status', ['paid', 'payment_held'])
       .order('created_at', { ascending: true })
+      .order('id')
       .range(from, from + pageSize - 1);
     if (range.since) q = q.gte('created_at', range.since);
     if (range.until) q = q.lt('created_at', range.until);
-    const { data } = await q;
+    const { data, error } = await q;
+    if (error) throw new Error('Unable to load sales analytics.');
     const rows = data ?? [];
     all.push(...(rows as typeof all));
     if (rows.length < pageSize) break;
   }
 
-  const bucketKey = (iso: string) => {
-    if (range.grain === 'day') return iso.slice(0, 10);
-    if (range.grain === 'month') return iso.slice(0, 7);
-    const d = new Date(iso);
-    const day = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() - (day - 1));
-    return d.toISOString().slice(0, 10);
-  };
+  const bucketKey = (iso: string) => iso.slice(0, 10);
 
   const map = new Map<string, { revenue: number; orders: number }>();
   for (const row of all) {
@@ -201,23 +238,40 @@ export async function loadRevenueSeriesForRange(range: Range): Promise<RevenuePo
     map.set(k, prev);
   }
   return Array.from(map.entries())
-    .map(([date, v]) => ({ date, revenue: round2(v.revenue), orders: v.orders }))
+    .map(([date, v]) => ({
+      date,
+      revenue: round2(v.revenue),
+      orders: v.orders,
+    }))
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 /** Top products by revenue from order_items joined to products metadata. */
-export async function loadTopProducts(limit = 20): Promise<TopProduct[]> {
+export async function loadTopProducts(
+  limit = 20,
+  range?: Range,
+): Promise<TopProduct[]> {
   const admin = createAdminClient();
   // Pull from order_items — join order for status filter.
-  const { data } = await admin
-    .from('order_items')
-    .select(
-      'product_sku, product_name, quantity, line_subtotal, orders!inner(status)',
-    )
-    .eq('orders.status', 'paid')
-    .limit(20000);
+  const { data, error } = await readAllRows((from, to) =>
+    applyDateRange(
+      admin
+        .from('order_items')
+        .select(
+          'product_sku, product_name, quantity, line_subtotal, orders!inner(status, created_at)',
+        )
+        .eq('orders.status', 'paid')
+        .order('id'),
+      range,
+      'orders.created_at',
+    ).range(from, to),
+  );
+  if (error) throw new Error('Unable to load sales analytics.');
 
-  const map = new Map<string, { name: string; revenue: number; units: number }>();
+  const map = new Map<
+    string,
+    { name: string; revenue: number; units: number }
+  >();
   for (const row of (data ?? []) as Array<{
     product_sku: string;
     product_name: string;
@@ -225,7 +279,11 @@ export async function loadTopProducts(limit = 20): Promise<TopProduct[]> {
     line_subtotal: number | string;
   }>) {
     const key = row.product_sku;
-    const prev = map.get(key) ?? { name: row.product_name, revenue: 0, units: 0 };
+    const prev = map.get(key) ?? {
+      name: row.product_name,
+      revenue: 0,
+      units: 0,
+    };
     prev.revenue += Number(row.line_subtotal ?? 0);
     prev.units += row.quantity;
     map.set(key, prev);
@@ -253,7 +311,9 @@ export async function loadLtvBuckets(): Promise<LtvBucket[]> {
       .in('status', ['paid', 'payment_held'])
       .range(from, from + pageSize - 1);
     const rows = data ?? [];
-    all.push(...(rows as Array<{ customer_email: string; total: number | string }>));
+    all.push(
+      ...(rows as Array<{ customer_email: string; total: number | string }>),
+    );
     if (rows.length < pageSize) break;
   }
 
@@ -265,11 +325,11 @@ export async function loadLtvBuckets(): Promise<LtvBucket[]> {
   }
 
   const buckets: LtvBucket[] = [
-    { label: '$0–100',       min: 0,    max: 100,    count: 0 },
-    { label: '$100–500',     min: 100,  max: 500,    count: 0 },
-    { label: '$500–1k',      min: 500,  max: 1000,   count: 0 },
-    { label: '$1k–5k',       min: 1000, max: 5000,   count: 0 },
-    { label: '$5k+',         min: 5000, max: Infinity, count: 0 },
+    { label: '$0–100', min: 0, max: 100, count: 0 },
+    { label: '$100–500', min: 100, max: 500, count: 0 },
+    { label: '$500–1k', min: 500, max: 1000, count: 0 },
+    { label: '$1k–5k', min: 1000, max: 5000, count: 0 },
+    { label: '$5k+', min: 5000, max: Infinity, count: 0 },
   ];
   ltv.forEach((amount) => {
     const b = buckets.find((x) => amount >= x.min && amount < x.max);
@@ -292,20 +352,32 @@ export async function loadStockAlerts(): Promise<StockAlert[]> {
 }
 
 /** Revenue by brand (treemap). */
-export async function loadBrandBreakdown(): Promise<BrandBreakdown[]> {
+export async function loadBrandBreakdown(
+  range?: Range,
+): Promise<BrandBreakdown[]> {
   const admin = createAdminClient();
   // Join order_items → products → brands. Filter to paid orders.
-  const { data } = await admin
-    .from('order_items')
-    .select(
-      'line_subtotal, products!inner(brand_id, brands(name)), orders!inner(status)',
-    )
-    .eq('orders.status', 'paid')
-    .limit(20000);
+  const { data, error } = await readAllRows((from, to) =>
+    applyDateRange(
+      admin
+        .from('order_items')
+        .select(
+          'line_subtotal, products!inner(brand_id, brands(name)), orders!inner(status, created_at)',
+        )
+        .eq('orders.status', 'paid')
+        .order('id'),
+      range,
+      'orders.created_at',
+    ).range(from, to),
+  );
+  if (error) throw new Error('Unable to load sales analytics.');
 
   type Row = {
     line_subtotal: number | string;
-    products: { brand_id: string | null; brands: { name: string } | null } | null;
+    products: {
+      brand_id: string | null;
+      brands: { name: string } | null;
+    } | null;
   };
 
   const map = new Map<string, { revenue: number; orders: number }>();
@@ -317,25 +389,34 @@ export async function loadBrandBreakdown(): Promise<BrandBreakdown[]> {
     map.set(brand, prev);
   }
   return Array.from(map.entries())
-    .map(([brand, v]) => ({ brand, revenue: round2(v.revenue), orders: v.orders }))
+    .map(([brand, v]) => ({
+      brand,
+      revenue: round2(v.revenue),
+      orders: v.orders,
+    }))
     .sort((a, b) => b.revenue - a.revenue);
 }
 
 /** Revenue and order count by US state from orders.shipping_address.state. */
-export async function loadStateBreakdown(): Promise<StateBreakdown[]> {
+export async function loadStateBreakdown(
+  range?: Range,
+): Promise<StateBreakdown[]> {
   const admin = createAdminClient();
-  const all: Array<{ total: number | string; shipping_address: { state?: string } | null }> = [];
-  const pageSize = 1000;
-  for (let from = 0; ; from += pageSize) {
-    const { data } = await admin
-      .from('orders')
-      .select('total, shipping_address')
-      .in('status', ['paid', 'payment_held'])
-      .range(from, from + pageSize - 1);
-    const rows = data ?? [];
-    all.push(...(rows as unknown as typeof all));
-    if (rows.length < pageSize) break;
-  }
+  const { data, error } = await readAllRows((from, to) =>
+    applyDateRange(
+      admin
+        .from('orders')
+        .select('total, shipping_address')
+        .in('status', ['paid', 'payment_held'])
+        .order('id'),
+      range,
+    ).range(from, to),
+  );
+  if (error) throw new Error('Unable to load regional sales.');
+  const all = (data ?? []) as Array<{
+    total: number | string;
+    shipping_address: { state?: string } | null;
+  }>;
   const map = new Map<string, { revenue: number; orders: number }>();
   for (const row of all) {
     const state = (row.shipping_address?.state ?? '').toUpperCase();
@@ -346,7 +427,11 @@ export async function loadStateBreakdown(): Promise<StateBreakdown[]> {
     map.set(state, prev);
   }
   return Array.from(map.entries())
-    .map(([state, v]) => ({ state, revenue: round2(v.revenue), orders: v.orders }))
+    .map(([state, v]) => ({
+      state,
+      revenue: round2(v.revenue),
+      orders: v.orders,
+    }))
     .sort((a, b) => b.revenue - a.revenue);
 }
 
@@ -381,7 +466,8 @@ export async function loadCohortRetention(): Promise<CohortRow[]> {
     const email = (row.customer_email ?? '').toLowerCase();
     if (!email) continue;
     const m = monthKey(row.created_at);
-    if (!firstMonth.has(email) || m < firstMonth.get(email)!) firstMonth.set(email, m);
+    if (!firstMonth.has(email) || m < firstMonth.get(email)!)
+      firstMonth.set(email, m);
     const set = activity.get(email) ?? new Set<string>();
     set.add(m);
     activity.set(email, set);

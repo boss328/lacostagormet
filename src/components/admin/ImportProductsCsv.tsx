@@ -101,7 +101,7 @@ export function ImportProductsCsv() {
           style={{ border: '1px solid var(--rule-strong)' }}
         >
           <p className="type-label text-accent">
-            § {applied ? 'Import complete' : 'Preview'}
+            {applied ? 'Import complete' : 'Preview'}
           </p>
 
           <dl className="type-data-mono text-ink flex flex-col gap-1">

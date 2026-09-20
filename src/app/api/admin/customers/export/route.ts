@@ -1,3 +1,4 @@
+import { searchFilter } from '@/lib/admin/search-filter';
 import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -28,10 +29,10 @@ export async function GET(req: NextRequest) {
       );
     if (search) {
       q = q.or(
-        `email.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%`,
+        searchFilter(['email', 'first_name', 'last_name', 'company_name'], search),
       );
     }
-    const { data, error } = await q.order('created_at', { ascending: false })
+    const { data, error } = await q.order('created_at', { ascending: false }).order('id')
       .range(from, from + pageSize - 1);
     if (error) {
       console.error('[admin/customers/export]', error);

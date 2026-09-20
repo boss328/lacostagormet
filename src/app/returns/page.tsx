@@ -15,7 +15,7 @@ export default function ReturnsPage() {
           { href: '/', label: 'Home' },
           { label: 'Returns' },
         ]}
-        eyebrow="§ Returns"
+        eyebrow="Returns"
         title={
           <>
             A simple <em className="type-accent">return</em> policy.
@@ -42,8 +42,8 @@ export default function ReturnsPage() {
             · Monday through Friday, 9–5 Pacific.
           </p>
           <p className="type-data-mono text-ink-muted">
-            Damaged-in-transit? Take a photo before opening and call the same
-            number — we usually have you squared away the same afternoon.
+            If your order is lost or damaged, contact customer service within
+            2 weeks to report the problem. Please keep your order number and any photos handy.
           </p>
         </div>
       </section>

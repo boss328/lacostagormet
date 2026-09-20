@@ -84,7 +84,7 @@ export function InquiryForm() {
         style={{ border: '1px solid var(--rule-strong)', padding: '40px 36px' }}
         role="status"
       >
-        <p className="type-label text-accent mb-5">§ Inquiry received</p>
+        <p className="type-label text-accent mb-5">Inquiry received</p>
         <p
           className="font-display italic text-brand-deep mb-4"
           style={{ fontSize: '32px', lineHeight: 1.05, letterSpacing: '-0.025em', fontWeight: 500 }}

@@ -74,12 +74,12 @@ export default function AdminImportsPage() {
   return (
     <>
       <header className="mb-8">
-        <p className="type-label text-accent mb-3">§ Imports — data staging</p>
+        <p className="type-label text-accent mb-3">Imports — data staging</p>
         <h1
           className="font-display text-ink"
           style={{ fontSize: '36px', lineHeight: 1, letterSpacing: '-0.025em' }}
         >
-          Bring data <em className="type-accent">in</em>.
+          Import data
         </h1>
         <p
           className="type-body mt-4 max-w-[620px]"

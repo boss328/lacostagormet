@@ -91,7 +91,7 @@ export function ProductJsonLd({ product }: { product: JsonLdProduct }) {
       // Google pairs this with the return policy for full merchant-listing
       // treatment. The rate comes from the same calculateShipping the cart
       // uses (single-item order of this product), so markup and checkout
-      // cannot drift. Handling 3–5 + transit 2–5 days = the 5–10 day
+      // cannot drift. Handling 2–3 + transit 2–5 days = the 4–8 day
       // total published in Merchant Center; keep those two in sync.
       shippingDetails: {
         '@type': 'OfferShippingDetails',
@@ -106,7 +106,7 @@ export function ProductJsonLd({ product }: { product: JsonLdProduct }) {
         },
         deliveryTime: {
           '@type': 'ShippingDeliveryTime',
-          handlingTime: { '@type': 'QuantitativeValue', minValue: 3, maxValue: 5, unitCode: 'DAY' },
+          handlingTime: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 3, unitCode: 'DAY' },
           transitTime: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 5, unitCode: 'DAY' },
         },
       },

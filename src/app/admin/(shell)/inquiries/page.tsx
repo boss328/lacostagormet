@@ -1,3 +1,5 @@
+import { parsePage } from '@/lib/catalog-state';
+import { AdminPagination } from '@/components/admin/AdminPagination';
 import Link from 'next/link';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { InquiryRowActions } from '@/components/admin/inquiries/InquiryRowActions';
@@ -51,9 +53,8 @@ export default async function AdminInquiriesPage({
 }: {
   searchParams: Record<string, string | string[] | undefined>;
 }) {
-  const statusKey = (
-    typeof searchParams.status === 'string' ? searchParams.status : 'new'
-  ) as StatusFilter;
+  const page = parsePage(searchParams.page);
+  const statusKey = STATUSES.find(s => s.key === searchParams.status)?.key ?? 'new';
 
   const admin = createAdminClient();
   let q = admin
@@ -63,22 +64,23 @@ export default async function AdminInquiriesPage({
       { count: 'exact' },
     )
     .order('created_at', { ascending: false })
-    .limit(200);
+    .order('id').range((page - 1) * 50, page * 50 - 1);
   if (statusKey !== 'all') q = q.eq('status', statusKey);
 
-  const { data, count } = await q;
+  const { data, count, error } = await q;
+  if (error) throw new Error('Unable to load inquiries.');
   const rows = (data ?? []) as InquiryRow[];
 
   return (
     <>
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ VII. Inquiries</p>
+        <p className="type-label text-accent mb-3">Inquiries</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
             className="font-display text-ink max-md:!text-[24px]"
             style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em', fontWeight: 400 }}
           >
-            The <em className="type-accent">inbox</em>.
+            Inquiries
           </h1>
           <span className="type-data-mono text-ink-muted">
             {(count ?? 0).toLocaleString()} on this view
@@ -147,7 +149,8 @@ export default async function AdminInquiriesPage({
                       <>
                         {' · '}
                         <a href={`tel:${r.phone}`} className="hover:text-brand-deep">{r.phone}</a>
-                      </>
+                        <AdminPagination path="/admin/inquiries/" page={page} total={count ?? 0} params={{ status: statusKey }} />
+    </>
                     )}
                   </p>
                 </div>
@@ -187,6 +190,7 @@ export default async function AdminInquiriesPage({
           ))}
         </div>
       )}
+      <AdminPagination path="/admin/inquiries/" page={page} total={count ?? 0} params={{ status: statusKey }} />
     </>
   );
 }

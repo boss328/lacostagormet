@@ -543,7 +543,7 @@ export function NewOrderForm({ products }: Props) {
 
       <aside className="flex flex-col gap-3 self-start lg:sticky lg:top-6">
         <div className="bg-cream" style={{ border: '1px solid var(--rule-strong)', padding: '20px 22px' }}>
-          <p className="type-label text-ink mb-3">§ Summary</p>
+          <p className="type-label text-ink mb-3">Summary</p>
           <dl className="flex flex-col gap-2">
             <Stat label="Email" value={customerEmail || '—'} />
             <Stat label="Items" value={`${items.filter((l) => l.productId).length} of ${items.length}`} />
@@ -593,7 +593,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <div className="flex flex-col gap-5">
       <div className="pb-3" style={{ borderBottom: '1px solid var(--rule)' }}>
-        <p className="type-label text-ink">§ {title}</p>
+        <p className="type-label text-ink">{title}</p>
       </div>
       {children}
     </div>

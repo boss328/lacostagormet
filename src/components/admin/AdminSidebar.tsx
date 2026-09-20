@@ -92,7 +92,7 @@ export function AdminSidebar() {
       <aside
         className={[
           // Desktop: sticky sidebar as before
-          'lg:sticky lg:top-6 self-start',
+          'admin-sidebar lg:sticky lg:top-6 self-start',
           // Tablet (md-lg): stay in normal flow above main content
           'md:block',
           // Mobile: fixed overlay drawer, off-screen when closed
@@ -100,14 +100,14 @@ export function AdminSidebar() {
           'max-md:bg-paper max-md:px-5 max-md:py-6 max-md:overflow-y-auto',
           'max-md:border-r max-md:border-rule-strong',
           'max-md:transition-transform max-md:duration-300 max-md:ease-out',
-          drawerOpen ? 'max-md:translate-x-0' : 'max-md:-translate-x-full',
+          drawerOpen ? 'max-md:translate-x-0' : 'max-md:hidden',
         ].join(' ')}
       >
         <p
           className="type-label text-ink-muted mb-4 max-md:mb-3"
           style={{ paddingLeft: 4 }}
         >
-          § Navigation
+          Workspace
         </p>
         <nav className="flex flex-col">
           {NAV.map((item) => {
@@ -117,11 +117,12 @@ export function AdminSidebar() {
             const active =
               item.href === '/admin/'
                 ? pathname === '/admin/' || pathname === '/admin'
-                : pathname.startsWith(item.href);
+                : (pathname + '/').startsWith(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? 'page' : undefined}
                 onClick={() => setDrawerOpen(false)}
                 className="group relative flex items-baseline gap-3 transition-colors duration-200"
                 style={{
@@ -149,7 +150,7 @@ export function AdminSidebar() {
                     letterSpacing: '-0.01em',
                   }}
                 >
-                  {item.numeral}
+                  {item.label.slice(0, 1)}
                 </span>
                 <span
                   className="font-display flex-1"

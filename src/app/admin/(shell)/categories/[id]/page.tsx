@@ -44,7 +44,7 @@ export default async function AdminCategoryEditPage({ params }: { params: { id: 
       </Link>
 
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ IX. Categories / Edit</p>
+        <p className="type-label text-accent mb-3">Categories / Edit</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
             className="font-display text-ink max-md:!text-[24px]"

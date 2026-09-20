@@ -44,7 +44,7 @@ export default async function AccountOverviewPage() {
   return (
     <>
       <header className="mb-12">
-        <p className="type-label text-accent mb-5">§ Overview</p>
+        <p className="type-label text-accent mb-5">Overview</p>
         <h1 className="type-display-2">
           Welcome back{firstName ? ', ' : ''}
           {firstName && <em className="type-accent">{firstName}</em>}.
@@ -59,7 +59,7 @@ export default async function AccountOverviewPage() {
           className="flex items-baseline justify-between pb-4 mb-2"
           style={{ borderBottom: '1px solid var(--rule-strong)' }}
         >
-          <span className="type-label text-ink">§&nbsp;&nbsp;Recent orders</span>
+          <span className="type-label text-ink">&nbsp;&nbsp;Recent orders</span>
           <Link
             href="/account/orders"
             className="type-label text-ink hover:text-brand-deep transition-colors duration-200"

@@ -6,9 +6,10 @@ import { useCartStore, type CartItem } from '@/stores/cart';
 
 type ProductAddPanelProps = {
   item: Omit<CartItem, 'quantity'>;
+  available?: boolean;
 };
 
-export function ProductAddPanel({ item }: ProductAddPanelProps) {
+export function ProductAddPanel({ item, available = true }: ProductAddPanelProps) {
   const [qty, setQty] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
@@ -17,6 +18,7 @@ export function ProductAddPanel({ item }: ProductAddPanelProps) {
   const inc = () => setQty((q) => Math.min(99, q + 1));
 
   const handleAdd = () => {
+    if (!available) return;
     addItem(item, qty);
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 1400);
@@ -56,6 +58,7 @@ export function ProductAddPanel({ item }: ProductAddPanelProps) {
           <button
             type="button"
             onClick={inc}
+            disabled={qty >= 99 || !available}
             aria-label="Increase quantity"
             className="flex items-center justify-center text-ink hover:bg-paper-2 transition-colors duration-200"
             style={{ width: 40, height: 40 }}
@@ -68,15 +71,16 @@ export function ProductAddPanel({ item }: ProductAddPanelProps) {
       <button
         type="button"
         onClick={handleAdd}
+        disabled={!available}
         className="btn btn-solid w-full justify-center max-md:!py-3 max-md:!px-5"
         style={{ padding: '18px 26px' }}
       >
-        <span>{justAdded ? 'Added to cart' : 'Add to cart'}</span>
+        <span>{!available ? 'Out of stock' : justAdded ? 'Added to cart' : 'Add to cart'}</span>
         <span className="btn-arrow" aria-hidden="true">→</span>
       </button>
 
       <p className="type-data-mono text-ink-muted">
-        Ships in 3 to 5 business days from Carlsbad
+        Most orders placed by 2 PM ship within 2 to 3 business days.
       </p>
     </div>
   );

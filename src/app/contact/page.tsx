@@ -15,7 +15,7 @@ export default function ContactPage() {
           { href: '/', label: 'Home' },
           { label: 'Contact' },
         ]}
-        eyebrow="§ Say hello"
+        eyebrow="Say hello"
         title={
           <>
             Get in <em className="type-accent">touch</em>.
@@ -30,7 +30,7 @@ export default function ContactPage() {
             className="bg-cream"
             style={{ border: '1px solid var(--rule-strong)', padding: '28px' }}
           >
-            <p className="type-label text-accent mb-5">§ By phone</p>
+            <p className="type-label text-accent mb-5">By phone</p>
             <a
               href="tel:+18583541120"
               className="font-display italic text-brand-deep hover:opacity-80 transition-opacity block mb-3"
@@ -47,7 +47,7 @@ export default function ContactPage() {
             className="bg-paper"
             style={{ border: '1px solid var(--rule-strong)', padding: '28px' }}
           >
-            <p className="type-label text-accent mb-5">§ By email</p>
+            <p className="type-label text-accent mb-5">By email</p>
             <a
               href="mailto:customercare@lacostagourmet.com"
               className="font-display italic text-brand-deep hover:opacity-80 transition-opacity block mb-3"
@@ -64,7 +64,7 @@ export default function ContactPage() {
             className="not-italic lg:col-span-2"
             style={{ border: '1px solid var(--rule)', padding: '24px 28px', background: 'var(--color-paper-2)' }}
           >
-            <p className="type-label text-ink-muted mb-4">§ Corporate HQ</p>
+            <p className="type-label text-ink-muted mb-4">Corporate HQ</p>
             <p className="font-display italic text-brand-deep" style={{ fontSize: '20px', lineHeight: 1.3, fontWeight: 500 }}>
               6209 Paseo Privado
             </p>

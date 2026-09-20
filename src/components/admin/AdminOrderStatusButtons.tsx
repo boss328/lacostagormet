@@ -147,7 +147,7 @@ export function AdminOrderStatusButtons({ orderNumber, status, fulfillmentStatus
         background: 'var(--color-paper-2)',
       }}
     >
-      <p className="type-label text-ink mb-4">§&nbsp;&nbsp;Transitions</p>
+      <p className="type-label text-ink mb-4">&nbsp;&nbsp;Transitions</p>
       <div className="flex items-center gap-3 flex-wrap">
         {canShip && !showShipForm && (
           <button

@@ -49,6 +49,8 @@ export function RangePills({ active }: { active: RangeKey }) {
           <button
             key={k}
             type="button"
+            disabled={pending}
+            aria-pressed={isActive}
             onClick={() => pick(k)}
             className="type-label-sm transition-colors duration-150"
             style={{

@@ -1,7 +1,11 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { STATUS_LABEL, STATUS_COLOR, type VendorOrderStatus } from '@/lib/admin/vendor-po';
+import {
+  STATUS_LABEL,
+  STATUS_COLOR,
+  type VendorOrderStatus,
+} from '@/lib/admin/vendor-po';
 import { PoEditor } from '@/components/admin/purchase-orders/PoEditor';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +22,12 @@ type Po = {
   sent_by: string | null;
   total_wholesale: number | string | null;
   created_at: string;
-  vendor: { id: string; name: string; contact_email: string | null; terms: string | null } | null;
+  vendor: {
+    id: string;
+    name: string;
+    contact_email: string | null;
+    terms: string | null;
+  } | null;
   order: {
     id: string;
     order_number: string;
@@ -29,7 +38,11 @@ type Po = {
   warehouse: { id: string; label: string } | null;
 };
 
-export default async function PoDetailPage({ params }: { params: { id: string } }) {
+export default async function PoDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const admin = createAdminClient();
   const { data: poData } = await admin
     .from('vendor_orders')
@@ -46,7 +59,9 @@ export default async function PoDetailPage({ params }: { params: { id: string } 
     po.order?.id
       ? admin
           .from('order_items')
-          .select('product_sku, product_name, quantity, unit_price, unit_wholesale_cost, line_subtotal')
+          .select(
+            'product_sku, product_name, quantity, unit_price, unit_wholesale_cost, line_subtotal',
+          )
           .eq('order_id', po.order.id)
           .eq('assigned_vendor_id', po.vendor_id ?? '')
       : Promise.resolve({ data: [] as unknown[] }),
@@ -93,22 +108,35 @@ export default async function PoDetailPage({ params }: { params: { id: string } 
         ← All POs
       </Link>
 
-      <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ VI. Purchase Order</p>
+      <header
+        className="mb-8 pb-6"
+        style={{ borderBottom: '1px solid var(--rule-strong)' }}
+      >
+        <p className="type-label text-accent mb-3">Purchase Order</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
             className="font-display text-ink"
-            style={{ fontSize: '38px', lineHeight: 1, letterSpacing: '-0.025em' }}
+            style={{
+              fontSize: '38px',
+              lineHeight: 1,
+              letterSpacing: '-0.025em',
+            }}
           >
             <em className="type-accent">PO {po.order?.order_number ?? '—'}</em>
-            <span className="type-data-mono text-ink-muted ml-3" style={{ fontSize: '14px' }}>
+            <span
+              className="type-data-mono text-ink-muted ml-3"
+              style={{ fontSize: '14px' }}
+            >
               {po.vendor?.name ?? 'unassigned vendor'}
             </span>
           </h1>
           <div className="flex items-center gap-4">
             <span
               className="type-label-sm text-cream"
-              style={{ padding: '4px 10px', background: STATUS_COLOR[po.status] }}
+              style={{
+                padding: '4px 10px',
+                background: STATUS_COLOR[po.status],
+              }}
             >
               {STATUS_LABEL[po.status]}
             </span>
@@ -137,11 +165,16 @@ export default async function PoDetailPage({ params }: { params: { id: string } 
               className="font-display italic text-brand-deep mb-2"
               style={{ fontSize: '20px', fontWeight: 500 }}
             >
-              <Link href={`/admin/orders/${po.order?.order_number}/`} className="hover:opacity-80">
+              <Link
+                href={`/admin/orders/${po.order?.order_number}/`}
+                className="hover:opacity-80"
+              >
                 {po.order?.order_number}
               </Link>
             </p>
-            <p className="type-data-mono text-ink-muted">{po.order?.customer_email}</p>
+            <p className="type-data-mono text-ink-muted">
+              {po.order?.customer_email}
+            </p>
             <p className="type-data-mono text-ink mt-3">
               Customer total: ${Number(po.order?.total ?? 0).toFixed(2)}
             </p>
@@ -152,7 +185,10 @@ export default async function PoDetailPage({ params }: { params: { id: string } 
               className="font-display italic text-brand-deep mb-2"
               style={{ fontSize: '18px', fontWeight: 500 }}
             >
-              <Link href={`/admin/vendors/${po.vendor?.id}/`} className="hover:opacity-80">
+              <Link
+                href={`/admin/vendors/${po.vendor?.id}/`}
+                className="hover:opacity-80"
+              >
                 {po.vendor?.name ?? 'unassigned'}
               </Link>
             </p>
@@ -167,7 +203,11 @@ export default async function PoDetailPage({ params }: { params: { id: string } 
           <Card title="Internal totals" eyebrow="Not in vendor email">
             <Row label="Customer paid" value={`$${customerTotal.toFixed(2)}`} />
             <Row label="Wholesale total" value={`$${wholesale.toFixed(2)}`} />
-            <Row label="Margin" value={margin === null ? '—' : `${margin}%`} accent={margin !== null && margin >= 30} />
+            <Row
+              label="Margin"
+              value={margin === null ? '—' : `${margin}%`}
+              accent={margin !== null && margin >= 30}
+            />
           </Card>
 
           {po.email_sent_at && (
@@ -201,7 +241,7 @@ function Card({
       style={{ border: '1px solid var(--rule-strong)', padding: '20px 22px' }}
     >
       <div className="flex items-baseline justify-between mb-4">
-        <p className="type-label text-ink">§ {title}</p>
+        <p className="type-label text-ink">{title}</p>
         {eyebrow && <p className="type-data-mono text-ink-muted">{eyebrow}</p>}
       </div>
       {children}
@@ -209,7 +249,15 @@ function Card({
   );
 }
 
-function Row({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function Row({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
   return (
     <div
       className="flex items-baseline justify-between py-2"

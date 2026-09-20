@@ -31,7 +31,7 @@ function fmtMoney(v: number): string {
   return `$${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-const HERITAGE_YEARS = new Date().getFullYear() - 2003;
+
 
 /**
  * Admin dashboard — editorial command center.
@@ -54,12 +54,12 @@ export default async function AdminDashboardPage({
     await Promise.all([
       loadDashSummary(),
       loadRevenueSeriesForRange(range),
-      loadTopProducts(20),
+      loadTopProducts(Infinity, range),
       loadLtvBuckets(),
       loadStockAlerts(),
       loadCohortRetention(),
-      loadBrandBreakdown(),
-      loadStateBreakdown(),
+      loadBrandBreakdown(range),
+      loadStateBreakdown(range),
     ]);
 
   return (
@@ -67,7 +67,7 @@ export default async function AdminDashboardPage({
       <header className="mb-8 pb-6 max-md:mb-5 max-md:pb-4" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
         <div className="flex items-baseline justify-between gap-8 flex-wrap max-md:gap-4">
           <div className="min-w-0">
-            <p className="type-label text-accent mb-3 max-md:mb-2">§ I. Dashboard — Est. MMIII</p>
+            <p className="type-label text-accent mb-3 max-md:mb-2">Store overview</p>
             <h1
               className="font-display text-ink max-md:!text-[22px]"
               style={{
@@ -77,10 +77,10 @@ export default async function AdminDashboardPage({
                 fontWeight: 400,
               }}
             >
-              La Costa <em className="type-accent">Command</em>.
+              Dashboard
             </h1>
             <p className="type-data-mono text-ink-muted mt-4 max-md:mt-2">
-              Today&rsquo;s trading floor · live Supabase · hard-refresh for latest
+              Orders, customers, and sales at a glance.
             </p>
           </div>
 
@@ -98,7 +98,7 @@ export default async function AdminDashboardPage({
               positive={summary.revenueDelta > 0}
             />
             <TinyStat
-              label="Orders 24h"
+              label="Orders today"
               value={String(summary.ordersLast24h)}
               delta={
                 summary.ordersDeltaPct !== 0
@@ -111,7 +111,7 @@ export default async function AdminDashboardPage({
               label="Pending ship"
               value={summary.unfulfilledCount.toLocaleString()}
               delta="needs action"
-              href="/admin/orders/?status=paid&fulfillment=unfulfilled"
+              href="/admin/orders/?view=pending-fulfillment"
             />
             <TinyStat
               label="Customers"
@@ -127,18 +127,18 @@ export default async function AdminDashboardPage({
       <section
         className="mb-8 px-6 py-5 max-md:mb-5 max-md:px-4 max-md:py-3"
         style={{
-          border: '1px solid var(--rule-strong)',
+          border: '1px solid var(--rule-strong)', borderRadius: 16,
           background: 'var(--color-cream)',
         }}
       >
         <div className="flex items-baseline justify-between gap-6 mb-4 flex-wrap max-md:gap-2 max-md:mb-2">
           <div>
-            <p className="type-label text-ink-muted mb-1 max-md:mb-0.5">§ Heritage</p>
+            <p className="type-label text-ink-muted mb-1 max-md:mb-0.5">Business performance</p>
             <p
               className="font-display italic text-brand-deep max-md:!text-[15px]"
               style={{ fontSize: '20px', lineHeight: 1, fontWeight: 500, letterSpacing: '-0.018em' }}
             >
-              Est. MMIII — {HERITAGE_YEARS} years of history.
+              Lifetime overview
             </p>
           </div>
           <p className="type-data-mono text-ink-muted max-md:hidden">All-time, since 2003</p>
@@ -155,20 +155,20 @@ export default async function AdminDashboardPage({
 
       {/* TIME-RANGE STRIP */}
       <div className="flex items-baseline gap-4 flex-wrap mb-5 max-md:gap-2 max-md:mb-4">
-        <p className="type-label text-ink-muted">§ Range</p>
+        <p className="type-label text-ink-muted">Range</p>
         <RangePills active={rangeKey} />
         <span className="type-data-mono text-ink-muted max-md:hidden">
-          Showing {range.short} · {range.grain} aggregation
+          Sales charts: {range.short}. Lifetime and inventory panels are labeled separately.
         </span>
       </div>
 
       <section className="mb-6">
-        <RevenueOverTime series={revenue} label={range.short} />
+        <RevenueOverTime key={rangeKey} series={revenue} label={range.short} initialGrain={range.grain} />
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.1fr_1fr] mb-6">
-        <OrdersAov series={revenue} />
-        <TopProducts products={topProducts} />
+        <OrdersAov key={rangeKey} series={revenue} initialGrain={range.grain} />
+        <TopProducts products={topProducts} label={range.short} />
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1fr_1.4fr] mb-6">
@@ -228,7 +228,7 @@ function TinyStat({
       className="bg-cream max-md:!min-w-0 max-md:!p-3 max-md:min-h-[88px] max-md:flex max-md:flex-col max-md:justify-between"
       style={{
         border: '1px solid var(--rule)',
-        padding: '10px 14px',
+        padding: '16px', borderRadius: 14,
         minWidth: 140,
       }}
     >

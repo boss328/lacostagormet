@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { LoginPageInner } from '@/app/login/LoginPageInner';
+import { isReadOnlyPreview } from '@/lib/preview-mode';
 
 export const metadata: Metadata = {
   title: 'Sign in',
@@ -19,15 +20,15 @@ export default function LoginPage() {
         <main className="max-w-content mx-auto px-8 py-24 max-sm:px-5 max-sm:py-16">
           <div
             className="bg-cream max-w-[440px] mx-auto"
-            style={{ border: '1px solid var(--rule-strong)', padding: '40px 36px' }}
+            style={{ border: '1px solid var(--rule-strong)', padding: '36px', borderRadius: 20 }}
           >
-            <p className="type-label text-accent text-center mb-3">§ Your account</p>
+            <p className="type-label text-accent text-center mb-3">Your account</p>
             <p className="type-data-mono text-ink-muted text-center">Loading…</p>
           </div>
         </main>
       }
     >
-      <LoginPageInner />
+      <LoginPageInner readOnly={isReadOnlyPreview()} />
     </Suspense>
   );
 }

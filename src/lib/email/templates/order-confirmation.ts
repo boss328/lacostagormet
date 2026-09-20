@@ -55,7 +55,7 @@ export function renderOrderConfirmation(input: OrderConfirmationInput) {
   const subject = `Your La Costa Gourmet order #${input.orderNumber} is confirmed`;
   const preheader = input.isHeld
     ? 'Order received — we are reviewing the payment and will be in touch shortly.'
-    : "Thanks for your order — we'll have it shipped within 3 to 5 business days.";
+    : "Thanks for your order — we'll have it shipped within 2 to 3 business days.";
 
   const itemRowsHtml = input.items
     .map(
@@ -118,7 +118,7 @@ export function renderOrderConfirmation(input: OrderConfirmationInput) {
     <p style="margin:0 0 18px 0;">${escapeHtml(greeting)}</p>
     <p style="margin:0 0 18px 0;">
       Thanks for your order. We've received it and we'll have it on its way to
-      you within <strong>3 to 5 business days</strong>.
+      you within <strong>2 to 3 business days</strong>.
     </p>
     ${heldBlockHtml}
 
@@ -180,7 +180,7 @@ export function renderOrderConfirmation(input: OrderConfirmationInput) {
 ${greeting}
 
 Thanks for your order. We've received it and we'll have it on its way to
-you within 3 to 5 business days.
+you within 2 to 3 business days.
 ${heldBlockText}
 ORDER #${input.orderNumber}
 Placed: ${formatDate(input.orderDate)}

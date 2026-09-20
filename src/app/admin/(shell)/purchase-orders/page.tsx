@@ -1,3 +1,6 @@
+import { VendorSetupNotice } from '@/components/admin/VendorSetupNotice';
+import { parsePage } from '@/lib/catalog-state';
+import { AdminPagination } from '@/components/admin/AdminPagination';
 import Link from 'next/link';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { STATUS_LABEL, STATUS_COLOR, type VendorOrderStatus } from '@/lib/admin/vendor-po';
@@ -15,6 +18,7 @@ const STATUSES: Array<{ key: 'all' | VendorOrderStatus; label: string }> = [
 
 type PoRow = {
   id: string;
+  vendor_id: string;
   status: VendorOrderStatus;
   email_subject: string | null;
   total_wholesale: number | string | null;
@@ -38,21 +42,22 @@ export default async function PurchaseOrdersPage({
 }: {
   searchParams: Record<string, string | string[] | undefined>;
 }) {
-  const statusKey = (typeof searchParams.status === 'string' ? searchParams.status : 'pending') as
-    | 'all'
-    | VendorOrderStatus;
+  const page = parsePage(searchParams.page);
+  const statusKey = STATUSES.find(s => s.key === searchParams.status)?.key ?? 'pending';
   const admin = createAdminClient();
 
   let q = admin
     .from('vendor_orders')
     .select(
-      'id, status, email_subject, total_wholesale, created_at, email_sent_at, vendor:vendors(name), order:orders(id, order_number, customer_email), warehouse:vendor_warehouses(label)',
+      'id, vendor_id, status, email_subject, total_wholesale, created_at, email_sent_at, vendor:vendors(name), order:orders(id, order_number, customer_email), warehouse:vendor_warehouses(label)', { count: 'exact' },
     )
     .order('created_at', { ascending: false })
-    .limit(200);
+    .order('id').range((page - 1) * 50, page * 50 - 1);
   if (statusKey !== 'all') q = q.eq('status', statusKey);
 
-  const { data: posData } = await q;
+  const { data: posData, count, error } = await q;
+  if (error && ['42703', 'PGRST200', 'PGRST205', '42P01'].includes(error.code)) return <VendorSetupNotice />;
+  if (error) throw new Error('Unable to load purchase orders.');
   const pos = (posData ?? []) as unknown as Array<Omit<PoRow, 'itemCount'> & { order: { id: string; order_number: string; customer_email: string } | null }>;
 
   // Fetch item counts per PO via order_items where order_id + assigned_vendor_id matches
@@ -63,7 +68,8 @@ export default async function PurchaseOrdersPage({
         const { count: c } = await admin
           .from('order_items')
           .select('id', { count: 'exact', head: true })
-          .eq('order_id', p.order.id);
+          .eq('order_id', p.order.id)
+          .eq('assigned_vendor_id', p.vendor_id);
         count = c ?? 0;
       }
       return { ...p, itemCount: count };
@@ -73,13 +79,13 @@ export default async function PurchaseOrdersPage({
   return (
     <>
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ VI. Purchase Orders</p>
+        <p className="type-label text-accent mb-3">Purchase Orders</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
             className="font-display text-ink max-md:!text-[24px]"
             style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em' }}
           >
-            The <em className="type-accent">drop-ship desk</em>.
+            Purchase orders
           </h1>
           <span className="type-data-mono text-ink-muted">
             {enriched.length.toLocaleString()} on this view
@@ -180,6 +186,7 @@ export default async function PurchaseOrdersPage({
           ))}
         </div>
       )}
+      <AdminPagination path="/admin/purchase-orders/" page={page} total={count ?? 0} params={{ status: statusKey }} />
     </>
   );
 }

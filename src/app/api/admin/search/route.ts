@@ -1,4 +1,6 @@
+import { searchFilter } from '@/lib/admin/search-filter';
 import 'server-only';
+import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -23,9 +25,8 @@ type SearchResult = {
  * lives at src/middleware.ts; this endpoint relies on it.
  */
 export async function GET(req: NextRequest) {
-  // /api/admin/* is NOT in the middleware matcher — so enforce here.
-  const cookie = req.cookies.get('lcg_admin')?.value;
-  const expected = process.env.ADMIN_PASSWORD;
+  const cookie = req.cookies.get(ADMIN_COOKIE)?.value;
+  const expected = await expectedSessionToken();
   if (!expected || cookie !== expected) {
     return NextResponse.json({ results: [] }, { status: 401 });
   }
@@ -34,24 +35,24 @@ export async function GET(req: NextRequest) {
   if (!q) return NextResponse.json({ results: [] });
 
   const admin = createAdminClient();
-  const like = `%${q}%`;
+
 
   const [ordersRes, customersRes, productsRes] = await Promise.all([
     admin
       .from('orders')
       .select('order_number, status, total, customer_email, created_at')
-      .or(`order_number.ilike.${like},customer_email.ilike.${like}`)
+      .or(searchFilter(['order_number', 'customer_email'], q))
       .order('created_at', { ascending: false })
       .limit(5),
     admin
       .from('customers')
       .select('id, email, first_name, last_name')
-      .or(`email.ilike.${like},first_name.ilike.${like},last_name.ilike.${like}`)
+      .or(searchFilter(['email', 'first_name', 'last_name', 'company_name'], q))
       .limit(5),
     admin
       .from('products')
       .select('id, sku, name, retail_price')
-      .or(`sku.ilike.${like},name.ilike.${like}`)
+      .or(searchFilter(['sku', 'name'], q))
       .eq('is_active', true)
       .limit(5),
   ]);

@@ -1,44 +1,26 @@
 'use client';
-
-import { useState, type MouseEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCartStore, type CartItem } from '@/stores/cart';
-
-type ProductCardAddProps = {
-  item: Omit<CartItem, 'quantity'>;
-};
-
-export function ProductCardAdd({ item }: ProductCardAddProps) {
+export function ProductCardAdd({ item }: { item: Omit<CartItem, 'quantity'> }) {
   const addItem = useCartStore((s) => s.addItem);
-  const [state, setState] = useState<'idle' | 'added'>('idle');
-
-  const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
-    // The card is a <Link>; don't navigate — this is an in-place cart action.
-    e.preventDefault();
-    e.stopPropagation();
-    addItem(item, 1);
-    setState('added');
-    setTimeout(() => setState('idle'), 1100);
-  };
-
+  const [added, setAdded] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(timer.current), []);
   return (
     <button
       type="button"
-      onClick={handleClick}
-      aria-label={`Add ${item.name} to cart`}
-      className="pc-add inline-flex items-center gap-1.5 font-mono uppercase max-md:!text-[9px] max-md:!px-2.5 max-md:!py-2"
-      style={{
-        fontSize: '10px',
-        letterSpacing: '0.18em',
-        padding: '9px 14px',
-        border: '1px solid var(--color-ink)',
-        lineHeight: 1,
-        cursor: 'pointer',
+      className="pc-add"
+      aria-label={
+        added ? `${item.name} added to cart` : `Add ${item.name} to cart`
+      }
+      onClick={() => {
+        addItem(item, 1);
+        setAdded(true);
+        clearTimeout(timer.current);
+        timer.current = setTimeout(() => setAdded(false), 1600);
       }}
     >
-      <span>{state === 'added' ? 'Added' : 'Add'}</span>
-      <span className="btn-arrow" aria-hidden="true" style={{ fontSize: '13px' }}>
-        →
-      </span>
+      <span aria-live="polite">{added ? 'Added ✓' : 'Add to cart'}</span>
     </button>
   );
 }

@@ -257,9 +257,9 @@ export default async function ProductPage({ params }: { params: Params }) {
       {/* Main 2-column hero */}
       <section className="bg-paper">
         <div className="max-w-content mx-auto px-8 pt-8 pb-20 max-md:px-4 max-md:pt-4 max-md:pb-8">
-          <div className="grid gap-12 max-lg:gap-8 max-md:gap-5 lg:grid-cols-[1.5fr_1fr]">
+          <div className="grid gap-12 max-lg:gap-8 max-md:gap-5 lg:grid-cols-[1.15fr_1fr]">
             {/* Gallery — capped on mobile so it doesn't dominate the viewport */}
-            <div className="max-md:max-h-[55vh] max-md:overflow-hidden">
+            <div className="product-gallery-shell">
               <ProductGallery
                 images={gallery}
                 productName={product.name}
@@ -279,7 +279,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                 </Link>
               )}
 
-              <h1 className="type-display-2">{renderProductName(product.name)}</h1>
+              <h1 className="product-title">{renderProductName(product.name)}</h1>
 
               <p className="type-data-mono text-ink-muted">SKU · {product.sku}</p>
 
@@ -309,7 +309,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                 )}
               </div>
 
-              <ProductAddPanel item={addItemData} />
+              <ProductAddPanel item={addItemData} available={product.stock_status !== 'out_of_stock'} />
 
               {tagList.length > 0 && (
                 <div
@@ -347,11 +347,11 @@ export default async function ProductPage({ params }: { params: Params }) {
         <div className="max-w-content mx-auto px-8 py-20 max-md:px-4 max-md:py-8">
           <div className="grid gap-14 max-lg:gap-10 max-md:gap-6 lg:grid-cols-[1.4fr_1fr]">
             <div>
-              <p className="type-label text-accent mb-6">§ About this product</p>
+              <p className="type-label text-accent mb-6">About this product</p>
               <ProductDescription html={product.description} />
             </div>
             <aside>
-              <p className="type-label text-accent mb-6">§ Details</p>
+              <p className="type-label text-accent mb-6">Details</p>
               <dl
                 className="flex flex-col"
                 style={{ borderTop: '1px solid var(--rule-strong)' }}

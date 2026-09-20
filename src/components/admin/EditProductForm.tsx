@@ -514,7 +514,7 @@ export function EditProductForm({ product, brands, categories }: Props) {
             className="bg-cream"
             style={{ border: '1px solid var(--rule-strong)', padding: '20px 22px' }}
           >
-            <p className="type-label text-ink mb-3">§ Summary</p>
+            <p className="type-label text-ink mb-3">Summary</p>
             <dl className="flex flex-col gap-2">
               <Stat label="Name" value={name || '—'} />
               <Stat label="SKU" value={sku || '—'} mono />
@@ -552,7 +552,7 @@ export function EditProductForm({ product, brands, categories }: Props) {
       </form>
 
       <section className="mt-16 pt-8" style={{ borderTop: '1px solid var(--rule)' }}>
-        <p className="type-label text-accent mb-3">§ Danger zone</p>
+        <p className="type-label text-accent mb-3">Danger zone</p>
         <p className="type-data-mono text-ink-muted mb-4 max-w-[640px]">
           Deletes this product and its primary image. If the product has any
           historical order line items, it will be hidden from the storefront
@@ -605,7 +605,7 @@ function Section({
 }) {
   const headerInner = (
     <div className="flex items-baseline justify-between gap-4">
-      <p className="type-label text-ink">§ {title}</p>
+      <p className="type-label text-ink">{title}</p>
       {collapsible && (
         <span className="type-data-mono text-ink-muted">{open ? '▾ Hide' : '▸ Show'}</span>
       )}

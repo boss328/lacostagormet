@@ -60,7 +60,7 @@ export function WarehouseList({
       style={{ border: '1px solid var(--rule-strong)', padding: '20px 22px' }}
     >
       <div className="flex items-baseline justify-between mb-4">
-        <p className="type-label text-ink">§ Warehouses</p>
+        <p className="type-label text-ink">Warehouses</p>
         <button
           type="button"
           onClick={() => setAdding((v) => !v)}

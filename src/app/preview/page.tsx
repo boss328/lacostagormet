@@ -11,7 +11,7 @@ export default function PreviewPage() {
       {/* Full-bleed ticker demo — sits flush against viewport edges */}
       <Ticker
         items={[
-          'Free shipping over $70 · continental U.S.',
+          'Free shipping over $80 · continental U.S.',
           'Volume pricing at $400 & $700',
           'Family-owned since 2003',
           'Mon–Fri · 9 to 5 PT',
@@ -19,7 +19,7 @@ export default function PreviewPage() {
       />
 
       <div className="max-w-content mx-auto px-8 py-20 max-sm:px-5">
-        <p className="type-label text-accent mb-10">§ 0 · DEV-ONLY PREVIEW</p>
+        <p className="type-label text-accent mb-10">0 · DEV-ONLY PREVIEW</p>
 
         <SectionHead
           numeral="I"
@@ -75,20 +75,20 @@ export default function PreviewPage() {
 
         <div className="grid grid-cols-4 gap-4 max-sm:grid-cols-2">
           {[
-            { name: 'paper',        hex: '#F6EEDE', cls: 'bg-paper' },
-            { name: 'paper-2',      hex: '#EDE2CB', cls: 'bg-paper-2' },
+            { name: 'paper',        hex: '#f5f6f5', cls: 'bg-paper' },
+            { name: 'paper-2',      hex: '#e8ecea', cls: 'bg-paper-2' },
             { name: 'paper-3',      hex: '#E0D3B6', cls: 'bg-paper-3' },
-            { name: 'cream',        hex: '#FCF6E8', cls: 'bg-cream' },
-            { name: 'ink',          hex: '#1A110A', cls: 'bg-ink' },
-            { name: 'ink-2',        hex: '#2E1F13', cls: 'bg-ink-2' },
+            { name: 'cream',        hex: '#ffffff', cls: 'bg-cream' },
+            { name: 'ink',          hex: '#1d2423', cls: 'bg-ink' },
+            { name: 'ink-2',        hex: '#424b49', cls: 'bg-ink-2' },
             { name: 'ink-3',        hex: '#4A3722', cls: 'bg-ink-3' },
-            { name: 'ink-muted',    hex: '#7A6448', cls: 'bg-ink-muted' },
-            { name: 'brand',        hex: '#7A3B1B', cls: 'bg-brand' },
-            { name: 'brand-deep',   hex: '#4E2410', cls: 'bg-brand-deep' },
+            { name: 'ink-muted',    hex: '#626c69', cls: 'bg-ink-muted' },
+            { name: 'brand',        hex: '#28544c', cls: 'bg-brand' },
+            { name: 'brand-deep',   hex: '#234b43', cls: 'bg-brand-deep' },
             { name: 'brand-darker', hex: '#2E1205', cls: 'bg-brand-darker' },
-            { name: 'accent',       hex: '#C14828', cls: 'bg-accent' },
-            { name: 'gold',         hex: '#B88A48', cls: 'bg-gold' },
-            { name: 'gold-bright',  hex: '#D4A961', cls: 'bg-gold-bright' },
+            { name: 'accent',       hex: '#715580', cls: 'bg-accent' },
+            { name: 'gold',         hex: '#9784a2', cls: 'bg-gold' },
+            { name: 'gold-bright',  hex: '#b7a2c5', cls: 'bg-gold-bright' },
             { name: 'forest',       hex: '#2A3F2A', cls: 'bg-forest' },
           ].map(({ name, hex, cls }) => (
             <div key={name} className="border border-rule">

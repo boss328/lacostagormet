@@ -22,7 +22,7 @@ import logo from '../../../public/logo.png';
  * forces dynamic rendering and Next 14 will bail out of static
  * prerender otherwise.
  */
-export function LoginPageInner() {
+export function LoginPageInner({ readOnly = false }: { readOnly?: boolean }) {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
   const redirect = searchParams.get('redirect') || '/account';
@@ -33,6 +33,11 @@ export function LoginPageInner() {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (readOnly) {
+      setStatus('error');
+      setErrorMsg('Email sign-in is disabled in this review preview.');
+      return;
+    }
     setStatus('sending');
     setErrorMsg('');
 
@@ -73,7 +78,7 @@ export function LoginPageInner() {
     <main className="max-w-content mx-auto px-8 py-24 max-sm:px-5 max-sm:py-16">
       <div
         className="bg-cream max-w-[440px] mx-auto"
-        style={{ border: '1px solid var(--rule-strong)', padding: '40px 36px' }}
+        style={{ border: '1px solid var(--rule-strong)', padding: '36px', borderRadius: 20 }}
       >
         <div className="flex justify-center mb-8">
           <Image
@@ -85,7 +90,7 @@ export function LoginPageInner() {
           />
         </div>
 
-        <p className="type-label text-accent mb-3 text-center">§ Your account</p>
+        <p className="type-label text-accent mb-3 text-center">Your account</p>
         <h1
           className="font-display text-ink text-center mb-3"
           style={{ fontSize: '32px', lineHeight: 1.05, letterSpacing: '-0.02em', fontWeight: 400 }}

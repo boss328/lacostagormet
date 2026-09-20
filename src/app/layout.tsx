@@ -1,36 +1,10 @@
 import type { Metadata } from "next";
-import { Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { TopRail } from "@/components/layout/TopRail";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { StorefrontChrome } from "@/components/layout/StorefrontChrome";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
-
-// Fraunces — drop 600 (unused) and pin to actually-used weights.
-// 300 stays because HomeHero uses it; 400 + 500 cover the rest.
-// Italic stays — used in 60+ places across the site.
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  weight: ["300", "400", "500"],
-  style: ["normal", "italic"],
-  variable: "--font-display",
-  display: "swap",
-  preload: true,
-  fallback: ["Georgia", "Cambria", "Times New Roman", "serif"],
-  // adjustFontFallback defaults to true on Google fonts → metric-aware
-  // override font is generated automatically.
-});
-
-// JetBrains Mono — drop 300 (no explicit usage). 400 default + 500 medium.
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-mono",
-  display: "swap",
-  preload: false, // mono is below-the-fold filler; let it load when needed
-  fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "monospace"],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -48,14 +22,14 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en">
       <body className="bg-paper text-ink-2 font-display antialiased min-h-screen flex flex-col">
-        <GoogleAnalytics />
+        <a className="skip-link" href="#main-content">Skip to content</a><GoogleAnalytics />
         <StorefrontChrome>
-          <TopRail />
           <Nav />
+          <TopRail />
         </StorefrontChrome>
-        <div className="flex-1">{children}</div>
+        <div id="main-content" className="flex-1" tabIndex={-1}>{children}</div>
         <StorefrontChrome>
           <Footer />
         </StorefrontChrome>

@@ -104,7 +104,7 @@ function submitToHostedPage(hostedUrl: string, formToken: string): void {
   form.submit();
 }
 
-export function CheckoutForm() {
+export function CheckoutForm({ readOnly = false }: { readOnly?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const items = useCartStore((s) => s.items);
@@ -151,7 +151,7 @@ export function CheckoutForm() {
     address.phone.trim().length >= 7 &&
     (US_STATES as readonly string[]).includes(address.state);
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const canContinue = Boolean(emailValid && shippingValid) && !submitting;
+  const canContinue = Boolean(emailValid && shippingValid) && !submitting && !readOnly;
 
   const updateAddress = <K extends keyof AddressPayload>(
     key: K,
@@ -247,7 +247,7 @@ export function CheckoutForm() {
       {/* Header */}
       <header className="bg-cream border-b border-rule">
         <div className="max-w-content mx-auto px-8 pt-12 pb-10 max-sm:px-5 max-sm:pt-9 max-sm:pb-8">
-          <p className="type-label text-accent mb-5">§ The checkout</p>
+          <p className="type-label text-accent mb-5">The checkout</p>
           <h1 className="type-display-2 mb-3">
             Almost <em className="type-accent">there</em>.
           </h1>
@@ -257,8 +257,8 @@ export function CheckoutForm() {
         </div>
       </header>
 
-      <section className="max-w-content mx-auto px-8 py-14 max-sm:px-5 max-sm:py-10">
-        <div className="grid gap-14 max-lg:gap-10 lg:grid-cols-[1.5fr_0.7fr]">
+      <section className="checkout-shell max-w-content mx-auto px-8 py-14 max-sm:px-5 max-sm:py-10">
+        <div className="grid gap-14 max-lg:gap-10 lg:grid-cols-[1.35fr_0.9fr]">
           {/* Left — form */}
           <div className="flex flex-col gap-8">
             {errorMessage && (
@@ -400,10 +400,11 @@ export function CheckoutForm() {
               <p className="type-data-mono text-ink-muted">
                 Credit and debit cards are processed securely by Authorize.net.
               </p>
-              <WalletPayments disabled={!canContinue} onActiveChange={setWalletActive} payload={{
+              {!readOnly && <WalletPayments disabled={!canContinue} onActiveChange={setWalletActive} payload={{
                 email, shippingAddress: address, clientSubtotal: subtotal,
                 items: items.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
-              }} />
+              }} />}
+              {readOnly && <p className="type-body mt-4">Review preview: payments are disabled. No order will be placed.</p>}
             </FormSection>
           </div>
 
@@ -413,7 +414,7 @@ export function CheckoutForm() {
               className="bg-cream"
               style={{ border: '1px solid var(--rule-strong)', padding: '28px' }}
             >
-              <p className="type-label text-ink mb-6">§&nbsp;&nbsp;Order summary</p>
+              <p className="type-label text-ink mb-6">&nbsp;&nbsp;Order summary</p>
 
               <ul className="flex flex-col" style={{ borderTop: '1px solid var(--rule)' }}>
                 {items.map((item) => (
@@ -446,7 +447,7 @@ export function CheckoutForm() {
                   }
                   note={
                     shipping === 0
-                      ? 'Orders over $70 · continental US'
+                      ? 'Orders over $80 · continental US'
                       : address.state === 'HI' || address.state === 'AK'
                         ? 'HI/AK surcharge applied'
                         : `Add ${(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2)} for free ground`
@@ -509,18 +510,18 @@ function FormSection({
 }) {
   return (
     <section
-      className="bg-cream"
-      style={{ border: '1px solid var(--rule)', padding: '28px 32px', borderRadius: 0 }}
+      className="checkout-section bg-cream"
+      style={{ border: '1px solid var(--rule)', padding: '24px', borderRadius: 16 }}
     >
       <div
         className="flex items-baseline gap-4 mb-6 pb-4"
         style={{ borderBottom: '1px dashed var(--rule)' }}
       >
         <span
-          className="font-display italic text-brand-deep"
-          style={{ fontSize: '28px', lineHeight: 1, letterSpacing: '-0.02em', fontWeight: 500 }}
+          className="checkout-step"
+          style={{ fontSize: '13px', lineHeight: 1, fontWeight: 600 }}
         >
-          {roman}
+          {{ I: '1', II: '2', III: '3' }[roman] ?? roman}
         </span>
         <span className="type-label text-ink-muted">{label}</span>
       </div>

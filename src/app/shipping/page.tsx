@@ -3,7 +3,7 @@ import { PageHeader } from '@/components/shop/PageHeader';
 export const metadata = {
   title: 'Shipping',
   description:
-    'Five warehouses, coast to coast. Orders ship in 3 to 5 business days. Free shipping on continental US orders over $70.',
+    'Four warehouses, coast to coast. Orders ship in 2 to 3 business days. Free shipping on continental US orders over $80.',
   alternates: { canonical: '/shipping/' },
 };
 
@@ -15,19 +15,19 @@ export default function ShippingPage() {
           { href: '/', label: 'Home' },
           { label: 'Shipping' },
         ]}
-        eyebrow="§ Shipping information"
+        eyebrow="Shipping information"
         title={
           <>
             How we <em className="type-accent">ship</em>.
           </>
         }
-        lede="Five warehouses, coast to coast. Orders typically ship within 3 to 5 business days. Free shipping on orders over $70 continental US."
+        lede="Four warehouses, coast to coast. Orders typically ship within 2 to 3 business days. Free shipping on orders over $80 continental US."
       />
 
       <section className="max-w-content mx-auto px-8 py-14 max-md:px-4 max-md:py-6">
         <div className="max-w-[720px] flex flex-col gap-5">
           <Row label="Free shipping threshold" value="See rate table below" />
-          <Row label="Ship-out time" value="3 to 5 business days" />
+          <Row label="Ship-out time" value="2 to 3 business days" />
           <Row
             label="Ships from"
             value={
@@ -74,8 +74,8 @@ export default function ShippingPage() {
               <span className="type-label-sm text-ink-muted text-right max-sm:text-left">Shipping</span>
             </div>
             <RateRow subtotal="$0 — $29.99" rate="$9.95" />
-            <RateRow subtotal="$30 — $69.99" rate="$12.95" />
-            <RateRow subtotal="$70 and above" rate="FREE" highlight />
+            <RateRow subtotal="$30 — $79.99" rate="$12.95" />
+            <RateRow subtotal="$80 and above" rate="FREE" highlight />
           </div>
 
           <p className="type-data-mono text-ink-muted mt-4">

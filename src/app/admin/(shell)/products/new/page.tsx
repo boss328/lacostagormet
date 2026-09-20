@@ -39,7 +39,7 @@ export default async function NewProductPage() {
   return (
     <>
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ IV.a New product</p>
+        <p className="type-label text-accent mb-3">a New product</p>
         <h1
           className="font-display text-ink max-md:!text-[24px]"
           style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em', fontWeight: 400 }}

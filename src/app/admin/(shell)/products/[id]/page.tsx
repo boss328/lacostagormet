@@ -2,7 +2,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { bcImage } from '@/lib/bcImage';
-import { EditProductForm, type EditProductExistingImage } from '@/components/admin/EditProductForm';
+import {
+  EditProductForm,
+  type EditProductExistingImage,
+} from '@/components/admin/EditProductForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,11 +25,21 @@ type ProductDetailRow = {
   primary_category_id: string | null;
   brands: { name: string; slug: string } | null;
   primary_category: { name: string; slug: string } | null;
-  product_images: Array<{ id: string; url: string; is_primary: boolean; display_order: number }> | null;
+  product_images: Array<{
+    id: string;
+    url: string;
+    is_primary: boolean;
+    display_order: number;
+  }> | null;
 };
 
 function toExistingImages(
-  raw: Array<{ id: string; url: string; is_primary: boolean; display_order: number }> | null,
+  raw: Array<{
+    id: string;
+    url: string;
+    is_primary: boolean;
+    display_order: number;
+  }> | null,
 ): EditProductExistingImage[] {
   if (!raw || raw.length === 0) return [];
   return raw.map((img) => ({
@@ -46,23 +59,30 @@ export default async function AdminProductEditPage({
 }) {
   const admin = createAdminClient();
 
-  const [{ data: productData }, { data: brandsData }, { data: categoriesData }] =
-    await Promise.all([
-      admin
-        .from('products')
-        .select(
-          'id, sku, slug, name, description, meta_description, weight_lb, upc, retail_price, is_active, is_featured, brand_id, primary_category_id, brands(name, slug), primary_category:categories!primary_category_id(name, slug), product_images(id, url, is_primary, display_order)',
-        )
-        .eq('id', params.id)
-        .maybeSingle(),
-      admin.from('brands').select('id, name, slug').eq('is_active', true).order('name'),
-      admin
-        .from('categories')
-        .select('id, name, slug')
-        .is('parent_id', null)
-        .eq('is_active', true)
-        .order('display_order'),
-    ]);
+  const [
+    { data: productData },
+    { data: brandsData },
+    { data: categoriesData },
+  ] = await Promise.all([
+    admin
+      .from('products')
+      .select(
+        'id, sku, slug, name, description, meta_description, weight_lb, upc, retail_price, is_active, is_featured, brand_id, primary_category_id, brands(name, slug), primary_category:categories!primary_category_id(name, slug), product_images(id, url, is_primary, display_order)',
+      )
+      .eq('id', params.id)
+      .maybeSingle(),
+    admin
+      .from('brands')
+      .select('id, name, slug')
+      .eq('is_active', true)
+      .order('name'),
+    admin
+      .from('categories')
+      .select('id, name, slug')
+      .is('parent_id', null)
+      .eq('is_active', true)
+      .order('display_order'),
+  ]);
 
   if (!productData) notFound();
   const p = productData as unknown as ProductDetailRow;
@@ -89,12 +109,20 @@ export default async function AdminProductEditPage({
         ←&nbsp;All products
       </Link>
 
-      <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ IV.b Edit product</p>
+      <header
+        className="mb-8 pb-6"
+        style={{ borderBottom: '1px solid var(--rule-strong)' }}
+      >
+        <p className="type-label text-accent mb-3">b Edit product</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
             className="font-display text-ink max-md:!text-[24px]"
-            style={{ fontSize: '40px', lineHeight: 1.05, letterSpacing: '-0.026em', fontWeight: 400 }}
+            style={{
+              fontSize: '40px',
+              lineHeight: 1.05,
+              letterSpacing: '-0.026em',
+              fontWeight: 400,
+            }}
           >
             {p.name}
           </h1>

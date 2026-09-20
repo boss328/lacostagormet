@@ -1,3 +1,5 @@
+import { VendorSetupNotice } from '@/components/admin/VendorSetupNotice';
+import { searchFilter } from '@/lib/admin/search-filter';
 import Link from 'next/link';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -30,9 +32,11 @@ export default async function AdminVendorsPage({
     .is('deleted_at', null)
     .order('name', { ascending: true })
     .limit(200);
-  if (search) vq = vq.ilike('name', `%${search}%`);
+  if (search) vq = vq.or(searchFilter(['name'], search));
 
-  const { data: vendorsData } = await vq;
+  const { data: vendorsData, error } = await vq;
+  if (error && ['42703', 'PGRST200', 'PGRST205', '42P01'].includes(error.code)) return <VendorSetupNotice />;
+  if (error) throw new Error('Unable to load vendors.');
   const vendors = (vendorsData ?? []) as Array<Omit<VendorRow, 'productCount' | 'warehouseCount' | 'openPoCount'>>;
 
   // Count helpers — one round-trip each, all in parallel.
@@ -66,13 +70,13 @@ export default async function AdminVendorsPage({
   return (
     <>
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ V. Vendors</p>
+        <p className="type-label text-accent mb-3">Vendors</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
             className="font-display text-ink max-md:!text-[24px]"
             style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em', fontWeight: 400 }}
           >
-            The <em className="type-accent">supply ledger</em>.
+            Vendors
           </h1>
           <div className="flex items-center gap-5">
             <Link

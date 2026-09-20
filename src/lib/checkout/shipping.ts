@@ -2,8 +2,8 @@
  * Shipping rate tiers — owner spec, Apr 2026 walkthrough.
  *
  *   Subtotal $0 – 29.99    →  $9.95
- *   Subtotal $30 – 69.99   →  $12.95
- *   Subtotal $70 +         →  free (continental US)
+ *   Subtotal $30 – 79.99   →  $12.95
+ *   Subtotal $80 +         →  free (continental US)
  *
  * Money handled in dollars to match the rest of the codebase. Edge
  * surcharges (HI/AK, international) are layered on top in
@@ -11,7 +11,7 @@
  */
 
 export const SHIPPING_TIERS = {
-  freeThreshold: 70,
+  freeThreshold: 80,
   midThreshold: 30,
   midRate: 12.95,
   lowRate: 9.95,
