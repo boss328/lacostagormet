@@ -59,7 +59,11 @@ export function Nav() {
               type="button"
               aria-expanded={categories}
               aria-controls="category-menu"
-              onClick={() => setCategories(!categories)}
+              onClick={(event) => {
+                // A pointer has already opened the menu on hover. Keep that
+                // first click open; keyboard activation still toggles it.
+                setCategories(event.detail === 0 ? !categories : true);
+              }}
             >
               Categories <ChevronDown size={14} />
             </button>
