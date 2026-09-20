@@ -11,7 +11,7 @@ export const metadata = {
 function Section({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="type-label text-accent">§ {eyebrow}</h2>
+      <h2 className="type-label text-accent">{eyebrow}</h2>
       {children}
     </div>
   );
@@ -25,7 +25,7 @@ export default function TermsPage() {
           { href: '/', label: 'Home' },
           { label: 'Terms' },
         ]}
-        eyebrow="§ Terms of service"
+        eyebrow="Terms of service"
         title={
           <>
             The <em className="type-accent">fine print</em>, kept short.
@@ -67,8 +67,8 @@ export default function TermsPage() {
 
           <Section eyebrow="Shipping">
             <p className="type-body">
-              We ship within the continental United States: orders of $70 or
-              more ship free, orders from $30 to $69.99 ship for $12.95, and
+              We ship within the continental United States: orders of $80 or
+              more ship free, orders from $30 to $79.99 ship for $12.95, and
               orders under $30 ship for $9.95. Alaska and Hawaii incur a
               surcharge. Details and current transit expectations live on the{' '}
               <Link href="/shipping/" className="text-brand-deep hover:text-ink transition-colors">

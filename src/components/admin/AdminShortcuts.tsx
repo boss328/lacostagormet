@@ -129,7 +129,7 @@ export function AdminShortcuts() {
           width: 'calc(100% - 48px)',
         }}
       >
-        <p className="type-label text-accent mb-4">§ Keyboard shortcuts</p>
+        <p className="type-label text-accent mb-4">Keyboard shortcuts</p>
         <h2 className="type-display-2 mb-6" style={{ fontSize: '32px' }}>
           Quick <em className="type-accent">navigation</em>.
         </h2>

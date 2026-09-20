@@ -1,3 +1,6 @@
+import { parsePage } from '@/lib/catalog-state';
+import { AdminPagination } from '@/components/admin/AdminPagination';
+import { searchFilter } from '@/lib/admin/search-filter';
 import Link from 'next/link';
 import Image from 'next/image';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -55,11 +58,12 @@ export default async function AdminProductsPage({
   searchParams: Record<string, string | string[] | undefined>;
 }) {
   const search = typeof searchParams.q === 'string' ? searchParams.q : undefined;
+  const page = parsePage(searchParams.page);
   const rangeKey = parseRange(searchParams.range);
   const range = resolveRange(rangeKey);
   const admin = createAdminClient();
 
-  const [{ data, count }, section] = await Promise.all([
+  const [{ data, count, error }, section] = await Promise.all([
     (async () => {
       let q = admin
         .from('products')
@@ -67,25 +71,26 @@ export default async function AdminProductsPage({
           'id, sku, name, retail_price, wholesale_cost, is_active, stock_status, brand_id, brands(name, slug), product_images(url, is_primary, display_order)',
           { count: 'exact' },
         );
-      if (search) q = q.or(`sku.ilike.%${search}%,name.ilike.%${search}%`);
-      q = q.order('name', { ascending: true }).limit(200);
+      if (search) q = q.or(searchFilter(['sku', 'name'], search));
+      q = q.order('name', { ascending: true }).order('id').range((page - 1) * 50, page * 50 - 1);
       return q;
     })(),
     loadProductsSection(range),
   ]);
 
+  if (error) throw new Error('Unable to load records. Please try again.');
   const rows = (data ?? []) as unknown as ProductRow[];
 
   return (
     <>
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ IV. Products</p>
+        <p className="type-label text-accent mb-3">Products</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
             className="font-display text-ink max-md:!text-[24px]"
             style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em', fontWeight: 400 }}
           >
-            The <em className="type-accent">catalog</em>.
+            Products
           </h1>
           <div className="flex items-center gap-5">
             <Link
@@ -293,6 +298,7 @@ export default async function AdminProductsPage({
           );
         })}
       </div>
+      <AdminPagination path="/admin/products/" page={page} total={count ?? 0} params={{ q: search, range: rangeKey }} />
     </>
   );
 }

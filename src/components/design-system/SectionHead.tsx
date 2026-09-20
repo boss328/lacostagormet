@@ -23,17 +23,16 @@ function renderTitle(title: string): ReactNode {
   );
 }
 
-export function SectionHead({ numeral, eyebrow, title, link, className = '', id }: SectionHeadProps) {
-  const base = 'grid grid-cols-[auto_1fr_auto] items-baseline gap-8 pb-5 mb-11 border-b border-rule max-md:grid-cols-1 max-md:gap-2 max-md:pb-3 max-md:mb-6';
+export function SectionHead({ eyebrow, title, link, className = '', id }: SectionHeadProps) {
+  const base = 'flex items-end justify-between gap-6 mb-8 max-md:flex-wrap';
   return (
     <header id={id} className={`${base}${className ? ' ' + className : ''}`}>
-      <div className="flex items-baseline gap-4 max-sm:gap-3">
-        <span className="type-numeral" aria-hidden="true">{numeral}</span>
-        <span className="type-label text-ink-muted">§&nbsp;&nbsp;{eyebrow ?? ''}</span>
-      </div>
+      <div>
+      {eyebrow && <p className="eyebrow">{eyebrow}</p>}
       <h2 className="type-display-2 max-sm:col-start-1">
         {renderTitle(title)}
       </h2>
+      </div>
       {link && (
         <Link
           href={link.href}

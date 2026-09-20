@@ -14,7 +14,7 @@ import {
 import { WidgetFrame } from '@/components/admin/charts/WidgetFrame';
 import type { RevenuePoint } from '@/lib/admin/analytics';
 
-type Grain = 'day' | 'week';
+type Grain = 'day' | 'week' | 'month';
 
 function bucket(data: RevenuePoint[], grain: Grain): Array<{ date: string; orders: number; aov: number }> {
   if (grain === 'day') {
@@ -26,7 +26,7 @@ function bucket(data: RevenuePoint[], grain: Grain): Array<{ date: string; order
   }
   const map = new Map<string, { revenue: number; orders: number }>();
   for (const p of data) {
-    const key = weekStart(p.date);
+    const key = grain === 'month' ? p.date.slice(0, 7) : weekStart(p.date);
     const prev = map.get(key) ?? { revenue: 0, orders: 0 };
     prev.revenue += p.revenue;
     prev.orders += p.orders;
@@ -47,15 +47,15 @@ function weekStart(iso: string): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function OrdersAov({ series }: { series: RevenuePoint[] }) {
-  const [grain, setGrain] = useState<Grain>('day');
+export function OrdersAov({ series, initialGrain = "day" }: { series: RevenuePoint[]; initialGrain?: Grain }) {
+  const [grain, setGrain] = useState<Grain>(initialGrain);
   const grouped = useMemo(() => bucket(series, grain), [series, grain]);
   const totalOrders = useMemo(() => grouped.reduce((s, p) => s + p.orders, 0), [grouped]);
   const avgAov = useMemo(() => {
-    const nonzero = grouped.filter((g) => g.orders > 0);
-    if (nonzero.length === 0) return 0;
-    return Math.round((nonzero.reduce((s, g) => s + g.aov, 0) / nonzero.length) * 100) / 100;
-  }, [grouped]);
+    const revenue = series.reduce((sum, point) => sum + point.revenue, 0);
+    const orders = series.reduce((sum, point) => sum + point.orders, 0);
+    return orders > 0 ? Math.round(revenue / orders * 100) / 100 : 0;
+  }, [series]);
 
   return (
     <WidgetFrame
@@ -70,11 +70,12 @@ export function OrdersAov({ series }: { series: RevenuePoint[] }) {
       cornerHint={`avg AOV $${avgAov.toFixed(2)}`}
       action={
         <div className="flex items-center gap-4">
-          {(['day', 'week'] as Grain[]).map((g) => (
+          {(['day', 'week', 'month'] as Grain[]).map((g) => (
             <button
               key={g}
               type="button"
               onClick={() => setGrain(g)}
+              aria-pressed={grain === g}
               className="type-label-sm transition-colors duration-200"
               style={{
                 color: grain === g ? 'var(--color-brand-deep)' : 'var(--color-ink-muted)',
@@ -82,7 +83,7 @@ export function OrdersAov({ series }: { series: RevenuePoint[] }) {
                 textUnderlineOffset: 4,
               }}
             >
-              {g === 'day' ? 'Daily' : 'Weekly'}
+              {g === 'day' ? 'Daily' : g === 'week' ? 'Weekly' : 'Monthly'}
             </button>
           ))}
         </div>

@@ -78,7 +78,7 @@ export default async function UnsubscribePage({ searchParams }: UnsubscribePageP
           { href: '/', label: 'Home' },
           { label: 'Unsubscribe' },
         ]}
-        eyebrow="§ Email preferences"
+        eyebrow="Email preferences"
         title={
           <>
             <em className="type-accent">Unsubscribe</em>.
@@ -103,7 +103,7 @@ function Outcome({ outcome }: { outcome: Outcome }) {
   if (outcome.state === 'success') {
     return (
       <>
-        <p className="type-label text-accent mb-5">§ Confirmed</p>
+        <p className="type-label text-accent mb-5">Confirmed</p>
         <p
           className="font-display italic text-brand-deep mb-4"
           style={{ fontSize: '24px', lineHeight: 1.15, letterSpacing: '-0.02em', fontWeight: 500 }}
@@ -122,7 +122,7 @@ function Outcome({ outcome }: { outcome: Outcome }) {
   if (outcome.state === 'already') {
     return (
       <>
-        <p className="type-label text-accent mb-5">§ Already done</p>
+        <p className="type-label text-accent mb-5">Already done</p>
         <p
           className="font-display italic text-brand-deep mb-4"
           style={{ fontSize: '24px', lineHeight: 1.15, letterSpacing: '-0.02em', fontWeight: 500 }}
@@ -139,7 +139,7 @@ function Outcome({ outcome }: { outcome: Outcome }) {
   if (outcome.state === 'not_found') {
     return (
       <>
-        <p className="type-label text-accent mb-5">§ Token not recognised</p>
+        <p className="type-label text-accent mb-5">Token not recognised</p>
         <p className="type-body text-ink-2">
           That unsubscribe link doesn&rsquo;t match any record we have. If you
           keep receiving emails you don&rsquo;t want, reply to one of them and
@@ -151,7 +151,7 @@ function Outcome({ outcome }: { outcome: Outcome }) {
   if (outcome.state === 'missing_token') {
     return (
       <>
-        <p className="type-label text-accent mb-5">§ Missing token</p>
+        <p className="type-label text-accent mb-5">Missing token</p>
         <p className="type-body text-ink-2">
           This page needs an unsubscribe token from the link in your email. If
           you arrived here by accident, you can close the tab.
@@ -161,7 +161,7 @@ function Outcome({ outcome }: { outcome: Outcome }) {
   }
   return (
     <>
-      <p className="type-label text-accent mb-5">§ Something went wrong</p>
+      <p className="type-label text-accent mb-5">Something went wrong</p>
       <p className="type-body text-ink-2">
         We couldn&rsquo;t process the unsubscribe request right now ({outcome.detail}).
         Reply to any La Costa Gourmet email and we&rsquo;ll take you off the list.

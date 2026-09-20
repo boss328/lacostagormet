@@ -37,7 +37,7 @@ export default async function NewOrderPage() {
   return (
     <>
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ II.a New order</p>
+        <p className="type-label text-accent mb-3">a New order</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
             className="font-display text-ink max-md:!text-[24px]"

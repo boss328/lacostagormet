@@ -12,7 +12,7 @@ export const metadata = {
 export default function CartPage() {
   return (
     <Suspense fallback={<p className="type-label text-ink-muted p-8">Loading cart…</p>}>
-      <CartContents />
+      <div className="cart-shell"><CartContents /></div>
     </Suspense>
   );
 }

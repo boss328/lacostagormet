@@ -98,7 +98,7 @@ export function PoEditor({
       className="bg-cream"
       style={{ border: '1px solid var(--rule-strong)', padding: '24px 26px' }}
     >
-      <p className="type-label text-ink mb-4">§ Email draft</p>
+      <p className="type-label text-ink mb-4">Email draft</p>
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
@@ -154,7 +154,7 @@ export function PoEditor({
       </div>
 
       <div className="mt-5 pt-4" style={{ borderTop: '1px dashed var(--rule)' }}>
-        <p className="type-label-sm text-ink mb-3">§ Items in this PO</p>
+        <p className="type-label-sm text-ink mb-3">Items in this PO</p>
         {items.length === 0 ? (
           <p className="type-data-mono text-ink-muted py-3">
             No items assigned to this vendor on this order.

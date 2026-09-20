@@ -15,12 +15,12 @@ export const metadata: Metadata = {
  *
  * Structure:
  *   ┌──────────────────────────────────────────────────┐
- *   │ TopRail: La Costa / § Admin / shortcuts / signout │
+ *   │ TopRail: La Costa / Admin / shortcuts / signout │
  *   ├─────────┬────────────────────────────────────────┤
  *   │ Sidebar │ Main                                    │
- *   │  § I    │                                         │
- *   │  § II   │  Page content                           │
- *   │  § III  │                                         │
+ *   │  I    │                                         │
+ *   │  II   │  Page content                           │
+ *   │  III  │                                         │
  *   └─────────┴────────────────────────────────────────┘
  *
  * Client components mounted once at the layout level: AdminShortcuts
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
  */
 export default function AdminShellLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="admin-shell min-h-screen">
       <AdminTopRail />
       <div className="max-w-[1600px] mx-auto px-6 py-6 max-sm:px-4 max-sm:py-5">
         <div className="grid gap-8 max-lg:gap-5 lg:grid-cols-[220px_1fr]">
@@ -43,7 +43,7 @@ export default function AdminShellLayout({ children }: { children: React.ReactNo
       <footer className="border-t border-rule mt-12 py-6">
         <div className="max-w-[1600px] mx-auto px-6 flex items-center justify-between max-sm:px-4 max-sm:flex-col max-sm:gap-3">
           <p className="type-data-mono text-ink-muted">
-            Est. MMIII · Carlsbad, CA · La Costa Command · № 0042 · Vol. XXII
+            La Costa Gourmet · Store management
           </p>
           <Link
             href="/"

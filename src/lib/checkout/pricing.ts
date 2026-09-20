@@ -6,8 +6,8 @@ import { calculateShipping, SHIPPING_TIERS } from '@/lib/checkout/shipping';
  * Canonical money math for checkout. Shipping rules use the 3-tier
  * structure in @/lib/checkout/shipping (Apr 2026 owner spec):
  *   $0–29.99   → $9.95
- *   $30–69.99  → $12.95
- *   $70+       → free (continental US)
+ *   $30–79.99  → $12.95
+ *   $80+       → free (continental US)
  *
  * The shipping.* settings keys remain in the DB for the legacy
  * surcharge logic (HI/AK) and so admin UI can keep reading them, but

@@ -7,7 +7,7 @@ import type { TopProduct } from '@/lib/admin/analytics';
 
 type Metric = 'revenue' | 'units';
 
-export function TopProducts({ products }: { products: TopProduct[] }) {
+export function TopProducts({ products, label = "all-time" }: { products: TopProduct[]; label?: string }) {
   const [metric, setMetric] = useState<Metric>('revenue');
   const sorted = useMemo(
     () =>
@@ -37,7 +37,7 @@ export function TopProducts({ products }: { products: TopProduct[] }) {
       eyebrow="Top performers"
       title={
         <>
-          The <em className="type-accent">shelf leaders</em>.
+          Top products
         </>
       }
       cornerValue={
@@ -45,7 +45,7 @@ export function TopProducts({ products }: { products: TopProduct[] }) {
           ? `$${Math.round(totalRevenue).toLocaleString()}`
           : `${totalUnits.toLocaleString()} units`
       }
-      cornerHint="all time paid"
+      cornerHint={`${label} · paid`}
       action={
         <div className="flex items-center gap-4">
           {(['revenue', 'units'] as Metric[]).map((m) => (
@@ -53,6 +53,7 @@ export function TopProducts({ products }: { products: TopProduct[] }) {
               key={m}
               type="button"
               onClick={() => setMetric(m)}
+              aria-pressed={metric === m}
               className="type-label-sm transition-colors duration-200"
               style={{
                 color: metric === m ? 'var(--color-brand-deep)' : 'var(--color-ink-muted)',

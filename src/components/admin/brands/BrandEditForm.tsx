@@ -88,7 +88,7 @@ export function BrandEditForm({
   return (
     <>
       <div className="bg-cream" style={{ border: '1px solid var(--rule-strong)', padding: '20px 22px' }}>
-        <p className="type-label text-ink mb-4">§ Brand info</p>
+        <p className="type-label text-ink mb-4">Brand info</p>
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <Field name="name" label="Name" defaultValue={brand.name} required />
           <div className="grid gap-4 sm:grid-cols-2">
@@ -165,7 +165,7 @@ export function BrandEditForm({
       </div>
 
       <section className="mt-12 pt-6" style={{ borderTop: '1px solid var(--rule)' }}>
-        <p className="type-label text-accent mb-3">§ Danger zone</p>
+        <p className="type-label text-accent mb-3">Danger zone</p>
         <p className="type-data-mono text-ink-muted mb-4 max-w-[640px]">
           {productCount > 0
             ? `This brand has ${productCount} product${productCount === 1 ? '' : 's'}, so deleting it will hide it from the storefront instead of removing it — the products stay put.`

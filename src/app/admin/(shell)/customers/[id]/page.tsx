@@ -88,7 +88,7 @@ export default async function AdminCustomerDetailPage({
       </Link>
 
       <header className="mb-8">
-        <p className="type-label text-accent mb-3">§ Customer</p>
+        <p className="type-label text-accent mb-3">Customer</p>
         <h1 className="type-display-2">
           {[c.first_name, c.last_name].filter(Boolean).join(' ') || (
             <em className="type-accent">Unnamed</em>
@@ -114,7 +114,7 @@ export default async function AdminCustomerDetailPage({
             className="type-label text-ink pb-3 mb-3"
             style={{ borderBottom: '1px solid var(--rule-strong)' }}
           >
-            §&nbsp;&nbsp;Addresses
+            &nbsp;&nbsp;Addresses
           </p>
           {addresses.length === 0 ? (
             <p className="type-data-mono text-ink-muted py-3">None on file.</p>
@@ -151,7 +151,7 @@ export default async function AdminCustomerDetailPage({
             className="type-label text-ink pb-3 mb-3"
             style={{ borderBottom: '1px solid var(--rule-strong)' }}
           >
-            §&nbsp;&nbsp;Order history
+            &nbsp;&nbsp;Order history
           </p>
           {orders.length === 0 ? (
             <p className="type-data-mono text-ink-muted py-3">No orders yet.</p>

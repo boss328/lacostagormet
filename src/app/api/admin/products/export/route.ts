@@ -1,3 +1,5 @@
+import { readAllRows } from '@/lib/admin/read-all-rows';
+import { searchFilter } from '@/lib/admin/search-filter';
 import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -26,15 +28,20 @@ export async function GET(req: NextRequest) {
   const search = req.nextUrl.searchParams.get('q') ?? '';
   const admin = createAdminClient();
 
-  let q = admin
-    .from('products')
-    .select(
-      'id, sku, name, retail_price, wholesale_cost, description, short_description, pack_size, units_per_pack, weight_lb, slug, upc, meta_description, stock_status, is_active, is_featured, created_at, updated_at, brands(name), primary_category:categories!primary_category_id(name), product_images(url, is_primary, display_order)',
-    );
-  if (search) q = q.or(`sku.ilike.%${search}%,name.ilike.%${search}%`);
-  q = q.order('name', { ascending: true }).limit(5000);
+  const buildQuery = () => {
+    let q = admin
+      .from('products')
+      .select(
+        'id, sku, name, retail_price, wholesale_cost, description, short_description, pack_size, units_per_pack, weight_lb, slug, upc, meta_description, stock_status, is_active, is_featured, created_at, updated_at, brands(name), primary_category:categories!primary_category_id(name), product_images(url, is_primary, display_order)',
+      );
+    if (search) q = q.or(searchFilter(['sku', 'name'], search));
+    q = q.order('name', { ascending: true }).order('id');
 
-  const { data, error } = await q;
+    return q;
+  };
+  const { data, error } = await readAllRows((from, to) =>
+    buildQuery().range(from, to),
+  );
   if (error) {
     console.error('[admin/products/export]', error);
     return NextResponse.json({ error: 'query failed' }, { status: 500 });
@@ -61,7 +68,11 @@ export async function GET(req: NextRequest) {
     updated_at: string;
     brands: { name: string } | null;
     primary_category: { name: string } | null;
-    product_images: Array<{ url: string; is_primary: boolean; display_order: number }> | null;
+    product_images: Array<{
+      url: string;
+      is_primary: boolean;
+      display_order: number;
+    }> | null;
   };
 
   const rows = ((data ?? []) as unknown as Row[]).map((p) => ({
@@ -70,7 +81,8 @@ export async function GET(req: NextRequest) {
     brand: p.brands?.name ?? '',
     category: p.primary_category?.name ?? '',
     retail_price: Number(p.retail_price).toFixed(2),
-    wholesale_cost: p.wholesale_cost !== null ? Number(p.wholesale_cost).toFixed(2) : '',
+    wholesale_cost:
+      p.wholesale_cost !== null ? Number(p.wholesale_cost).toFixed(2) : '',
     description: p.description ?? '',
     short_description: p.short_description ?? '',
     pack_size: p.pack_size ?? '',
@@ -92,12 +104,28 @@ export async function GET(req: NextRequest) {
 
   const columns = [
     // Editable via the bulk import (slug intentionally NOT importable):
-    'sku', 'name', 'brand', 'category', 'retail_price', 'wholesale_cost',
-    'description', 'short_description', 'pack_size', 'units_per_pack',
-    'weight_lb', 'slug', 'upc', 'meta_description', 'stock_status',
-    'is_active', 'is_featured',
+    'sku',
+    'name',
+    'brand',
+    'category',
+    'retail_price',
+    'wholesale_cost',
+    'description',
+    'short_description',
+    'pack_size',
+    'units_per_pack',
+    'weight_lb',
+    'slug',
+    'upc',
+    'meta_description',
+    'stock_status',
+    'is_active',
+    'is_featured',
     // Read-only context:
-    'id', 'image_urls', 'created_at', 'updated_at',
+    'id',
+    'image_urls',
+    'created_at',
+    'updated_at',
   ];
   const body = toCsv(rows, columns);
 

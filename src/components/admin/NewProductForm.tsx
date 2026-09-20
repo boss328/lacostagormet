@@ -405,7 +405,7 @@ export function NewProductForm({ brands, categories }: Props) {
           className="bg-cream"
           style={{ border: '1px solid var(--rule-strong)', padding: '20px 22px' }}
         >
-          <p className="type-label text-ink mb-3">§ Summary</p>
+          <p className="type-label text-ink mb-3">Summary</p>
           <dl className="flex flex-col gap-2">
             <Stat label="Name" value={name || '—'} />
             <Stat label="SKU" value={sku || '—'} mono />
@@ -472,7 +472,7 @@ function Section({
 }) {
   const headerInner = (
     <div className="flex items-baseline justify-between gap-4">
-      <p className="type-label text-ink">§ {title}</p>
+      <p className="type-label text-ink">{title}</p>
       {collapsible && (
         <span className="type-data-mono text-ink-muted">{open ? '▾ Hide' : '▸ Show'}</span>
       )}

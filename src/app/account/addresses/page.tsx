@@ -42,7 +42,7 @@ export default async function AccountAddressesPage() {
   return (
     <>
       <header className="mb-10">
-        <p className="type-label text-accent mb-5">§ The address book</p>
+        <p className="type-label text-accent mb-5">The address book</p>
         <h1 className="type-display-2">
           Saved <em className="type-accent">addresses</em>.
         </h1>

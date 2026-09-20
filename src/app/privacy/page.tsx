@@ -18,7 +18,7 @@ export const metadata = {
 function Section({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="type-label text-accent">§ {eyebrow}</h2>
+      <h2 className="type-label text-accent">{eyebrow}</h2>
       {children}
     </div>
   );
@@ -32,7 +32,7 @@ export default function PrivacyPage() {
           { href: '/', label: 'Home' },
           { label: 'Privacy' },
         ]}
-        eyebrow="§ Privacy policy"
+        eyebrow="Privacy policy"
         title={
           <>
             Your data, <em className="type-accent">plainly</em>.

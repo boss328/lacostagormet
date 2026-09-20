@@ -29,7 +29,7 @@ export default function AdminLoginPage({
     <main className="min-h-screen bg-paper flex items-center justify-center px-5 py-12">
       <div
         className="bg-cream w-full max-w-[440px]"
-        style={{ border: '1px solid var(--rule-strong)', padding: '40px 36px' }}
+        style={{ border: '1px solid var(--rule-strong)', padding: '36px', borderRadius: 20 }}
       >
         <div className="flex justify-center mb-8">
           <Image
@@ -41,7 +41,7 @@ export default function AdminLoginPage({
           />
         </div>
 
-        <p className="type-label text-accent mb-3 text-center">§ Admin Access</p>
+        <p className="type-label text-accent mb-3 text-center">Admin Access</p>
         <h1
           className="font-display text-ink text-center mb-3"
           style={{ fontSize: '32px', lineHeight: 1.05, letterSpacing: '-0.02em', fontWeight: 400 }}

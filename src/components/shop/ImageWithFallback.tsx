@@ -13,5 +13,5 @@ type Props = Omit<ImageProps, 'src'> & {
  */
 export function ImageWithFallback({ src, fallback, ...imageProps }: Props) {
   if (!src) return <>{fallback}</>;
-  return <Image {...imageProps} src={src} />;
+  return <Image {...imageProps} src={src} alt={imageProps.alt} />;
 }

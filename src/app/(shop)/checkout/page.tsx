@@ -1,4 +1,5 @@
 import { CheckoutForm } from '@/components/checkout/CheckoutForm';
+import { isReadOnlyPreview } from '@/lib/preview-mode';
 
 export const metadata = {
   title: 'Checkout',
@@ -11,5 +12,5 @@ export const metadata = {
 export const dynamic = 'force-dynamic';
 
 export default function CheckoutPage() {
-  return <CheckoutForm />;
+  return <div className="checkout-shell"><CheckoutForm readOnly={isReadOnlyPreview()} /></div>;
 }

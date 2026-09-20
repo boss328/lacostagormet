@@ -157,7 +157,7 @@ function EmptyState() {
       className="bg-paper-2 text-center px-10 py-20 max-sm:px-5 max-sm:py-14"
       style={{ border: '1px solid var(--rule)' }}
     >
-      <p className="type-label text-accent mb-6">§ The register</p>
+      <p className="type-label text-accent mb-6">Your shopping bag</p>
       <h2 className="type-display-2 mb-4">
         Your cart is <em className="type-accent">empty</em>.
       </h2>
@@ -348,7 +348,7 @@ export function CartContents() {
       {/* Page header */}
       <header className="bg-cream border-b border-rule">
         <div className="max-w-content mx-auto px-8 pt-14 pb-12 max-sm:px-5 max-sm:pt-10 max-sm:pb-10">
-          <p className="type-label text-accent mb-6">§ The register</p>
+          <p className="type-label text-accent mb-6">Your shopping bag</p>
           <h1 className="type-display-1 mb-6">
             Your <em className="type-accent">cart</em>.
           </h1>
@@ -405,7 +405,7 @@ export function CartContents() {
                 className="flex items-baseline justify-between pb-4 mb-2"
                 style={{ borderBottom: '1px solid var(--rule-strong)' }}
               >
-                <span className="type-label text-ink">§&nbsp;&nbsp;Line items</span>
+                <span className="type-label text-ink">&nbsp;&nbsp;Line items</span>
                 <span className="type-data-mono text-ink-muted">
                   {items.length} {items.length === 1 ? 'line' : 'lines'}
                 </span>
@@ -421,7 +421,7 @@ export function CartContents() {
                 className="bg-cream"
                 style={{ border: '1px solid var(--rule-strong)', padding: '28px' }}
               >
-                <p className="type-label text-ink mb-6">§&nbsp;&nbsp;Summary</p>
+                <p className="type-label text-ink mb-6">&nbsp;&nbsp;Summary</p>
 
                 <dl
                   className="flex flex-col"
@@ -444,7 +444,7 @@ export function CartContents() {
                     }
                     note={
                       qualifiesFreeShipping
-                        ? 'Continental US, orders $70+'
+                        ? 'Continental US, orders $80+'
                         : `Add $${(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2)} more for free shipping`
                     }
                   />

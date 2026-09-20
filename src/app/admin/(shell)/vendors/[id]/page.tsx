@@ -103,7 +103,7 @@ export default async function VendorDetailPage({
       </Link>
 
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ V. Vendor</p>
+        <p className="type-label text-accent mb-3">Vendor</p>
         <h1
           className="font-display text-ink"
           style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em' }}
@@ -127,7 +127,7 @@ export default async function VendorDetailPage({
           className="flex items-baseline justify-between pb-3 mb-2"
           style={{ borderBottom: '1px solid var(--rule-strong)' }}
         >
-          <span className="type-label text-ink">§ Products supplied</span>
+          <span className="type-label text-ink">Products supplied</span>
           <span className="type-data-mono text-ink-muted">
             {products.length} {products.length === 1 ? 'product' : 'products'}
           </span>
@@ -176,7 +176,7 @@ export default async function VendorDetailPage({
           className="flex items-baseline justify-between pb-3 mb-2"
           style={{ borderBottom: '1px solid var(--rule-strong)' }}
         >
-          <span className="type-label text-ink">§ Recent purchase orders</span>
+          <span className="type-label text-ink">Recent purchase orders</span>
           <span className="type-data-mono text-ink-muted">last 25</span>
         </div>
         {pos.length === 0 ? (

@@ -40,13 +40,13 @@ export default async function AdminCategoriesPage() {
   return (
     <>
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ IX. Categories</p>
+        <p className="type-label text-accent mb-3">Categories</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
             className="font-display text-ink max-md:!text-[24px]"
             style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em', fontWeight: 400 }}
           >
-            The <em className="type-accent">departments</em>.
+            Categories
           </h1>
           <div className="flex items-center gap-5">
             <Link

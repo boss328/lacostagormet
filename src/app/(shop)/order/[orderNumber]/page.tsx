@@ -52,7 +52,11 @@ type OrderItemRow = {
   products: {
     slug: string | null;
     pack_size: string | null;
-    product_images: Array<{ url: string; is_primary: boolean; display_order: number }> | null;
+    product_images: Array<{
+      url: string;
+      is_primary: boolean;
+      display_order: number;
+    }> | null;
   } | null;
 };
 
@@ -124,10 +128,19 @@ function splitPrice(v: number | string): { dollars: string; cents: string } {
   return { dollars: d, cents: c.padEnd(2, '0').slice(0, 2) };
 }
 
-function Price({ amount, size = 22 }: { amount: number | string; size?: number }) {
+function Price({
+  amount,
+  size = 22,
+}: {
+  amount: number | string;
+  size?: number;
+}) {
   const { dollars, cents } = splitPrice(amount);
   return (
-    <span className="type-price" style={{ fontSize: `${size}px`, lineHeight: 1 }}>
+    <span
+      className="type-price"
+      style={{ fontSize: `${size}px`, lineHeight: 1 }}
+    >
       ${dollars}
       <sup
         className="font-display"
@@ -144,7 +157,11 @@ function Price({ amount, size = 22 }: { amount: number | string; size?: number }
   );
 }
 
-export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
   return {
     title: `Order ${params.orderNumber}`,
     description: 'Your La Costa Gourmet order confirmation.',
@@ -152,7 +169,11 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 }
 
-export default async function OrderConfirmationPage({ params }: { params: Params }) {
+export default async function OrderConfirmationPage({
+  params,
+}: {
+  params: Params;
+}) {
   const data = await fetchOrder(params.orderNumber);
   if (!data) notFound();
 
@@ -161,7 +182,8 @@ export default async function OrderConfirmationPage({ params }: { params: Params
   const pending = order.status === 'pending';
 
   // Fire the GA4 purchase conversion once per real sale (production only).
-  const trackPurchase = analyticsEnabled() && CONVERSION_STATUSES.has(order.status);
+  const trackPurchase =
+    analyticsEnabled() && CONVERSION_STATUSES.has(order.status);
 
   return (
     <>
@@ -186,7 +208,7 @@ export default async function OrderConfirmationPage({ params }: { params: Params
       {/* Header — cream band, big order number */}
       <header className="bg-cream border-b border-rule">
         <div className="max-w-content mx-auto px-8 pt-14 pb-12 max-sm:px-5 max-sm:pt-10 max-sm:pb-10">
-          <p className="type-label text-accent mb-6">§ Receipt of order</p>
+          <p className="type-label text-accent mb-6">Receipt of order</p>
           <h1 className="type-display-1 mb-6">
             Thank <em className="type-accent">you</em>.
           </h1>
@@ -235,16 +257,22 @@ export default async function OrderConfirmationPage({ params }: { params: Params
               className="flex items-baseline justify-between pb-4 mb-2"
               style={{ borderBottom: '1px solid var(--rule-strong)' }}
             >
-              <span className="type-label text-ink">§&nbsp;&nbsp;What you ordered</span>
+              <span className="type-label text-ink">
+                &nbsp;&nbsp;What you ordered
+              </span>
               <span className="type-data-mono text-ink-muted">
                 {items.length} {items.length === 1 ? 'line' : 'lines'}
               </span>
             </div>
             {items.map((item) => {
-              const primary = pickPrimary(item.products?.product_images ?? null);
+              const primary = pickPrimary(
+                item.products?.product_images ?? null,
+              );
               const imgUrl = primary ? bcImage(primary.url, 'mid') : null;
               const pack = formatPackSize(item.products?.pack_size ?? null);
-              const productHref = item.products?.slug ? `/product/${item.products.slug}` : null;
+              const productHref = item.products?.slug
+                ? `/product/${item.products.slug}`
+                : null;
 
               return (
                 <div
@@ -277,13 +305,17 @@ export default async function OrderConfirmationPage({ params }: { params: Params
                       </div>
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="type-data-mono text-ink-muted">{item.product_sku}</span>
+                        <span className="type-data-mono text-ink-muted">
+                          {item.product_sku}
+                        </span>
                       </div>
                     )}
                   </div>
 
                   <div className="min-w-0 flex flex-col gap-1">
-                    <span className="type-data-mono text-ink-muted">{item.product_sku}</span>
+                    <span className="type-data-mono text-ink-muted">
+                      {item.product_sku}
+                    </span>
                     {productHref ? (
                       <Link
                         href={productHref}
@@ -313,11 +345,20 @@ export default async function OrderConfirmationPage({ params }: { params: Params
           <aside className="lg:sticky lg:top-6 self-start flex flex-col gap-5">
             <div
               className="bg-cream"
-              style={{ border: '1px solid var(--rule-strong)', padding: '24px 26px' }}
+              style={{
+                border: '1px solid var(--rule-strong)',
+                padding: '24px 26px',
+              }}
             >
-              <p className="type-label text-ink mb-5">§&nbsp;&nbsp;Shipping to</p>
-              <address className="font-display text-ink not-italic" style={{ fontSize: '15px', lineHeight: 1.55 }}>
-                {order.shipping_address.first_name} {order.shipping_address.last_name}
+              <p className="type-label text-ink mb-5">
+                &nbsp;&nbsp;Shipping to
+              </p>
+              <address
+                className="font-display text-ink not-italic"
+                style={{ fontSize: '15px', lineHeight: 1.55 }}
+              >
+                {order.shipping_address.first_name}{' '}
+                {order.shipping_address.last_name}
                 <br />
                 {order.shipping_address.address1}
                 {order.shipping_address.address2 && (
@@ -327,11 +368,14 @@ export default async function OrderConfirmationPage({ params }: { params: Params
                   </>
                 )}
                 <br />
-                {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.zip}
+                {order.shipping_address.city}, {order.shipping_address.state}{' '}
+                {order.shipping_address.zip}
                 {order.shipping_address.phone && (
                   <>
                     <br />
-                    <span className="type-data-mono text-ink-muted">{order.shipping_address.phone}</span>
+                    <span className="type-data-mono text-ink-muted">
+                      {order.shipping_address.phone}
+                    </span>
                   </>
                 )}
               </address>
@@ -342,18 +386,31 @@ export default async function OrderConfirmationPage({ params }: { params: Params
 
             <div
               className="bg-cream"
-              style={{ border: '1px solid var(--rule-strong)', padding: '24px 26px' }}
+              style={{
+                border: '1px solid var(--rule-strong)',
+                padding: '24px 26px',
+              }}
             >
-              <p className="type-label text-ink mb-5">§&nbsp;&nbsp;Payment</p>
-              <dl className="flex flex-col" style={{ borderTop: '1px solid var(--rule)' }}>
-                <Row label="Subtotal" value={<Price amount={order.subtotal} size={16} />} />
+              <p className="type-label text-ink mb-5">&nbsp;&nbsp;Payment</p>
+              <dl
+                className="flex flex-col"
+                style={{ borderTop: '1px solid var(--rule)' }}
+              >
+                <Row
+                  label="Subtotal"
+                  value={<Price amount={order.subtotal} size={16} />}
+                />
                 <Row
                   label="Shipping"
                   value={
                     Number(order.shipping_cost) === 0 ? (
                       <span
                         className="font-display italic text-gold-bright"
-                        style={{ fontSize: '15px', letterSpacing: '-0.01em', fontWeight: 500 }}
+                        style={{
+                          fontSize: '15px',
+                          letterSpacing: '-0.01em',
+                          fontWeight: 500,
+                        }}
                       >
                         FREE
                       </span>
@@ -372,8 +429,8 @@ export default async function OrderConfirmationPage({ params }: { params: Params
               </div>
               {payment?.card_last_four && (
                 <p className="type-data-mono text-ink-muted mt-4">
-                  {payment.card_brand ? `${payment.card_brand} ` : 'Card '}ending in{' '}
-                  {payment.card_last_four}
+                  {payment.card_brand ? `${payment.card_brand} ` : 'Card '}
+                  ending in {payment.card_last_four}
                 </p>
               )}
               <p className="type-data-mono text-ink-muted mt-3">

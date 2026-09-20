@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
+import { isReadOnlyPreview, isPreviewWrite } from '@/lib/preview-mode';
 
 /**
  * Two independent auth systems, both gated here:
@@ -20,6 +21,9 @@ import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
  */
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  if (isReadOnlyPreview() && isPreviewWrite(req.method, pathname)) {
+    return NextResponse.json({ error: 'This is a read-only preview. Orders and messages are disabled.' }, { status: 409 });
+  }
 
   // ── Admin gate (no Supabase) ──────────────────────────────────────────
   // Covers the admin PAGES (/admin/*) AND the admin API (/api/admin/*).

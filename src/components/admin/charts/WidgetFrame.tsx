@@ -1,15 +1,7 @@
 import type { ReactNode } from 'react';
 
-/**
- * Standard frame for dashboard widgets. Paper-2 band inset with a cream
- * interior, mono eyebrow with roman numeral, Fraunces title with italic
- * accent, optional corner metric + delta, and a body slot.
- *
- * Keep every widget at the same visual grammar — the dashboard reads as a
- * single editorial page rather than a Mondrian of competing cards.
- */
+/** Shared frame for store analytics panels. */
 export function WidgetFrame({
-  numeral,
   eyebrow,
   title,
   cornerValue,
@@ -31,35 +23,23 @@ export function WidgetFrame({
 }) {
   return (
     <section
-      className="bg-cream"
+      className="bg-cream min-w-0 max-w-full max-md:!p-4"
       style={{
         border: '1px solid var(--rule-strong)',
-        padding: '24px 26px 20px',
+        padding: '24px 26px 20px', borderRadius: 16,
         minHeight,
       }}
     >
       <header
         className="flex items-baseline justify-between gap-5 pb-3 mb-4 flex-wrap"
-        style={{ borderBottom: '1px dashed var(--rule)' }}
+        style={{ borderBottom: '1px solid var(--rule)' }}
       >
         <div className="flex items-baseline gap-3 min-w-0">
-          <span
-            className="font-display italic text-brand-deep shrink-0"
-            style={{
-              fontSize: '18px',
-              lineHeight: 1,
-              fontWeight: 500,
-              letterSpacing: '-0.01em',
-              width: 20,
-            }}
-          >
-            {numeral}
-          </span>
-          <span className="type-label text-ink-muted">§ {eyebrow}</span>
+          <span className="type-label text-ink-muted">{eyebrow}</span>
         </div>
 
         {cornerValue && (
-          <div className="flex items-baseline gap-3">
+          <div className="flex items-baseline gap-3 flex-wrap">
             <span
               className="font-display italic text-brand-deep"
               style={{
@@ -113,7 +93,7 @@ export function WidgetFrame({
       {action && (
         <div
           className="mt-4 pt-3"
-          style={{ borderTop: '1px dashed var(--rule)' }}
+          style={{ borderTop: '1px solid var(--rule)' }}
         >
           {action}
         </div>

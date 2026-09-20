@@ -1,3 +1,5 @@
+import { parsePage } from '@/lib/catalog-state';
+import { searchFilter } from '@/lib/admin/search-filter';
 import Link from 'next/link';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { parseRange, resolveRange, fmtDelta } from '@/lib/admin/range';
@@ -99,7 +101,7 @@ export default async function AdminOrdersPage({
     typeof searchParams.view === 'string' ? searchParams.view : 'all'
   ) as FilterKey;
   const search = typeof searchParams.q === 'string' ? searchParams.q : undefined;
-  const page = Math.max(1, Number(searchParams.page) || 1);
+  const page = parsePage(searchParams.page);
   const offset = (page - 1) * PAGE_SIZE;
   const rangeKey = parseRange(searchParams.range);
   const range = resolveRange(rangeKey);
@@ -108,7 +110,7 @@ export default async function AdminOrdersPage({
   const filter = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0];
 
   // Load list + analytics in parallel
-  const [{ data, count }, section] = await Promise.all([
+  const [{ data, count, error }, section] = await Promise.all([
     (async () => {
       let q = admin
         .from('orders')
@@ -117,13 +119,14 @@ export default async function AdminOrdersPage({
           { count: 'exact' },
         );
       q = filter.apply(q) as typeof q;
-      if (search) q = q.or(`order_number.ilike.%${search}%,customer_email.ilike.%${search}%`);
-      q = q.order('created_at', { ascending: false }).range(offset, offset + PAGE_SIZE - 1);
+      if (search) q = q.or(searchFilter(['order_number', 'customer_email'], search));
+      q = q.order('created_at', { ascending: false }).order('id').range(offset, offset + PAGE_SIZE - 1);
       return q;
     })(),
     loadOrdersSection(range),
   ]);
 
+  if (error) throw new Error('Unable to load records. Please try again.');
   const rows = (data ?? []) as OrderRow[];
   const total = count ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -135,13 +138,13 @@ export default async function AdminOrdersPage({
   return (
     <>
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ II. Orders</p>
+        <p className="type-label text-accent mb-3">Orders</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
             className="font-display text-ink max-md:!text-[24px]"
             style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em', fontWeight: 400 }}
           >
-            The <em className="type-accent">ledger</em>.
+            Orders
           </h1>
           <div className="flex items-center gap-5">
             <Link

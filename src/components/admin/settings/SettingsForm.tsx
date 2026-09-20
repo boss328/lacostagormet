@@ -40,7 +40,7 @@ export function SettingsForm({ initial }: { initial: Settings }) {
         className="bg-cream"
         style={{ border: '1px solid var(--rule-strong)', padding: '24px 26px' }}
       >
-        <p className="type-label text-ink mb-5">§ Vendor PO defaults</p>
+        <p className="type-label text-ink mb-5">Vendor PO defaults</p>
 
         <div className="flex flex-col gap-5">
           <Toggle

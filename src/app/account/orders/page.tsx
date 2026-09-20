@@ -43,7 +43,7 @@ export default async function AccountOrdersPage({
   return (
     <>
       <header className="mb-10">
-        <p className="type-label text-accent mb-5">§ The ledger</p>
+        <p className="type-label text-accent mb-5">The ledger</p>
         <h1 className="type-display-2">
           Your <em className="type-accent">orders</em>.
         </h1>

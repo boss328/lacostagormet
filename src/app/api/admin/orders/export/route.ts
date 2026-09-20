@@ -1,3 +1,5 @@
+import { readAllRows } from '@/lib/admin/read-all-rows';
+import { searchFilter } from '@/lib/admin/search-filter';
 import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -10,13 +12,8 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/admin/orders/export?view=<filter>&q=<search>
  *
- * Streams the list view as CSV. Respects the same filters as the
- * /admin/orders page (duplicated here rather than DRY'd because Next's
- * route handlers don't share modules with page components cleanly and
- * the list is small enough to keep in sync by eye).
- *
- * Caps at 5,000 rows — above that the user should be hitting a proper
- * analytics query, not a CSV export.
+ * Exports the filtered list in stable batches, including rows beyond the
+ * Data API response limit. Uses the same views and literal search as the list.
  */
 export async function GET(req: NextRequest) {
   const cookie = req.cookies.get(ADMIN_COOKIE)?.value;
@@ -30,42 +27,45 @@ export async function GET(req: NextRequest) {
   const search = url.searchParams.get('q') ?? '';
 
   const admin = createAdminClient();
-  let q = admin
-    .from('orders')
-    .select(
-      'order_number, status, fulfillment_status, customer_email, subtotal, shipping_cost, tax, total, created_at, shipping_address',
-    );
+  const buildQuery = () => {
+    let q = admin
+      .from('orders')
+      .select(
+        'order_number, status, fulfillment_status, customer_email, subtotal, shipping_cost, tax, total, created_at, shipping_address',
+      );
 
-  switch (view) {
-    case 'paid':
-      q = q.eq('status', 'paid');
-      break;
-    case 'pending-fulfillment':
-      q = q.eq('status', 'paid').not('fulfillment_status', 'in', '(shipped,delivered)');
-      break;
-    case 'payment_held':
-      q = q.eq('status', 'payment_held');
-      break;
-    case 'cancelled':
-      q = q.eq('status', 'cancelled');
-      break;
-    case 'high-value':
-      q = q.gte('total', 500);
-      break;
-    case 'this-week': {
-      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      q = q.gte('created_at', since);
-      break;
+    switch (view) {
+      case 'paid':
+        q = q.eq('status', 'paid');
+        break;
+      case 'pending-fulfillment':
+        q = q.eq('status', 'paid').not('fulfillment_status', 'in', '(shipped,delivered)');
+        break;
+      case 'payment_held':
+        q = q.eq('status', 'payment_held');
+        break;
+      case 'cancelled':
+        q = q.eq('status', 'cancelled');
+        break;
+      case 'high-value':
+        q = q.gte('total', 500);
+        break;
+      case 'this-week': {
+        const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        q = q.gte('created_at', since);
+        break;
+      }
     }
-  }
 
-  if (search) {
-    q = q.or(`order_number.ilike.%${search}%,customer_email.ilike.%${search}%`);
-  }
+    if (search) {
+      q = q.or(searchFilter(['order_number', 'customer_email'], search));
+    }
 
-  q = q.order('created_at', { ascending: false }).limit(5000);
+    q = q.order('created_at', { ascending: false }).order('id');
 
-  const { data, error } = await q;
+    return q;
+  };
+  const { data, error } = await readAllRows((from, to) => buildQuery().range(from, to));
   if (error) {
     console.error('[admin/orders/export]', error);
     return NextResponse.json({ error: 'query failed' }, { status: 500 });

@@ -34,14 +34,14 @@ export function SectionAnalytics({
   return (
     <section
       className="mb-8"
-      style={{ border: '1px solid var(--rule)', background: 'var(--color-cream)' }}
+      style={{ borderRadius: 14, border: '1px solid var(--rule)', background: 'var(--color-cream)' }}
     >
       <header
         className="flex items-baseline justify-between gap-6 px-5 py-4 flex-wrap"
         style={{ borderBottom: open ? '1px solid var(--rule)' : 'none' }}
       >
         <div className="flex items-center gap-4 flex-wrap">
-          <p className="type-label text-ink-muted">§ {eyebrow}</p>
+          <p className="type-label text-ink-muted">{eyebrow}</p>
           <RangePills active={range} />
         </div>
         <button

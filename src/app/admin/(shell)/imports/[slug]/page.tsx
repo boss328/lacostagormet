@@ -25,7 +25,7 @@ export default function ImportWizardStub({ params }: { params: { slug: string } 
       </Link>
 
       <header className="mb-8">
-        <p className="type-label text-accent mb-3">§ Import wizard</p>
+        <p className="type-label text-accent mb-3">Import wizard</p>
         <h1
           className="font-display text-ink"
           style={{ fontSize: '36px', lineHeight: 1, letterSpacing: '-0.025em' }}
@@ -38,7 +38,7 @@ export default function ImportWizardStub({ params }: { params: { slug: string } 
         className="bg-cream mb-6"
         style={{ border: '1px solid var(--rule-strong)', padding: '28px 30px' }}
       >
-        <p className="type-label text-ink mb-4">§&nbsp;&nbsp;Status — coming Phase 7</p>
+        <p className="type-label text-ink mb-4">&nbsp;&nbsp;Status — coming Phase 7</p>
         <p
           className="font-display text-ink-2 mb-5"
           style={{ fontSize: '16px', lineHeight: 1.55 }}
@@ -78,7 +78,7 @@ export default function ImportWizardStub({ params }: { params: { slug: string } 
         className="bg-paper-2"
         style={{ border: '1px solid var(--rule)', padding: '22px 26px' }}
       >
-        <p className="type-label text-ink mb-3">§&nbsp;&nbsp;Phase 7 wizard steps (planned)</p>
+        <p className="type-label text-ink mb-3">&nbsp;&nbsp;Phase 7 wizard steps (planned)</p>
         <ol
           className="flex flex-col"
           style={{ borderTop: '1px solid var(--rule)' }}

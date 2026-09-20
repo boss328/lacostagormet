@@ -1,3 +1,5 @@
+import { parsePage } from '@/lib/catalog-state';
+import { searchFilter } from '@/lib/admin/search-filter';
 import Link from 'next/link';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { parseRange, resolveRange, fmtDelta } from '@/lib/admin/range';
@@ -32,14 +34,14 @@ export default async function AdminCustomersPage({
   searchParams: Record<string, string | string[] | undefined>;
 }) {
   const search = typeof searchParams.q === 'string' ? searchParams.q : undefined;
-  const page = Math.max(1, Number(searchParams.page) || 1);
+  const page = parsePage(searchParams.page);
   const offset = (page - 1) * PAGE_SIZE;
   const rangeKey = parseRange(searchParams.range);
   const range = resolveRange(rangeKey);
 
   const admin = createAdminClient();
 
-  const [{ data, count }, section] = await Promise.all([
+  const [{ data, count, error }, section] = await Promise.all([
     (async () => {
       let q = admin
         .from('customers')
@@ -49,15 +51,16 @@ export default async function AdminCustomersPage({
         );
       if (search) {
         q = q.or(
-          `email.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%`,
+          searchFilter(['email', 'first_name', 'last_name', 'company_name'], search),
         );
       }
-      q = q.order('created_at', { ascending: false }).range(offset, offset + PAGE_SIZE - 1);
+      q = q.order('created_at', { ascending: false }).order('id').range(offset, offset + PAGE_SIZE - 1);
       return q;
     })(),
     loadCustomersSection(range),
   ]);
 
+  if (error) throw new Error('Unable to load records. Please try again.');
   const rows = (data ?? []) as CustomerRow[];
   const total = count ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -69,13 +72,13 @@ export default async function AdminCustomersPage({
   return (
     <>
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ III. Customers</p>
+        <p className="type-label text-accent mb-3">Customers</p>
         <div className="flex items-baseline justify-between gap-6 flex-wrap">
           <h1
             className="font-display text-ink max-md:!text-[24px]"
             style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em', fontWeight: 400 }}
           >
-            The <em className="type-accent">rolodex</em>.
+            Customers
           </h1>
           <div className="flex items-center gap-5">
             <Link

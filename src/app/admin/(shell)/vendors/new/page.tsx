@@ -12,7 +12,7 @@ export default function NewVendorPage() {
         ← All vendors
       </Link>
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ V. Vendors / New</p>
+        <p className="type-label text-accent mb-3">Vendors / New</p>
         <h1
           className="font-display text-ink"
           style={{ fontSize: '36px', lineHeight: 1, letterSpacing: '-0.024em' }}

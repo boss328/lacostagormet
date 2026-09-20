@@ -18,7 +18,7 @@ export function AdminDrawerToggle() {
       onClick={() => {
         window.dispatchEvent(new CustomEvent('admin:toggle-drawer'));
       }}
-      className="md:hidden text-cream hover:text-gold-bright transition-colors"
+      className="md:hidden text-ink hover:text-brand transition-colors"
       style={{ padding: 6 }}
     >
       <Menu size={22} strokeWidth={1.5} />

@@ -147,7 +147,7 @@ export function ReorderButton({ orderNumber, variant = 'outline', className = ''
             style={{ border: '1px solid var(--rule-strong)', padding: '32px' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="type-label text-accent mb-3">§ Confirm reorder</p>
+            <p className="type-label text-accent mb-3">Confirm reorder</p>
             <h2
               className="font-display text-ink mb-4"
               style={{ fontSize: '26px', lineHeight: 1.1, letterSpacing: '-0.02em' }}

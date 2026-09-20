@@ -44,7 +44,7 @@ export function VendorEditForm({ vendor }: { vendor: Vendor }) {
       className="bg-cream"
       style={{ border: '1px solid var(--rule-strong)', padding: '20px 22px' }}
     >
-      <p className="type-label text-ink mb-4">§ Contact info</p>
+      <p className="type-label text-ink mb-4">Contact info</p>
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <Field name="name" label="Vendor name" defaultValue={vendor.name} required />
         <div className="grid gap-4 sm:grid-cols-2">

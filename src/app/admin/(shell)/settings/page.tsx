@@ -38,12 +38,12 @@ export default async function SettingsPage() {
         ← Dashboard
       </Link>
       <header className="mb-8 pb-6" style={{ borderBottom: '1px solid var(--rule-strong)' }}>
-        <p className="type-label text-accent mb-3">§ Settings</p>
+        <p className="type-label text-accent mb-3">Settings</p>
         <h1
           className="font-display text-ink max-md:!text-[24px]"
           style={{ fontSize: '40px', lineHeight: 1, letterSpacing: '-0.026em' }}
         >
-          The <em className="type-accent">controls</em>.
+          Settings
         </h1>
       </header>
 

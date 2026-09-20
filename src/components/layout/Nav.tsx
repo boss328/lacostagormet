@@ -1,185 +1,166 @@
 'use client';
-
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, Search, User, X, ShoppingBag } from 'lucide-react';
-import { CartBadge } from '@/components/layout/CartBadge';
-import logo from '../../../public/logo.png';
-
-// Order mirrors the homepage category tiles (owner spec, Aug 2026).
-// Labels are shortened where the full DB name would crowd the rail —
-// the tiles carry the full names.
-const NAV_LINKS: Array<{ href: string; label: string }> = [
-  { href: '/shop/chai-and-matcha', label: 'Chai & Matcha' },
-  { href: '/shop/specialty-beverages', label: 'Frappe & Cocoa & Coffee' },
-  { href: '/shop/smoothies', label: 'Smoothies & Refreshers' },
-  { href: '/shop/oatmeal', label: 'Oatmeal' },
-  { href: '/shop/protein-and-energy', label: 'Protein' },
-  { href: '/shop/syrups', label: 'Syrups & Sauces' },
-  { href: '/shop/boba', label: 'Boba' },
-  { href: '/brand', label: 'Brands' },
-  { href: '/for-business', label: 'For Business' },
-];
+import { Menu, Search, User, X, ChevronDown } from 'lucide-react';
+import { CartBadge } from './CartBadge';
+import { COLLECTIONS } from '@/lib/collections';
 
 export function Nav() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  // Escape key closes the drawer; body scroll locks while it's open.
+  const [mobile, setMobile] = useState(false);
+  const [categories, setCategories] = useState(false);
+  const pathname = usePathname();
+  const toggle = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLButtonElement>(null);
+  const close = () => {
+    setMobile(false);
+    setCategories(false);
+  };
+  useEffect(close, [pathname]);
   useEffect(() => {
-    if (typeof document === 'undefined') return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setIsOpen(false);
+    function escape(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        if (categories) toggle.current?.focus();
+        else if (mobile) menu.current?.focus();
+        setCategories(false);
+        setMobile(false);
+      }
     }
-    window.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    if (isOpen) document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [isOpen]);
-
-  const close = () => setIsOpen(false);
-
+    window.addEventListener('keydown', escape);
+    return () => window.removeEventListener('keydown', escape);
+  }, [categories, mobile]);
   return (
-    <nav className="bg-cream border-b border-rule px-8 max-md:px-5 pt-6 pb-5 max-md:pt-3 max-md:pb-3 relative z-40">
-        <div className="max-w-content mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-10 max-lg:grid-cols-[auto_auto] max-lg:justify-between max-md:gap-4">
-          {/* Logo wordmark */}
-          <Link href="/" className="flex items-center gap-4 group" onClick={close}>
-            <Image
-              src={logo}
-              alt="La Costa Gourmet"
-              priority
-              sizes="(max-width: 640px) 144px, 210px"
-              placeholder="blur"
-              className="h-12 max-sm:h-9 w-auto"
-            />
-          </Link>
-
-          {/* Center nav links — desktop only */}
-          <ul className="flex items-center justify-center gap-8 max-lg:hidden">
-            {NAV_LINKS.map((link) => (
-              <li key={link.href}>
-                <Link href={link.href} className="nav-link type-label">
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          {/* Utility column */}
-          <div className="flex items-center gap-6 max-sm:gap-4">
-            <Link
-              href="/search"
-              aria-label="Search products"
-              className="text-ink hover:text-brand-deep transition-colors duration-300 max-lg:hidden inline-flex items-center justify-center"
-              style={{ minWidth: 44, minHeight: 44 }}
-            >
-              <Search size={18} strokeWidth={1.5} />
-            </Link>
-            <Link
-              href="/search"
-              aria-label="Search products"
-              className="text-ink hover:text-brand-deep transition-colors duration-300 lg:hidden inline-flex items-center justify-center"
-              style={{ minWidth: 44, minHeight: 44 }}
-            >
-              <Search size={22} strokeWidth={1.5} />
-            </Link>
-            <Link
-              href="/account"
-              aria-label="Your account"
-              className="text-ink hover:text-brand-deep transition-colors duration-300 max-lg:hidden inline-flex items-center gap-2"
-            >
-              <User size={18} strokeWidth={1.5} />
-              <span className="font-mono uppercase" style={{ fontSize: '10px', letterSpacing: '0.22em' }}>
-                Account
-              </span>
-            </Link>
-            <Link
-              href="/account"
-              aria-label="Your account"
-              className="text-ink hover:text-brand-deep transition-colors duration-300 lg:hidden inline-flex items-center justify-center"
-              style={{ minWidth: 44, minHeight: 44 }}
-            >
-              <User size={22} strokeWidth={1.5} />
-            </Link>
-            <CartBadge />
+    <header className="site-header">
+      <div className="nav-inner wrap">
+        <Link href="/" onClick={close} aria-label="La Costa Gourmet home">
+          <Image
+            src="/storefront/logo-green-purple.png"
+            alt="La Costa Gourmet"
+            width={1200}
+            height={564}
+            priority
+            className="site-logo"
+          />
+        </Link>
+        <nav className="desktop-nav" aria-label="Main navigation">
+          <Link href="/shop">Shop all</Link>
+          <div
+            className="nav-category-group"
+            onMouseEnter={() => setCategories(true)}
+            onMouseLeave={() => setCategories(false)}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node))
+                setCategories(false);
+            }}
+          >
             <button
+              ref={toggle}
               type="button"
-              aria-label={isOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={isOpen}
-              aria-controls="mobile-nav"
-              onClick={() => setIsOpen((v) => !v)}
-              className="lg:hidden text-ink hover:text-brand-deep transition-colors inline-flex items-center justify-center"
-              style={{ minWidth: 44, minHeight: 44 }}
+              aria-expanded={categories}
+              aria-controls="category-menu"
+              onClick={(event) => {
+                // A pointer has already opened the menu on hover. Keep that
+                // first click open; keyboard activation still toggles it.
+                setCategories(event.detail === 0 ? !categories : true);
+              }}
             >
-              {isOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
+              Categories <ChevronDown size={14} />
+            </button>
+            {categories && (
+              <div id="category-menu" className="mega-menu">
+                <div className="wrap">
+                  <div className="section-heading">
+                    <h2>Find your favorite.</h2>
+                    <Link href="/shop" onClick={close} className="text-link">
+                      Shop all products →
+                    </Link>
+                  </div>
+                  <div className="mega-grid">
+                    {COLLECTIONS.map((c) => (
+                      <Link
+                        key={c.slug}
+                        href={`/shop/${c.slug}`}
+                        onClick={close}
+                      >
+                        <Image
+                          src={`/storefront/${c.image}.webp`}
+                          alt=""
+                          width={64}
+                          height={64}
+                        />
+                        <span>{c.name}</span>
+                        <span aria-hidden="true">›</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <Link href="/brand">Brands</Link>
+          <Link href="/for-business">For business</Link>
+          <Link href="/contact">Help</Link>
+        </nav>
+        <div className="nav-actions">
+          <Link
+            className="icon-button"
+            href="/search"
+            aria-label="Search products"
+          >
+            <Search size={20} />
+          </Link>
+          <Link
+            className="icon-button account-icon"
+            href="/account"
+            aria-label="Your account"
+          >
+            <User size={20} />
+          </Link>
+          <CartBadge />
+          <button
+            ref={menu}
+            className="icon-button mobile-menu-toggle"
+            aria-label={mobile ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobile}
+            aria-controls="mobile-nav"
+            onClick={() => setMobile(!mobile)}
+          >
+            {mobile ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
-
-      {/* Mobile drawer backdrop — fixed covers the whole viewport below
-          the nav; tap anywhere outside to close. */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-30 lg:hidden"
-          style={{ background: 'rgba(26, 17, 10, 0.55)' }}
-          onClick={close}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Mobile drawer — positioned absolute within the nav so it opens
-          directly below the nav bar (top-full). nav is position:relative
-          so this anchors correctly regardless of nav height. */}
-      <div
-        id="mobile-nav"
-        className={[
-          'lg:hidden absolute top-full left-0 right-0 z-40 bg-cream border-b border-rule-strong',
-          'transition-[opacity,transform] duration-200 ease-out',
-          isOpen
-            ? 'opacity-100 translate-y-0 pointer-events-auto'
-            : 'opacity-0 -translate-y-2 pointer-events-none',
-        ].join(' ')}
-        style={{ maxHeight: 'calc(100vh - 4rem)', overflowY: 'auto' }}
-      >
-        <ul className="max-w-content mx-auto px-5 py-2">
-          {NAV_LINKS.map((link) => (
-            <li
-              key={link.href}
-              style={{ borderBottom: '1px solid var(--rule)' }}
-            >
-              <Link
-                href={link.href}
-                onClick={close}
-                className="block py-4 font-display italic text-brand-deep hover:text-ink transition-colors"
-                style={{ fontSize: '20px', lineHeight: 1.1, letterSpacing: '-0.01em', fontWeight: 500 }}
-              >
-                {link.label}
+      {mobile && (
+        <nav
+          id="mobile-nav"
+          className="mobile-nav wrap"
+          aria-label="Mobile navigation"
+        >
+          <Link href="/shop" onClick={close}>
+            Shop all products
+          </Link>
+          <details>
+            <summary>Categories</summary>
+            {COLLECTIONS.map((c) => (
+              <Link key={c.slug} href={`/shop/${c.slug}`} onClick={close}>
+                {c.name}
               </Link>
-            </li>
-          ))}
-        </ul>
-        <div className="max-w-content mx-auto px-5 py-4 flex items-center gap-6">
-          <Link
-            href="/account"
-            onClick={close}
-            className="flex items-center gap-2 type-label text-ink hover:text-brand-deep transition-colors"
-          >
-            <User size={16} strokeWidth={1.5} />
-            Account
+            ))}
+          </details>
+          <Link href="/brand" onClick={close}>
+            Brands
           </Link>
-          <Link
-            href="/cart"
-            onClick={close}
-            className="flex items-center gap-2 type-label text-ink hover:text-brand-deep transition-colors"
-          >
-            <ShoppingBag size={16} strokeWidth={1.5} />
-            Cart
+          <Link href="/for-business" onClick={close}>
+            For business
           </Link>
-        </div>
-      </div>
-    </nav>
+          <Link href="/account" onClick={close}>
+            Your account
+          </Link>
+          <Link href="/contact" onClick={close}>
+            Contact & help
+          </Link>
+        </nav>
+      )}
+    </header>
   );
 }
