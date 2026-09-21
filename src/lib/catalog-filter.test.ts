@@ -13,7 +13,7 @@ import {
   parseSort,
   SORT_OPTIONS,
 } from './catalog-state';
-import { collectionMembership } from './collections';
+import { COLLECTIONS } from './collections';
 import { calculateShipping } from './checkout/shipping';
 import { searchFilter } from './admin/search-filter';
 import { readAllRows } from './admin/read-all-rows';
@@ -126,22 +126,83 @@ test('pagination preserves all filters, changing filters can remove page, URL va
   assert.equal(url.searchParams.get('sort'), 'price-desc');
   assert.equal(url.searchParams.has('page'), false);
 });
-test('new products inherit categories and special collections; legacy curated assignments remain', () => {
-  assert.deepEqual(
-    collectionMembership({ slug: 'new-oats', name: 'Fruit oats' }, ['oatmeal']),
-    ['oatmeal'],
-  );
-  assert.ok(
-    collectionMembership({ slug: 'new-frappe', name: 'Coffee Frappe' }, [
-      'specialty-beverages',
-    ]).includes('chai-matcha'),
-  );
-  assert.ok(
-    collectionMembership({ slug: 'new-tea', name: 'Earl Grey Tea' }, [
-      'specialty-beverages',
-    ]).includes('coffee'),
-  );
-});
+for (const collection of COLLECTIONS) {
+  test(`${collection.name} follows primary, additional and child assignments and removes moved products`, () => {
+    const assigned: CatalogData = {
+      ...data,
+      categories: [
+        {
+          id: 'target',
+          slug: collection.source,
+          name: collection.name,
+          parent_id: null,
+        },
+        { id: 'child', slug: 'child', name: 'Child', parent_id: 'target' },
+        { id: 'other', slug: 'other', name: 'Other', parent_id: null },
+      ],
+      products: [
+        {
+          ...products[0],
+          primary_category_id: 'target',
+          product_categories: [],
+        },
+        {
+          ...products[1],
+          primary_category_id: 'other',
+          product_categories: [{ category_id: 'target' }],
+        },
+        {
+          ...products[2],
+          primary_category_id: 'child',
+          product_categories: [],
+        },
+        // An old curated smoothie member must not leak into any category.
+        {
+          ...products[3],
+          slug: '1883-maison-routin-peach-syrup-six-1-liter-bottles',
+          name: 'Peach Smoothie Syrup',
+          primary_category_id: 'other',
+          product_categories: [],
+        },
+      ],
+    };
+    assert.deepEqual(
+      filterCatalog(assigned, { category: collection.slug })
+        .products.map((p) => p.id)
+        .sort(),
+      ['000', '001', '002'],
+    );
+    assert.deepEqual(
+      filterCatalog(assigned, { category: collection.slug }),
+      filterCatalog(assigned, { category: collection.source }),
+    );
+    assert.equal(
+      filterCatalog(assigned, { category: collection.slug, brand: 'beta' })
+        .total,
+      1,
+    );
+    assert.equal(
+      filterCatalog(assigned, { category: collection.slug, q: 'SKU-0' }).total,
+      1,
+    );
+    const moved = {
+      ...assigned,
+      products: assigned.products.map((p) => ({
+        ...p,
+        primary_category_id: 'other',
+        product_categories: [],
+      })),
+    };
+    assert.equal(filterCatalog(moved, { category: collection.slug }).total, 0);
+    assert.equal(
+      filterCatalog(
+        { ...assigned, categories: [] },
+        { category: collection.slug },
+      ).total,
+      0,
+    );
+  });
+}
 test('category cycles terminate', () => {
   assert.equal(
     categoryDescendants('parent', [
@@ -299,14 +360,6 @@ test('exports read every page and surface errors instead of returning partial CS
   );
   assert.equal(failed.data, null);
   assert.equal(failed.error?.message, 'offline');
-});
-
-test('existing products moved to another category follow the administrator assignment', () => {
-  const product = {
-    slug: 'two-leaves-and-a-bud-nice-matcha-green-tea-one-1-2-lb-pouch',
-    name: 'Nice Matcha',
-  };
-  assert.deepEqual(collectionMembership(product, ['oatmeal']), ['oatmeal']);
 });
 
 test('review mode blocks write paths, cron, payment returns and email callbacks', () => {
