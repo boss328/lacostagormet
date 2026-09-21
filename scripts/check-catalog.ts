@@ -40,32 +40,40 @@ async function main() {
     if (p.data!.length < 500) break;
   }
   const data: CatalogData = { products, categories: c.data!, brands: b.data! };
-  // The home-page alias must show the products assigned in admin, including
-  // freshly moved coffee products that the old merchandising file omitted.
-  const coffeeCategory = data.categories.find((c) => c.slug === 'coffee-tea');
-  assert.ok(coffeeCategory, 'Coffee & Tea category must exist in the catalog');
-  const coffeeIds = new Set([coffeeCategory.id]);
-  for (let size = 0; size !== coffeeIds.size; ) {
-    size = coffeeIds.size;
-    for (const category of data.categories)
-      if (category.parent_id && coffeeIds.has(category.parent_id))
-        coffeeIds.add(category.id);
+  // Check every homepage alias independently against live admin assignments.
+  for (const collection of COLLECTIONS) {
+    const assignedCategory = data.categories.find(
+      (c) => c.slug === collection.source,
+    );
+    assert.ok(
+      assignedCategory,
+      `${collection.name} category must exist in the catalog`,
+    );
+    const assignedIds = new Set([assignedCategory.id]);
+    for (let size = 0; size !== assignedIds.size; ) {
+      size = assignedIds.size;
+      for (const category of data.categories)
+        if (category.parent_id && assignedIds.has(category.parent_id))
+          assignedIds.add(category.id);
+    }
+    const expectedProducts = products.filter(
+      (p) =>
+        assignedIds.has(p.primary_category_id ?? '') ||
+        p.product_categories.some((c) => assignedIds.has(c.category_id)),
+    );
+    const firstPage = filterCatalog(data, { category: collection.slug });
+    const actualProducts = Array.from(
+      { length: firstPage.pageCount },
+      (_, i) =>
+        filterCatalog(data, { category: collection.slug, page: i + 1 })
+          .products,
+    ).flat();
+    assert.deepEqual(
+      actualProducts.map((p) => p.id).sort(),
+      expectedProducts.map((p) => p.id).sort(),
+      `Homepage ${collection.name} must match admin category assignments`,
+    );
   }
-  const expectedCoffee = products.filter(
-    (p) =>
-      coffeeIds.has(p.primary_category_id ?? '') ||
-      p.product_categories.some((c) => coffeeIds.has(c.category_id)),
-  );
-  const coffeeFirst = filterCatalog(data, { category: 'coffee' });
-  const actualCoffee = Array.from(
-    { length: coffeeFirst.pageCount },
-    (_, i) => filterCatalog(data, { category: 'coffee', page: i + 1 }).products,
-  ).flat();
-  assert.deepEqual(
-    actualCoffee.map((p) => p.id).sort(),
-    expectedCoffee.map((p) => p.id).sort(),
-    'Homepage Coffee & Tea must match admin category assignments',
-  );
   const categories = [
     ...new Set([
       ...COLLECTIONS.map((c) => c.slug),

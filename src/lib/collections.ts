@@ -1,8 +1,4 @@
-import membership from './collection-membership.json';
-import sources from './collection-sources.json';
-
-// Approved merchandising groups, layered over the existing database categories.
-// Inventory, prices and stock always come from Supabase.
+// Public category labels and URLs mapped to administrator-managed categories.
 export const COLLECTIONS = [
   {
     slug: 'chai-matcha',
@@ -61,46 +57,3 @@ export const COLLECTIONS = [
     alt: 'Glass mug of freshly brewed coffee',
   },
 ] as const;
-
-export function collectionMembership(
-  product: { slug: string; name: string },
-  sourceSlugs: string[],
-): string[] {
-  const curated = (membership as Record<string, string[]>)[product.slug];
-  const groups = COLLECTIONS.filter(
-    (c) => c.source !== 'specialty-beverages' && sourceSlugs.includes(c.source),
-  ).map((c) => c.slug as string);
-  const originalCategory = (sources as Record<string, string[]>)[product.slug];
-  // A product moved by an administrator follows its new category; adding an
-  // extra category also works for products already in the approved selection.
-  if (curated && originalCategory?.some((slug) => sourceSlugs.includes(slug)))
-    return [...new Set([...curated, ...groups])];
-  // Newly added products inherit the administrator's category assignments.
-  if (sourceSlugs.includes('specialty-beverages')) {
-    if (/frapp[eé]|blended|chai|matcha|horchata/i.test(product.name))
-      groups.push('chai-matcha');
-    if (
-      /cocoa|hot chocolate|drinking chocolate|ground chocolate|chocolate (powder|mix)/i.test(
-        product.name,
-      )
-    )
-      groups.push('cocoa');
-    if (
-      /coffee|espresso|tea\b|mocha|latte|oat\s?milk|barista.*milk/i.test(
-        product.name,
-      )
-    )
-      groups.push('coffee');
-  }
-  if (sourceSlugs.includes('specialty-beverages')) {
-    if (
-      /smoothie|refresher|puree|lemonade|soda|tiki breeze/i.test(product.name)
-    )
-      groups.push('smoothies');
-    if (/syrup|sauce|pump/i.test(product.name)) groups.push('syrups');
-    if (/protein|energy|lotus plant/i.test(product.name))
-      groups.push('protein');
-    if (/boba|tapioca/i.test(product.name)) groups.push('boba');
-  }
-  return [...new Set(groups)];
-}

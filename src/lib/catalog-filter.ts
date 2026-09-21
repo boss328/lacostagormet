@@ -1,5 +1,5 @@
 import type { ProductCardData } from '@/components/shop/ProductCard';
-import { COLLECTIONS, collectionMembership } from './collections';
+import { COLLECTIONS } from './collections';
 import { PAGE_SIZE, parsePage, type SortKey } from './catalog-state';
 
 export type CatalogProduct = ProductCardData & {
@@ -46,13 +46,10 @@ export function categoryDescendants(
 export function filterCatalog(data: CatalogData, filters: CatalogFilters) {
   const { category, brand, q = '', sort = 'newest' } = filters;
   const collection = COLLECTIONS.find((c) => c.slug === category);
-  // Coffee & Tea now has its own administrator-managed category. The old
-  // merchandising snapshot includes unrelated latte/tea mixes and omits
-  // coffee products moved out of Specialty Beverages, so it must not decide
-  // membership for this collection.
-  const useAssignedCategory = collection?.slug === 'coffee';
+  // Homepage tiles are aliases for live admin categories. Membership comes
+  // only from primary/additional assignments, including child categories.
   const dbCategory = data.categories.find(
-    (c) => c.slug === (useAssignedCategory ? collection.source : category),
+    (c) => c.slug === (collection?.source ?? category),
   );
   const categoryIds = dbCategory
     ? categoryDescendants(dbCategory.id, data.categories)
@@ -67,16 +64,11 @@ export function filterCatalog(data: CatalogData, filters: CatalogFilters) {
         product.primary_category_id,
         ...product.product_categories.map((c) => c.category_id),
       ]);
-      if (category) {
-        if (collection && !useAssignedCategory) {
-          const slugs = data.categories
-            .filter((c) => ids.has(c.id))
-            .map((c) => c.slug);
-          if (!collectionMembership(product, slugs).includes(category))
-            return false;
-        } else if (!dbCategory || ![...categoryIds].some((id) => ids.has(id)))
-          return false;
-      }
+      if (
+        category &&
+        (!dbCategory || ![...categoryIds].some((id) => ids.has(id)))
+      )
+        return false;
       if (
         search &&
         ![
