@@ -151,6 +151,112 @@ test('category cycles terminate', () => {
     2,
   );
 });
+
+test('home coffee collection follows the real category instead of stale merchandising or name keywords', () => {
+  const assigned: CatalogData = {
+    ...data,
+    categories: [
+      {
+        id: 'coffee',
+        name: 'Coffee & Tea',
+        slug: 'coffee-tea',
+        parent_id: null,
+      },
+      {
+        id: 'beans',
+        name: 'Whole bean',
+        slug: 'whole-bean',
+        parent_id: 'coffee',
+      },
+      {
+        id: 'specialty',
+        name: 'Hot Chocolate',
+        slug: 'specialty-beverages',
+        parent_id: null,
+      },
+      { id: 'chai', name: 'Chai', slug: 'chai-and-matcha', parent_id: null },
+    ],
+    products: [
+      {
+        ...products[0],
+        id: 'ground',
+        slug: 'lion-coffee-french-roast-ground-three-10-oz-bags',
+        name: 'Lion Coffee French Roast',
+        primary_category_id: 'coffee',
+        product_categories: [],
+      },
+      {
+        ...products[1],
+        id: 'beans',
+        name: 'Whole bean roast',
+        primary_category_id: 'beans',
+        product_categories: [],
+      },
+      {
+        ...products[2],
+        id: 'tea',
+        name: 'Earl Grey',
+        primary_category_id: 'specialty',
+        product_categories: [{ category_id: 'coffee' }],
+      },
+      {
+        ...products[3],
+        id: 'chai',
+        slug: 'david-rio-tiger-spice-chai-six-14-oz-canisters',
+        name: 'Chai Tea Latte',
+        primary_category_id: 'chai',
+        product_categories: [],
+      },
+      {
+        ...products[4],
+        id: 'syrup',
+        name: 'Coffee Syrup',
+        primary_category_id: 'specialty',
+        product_categories: [],
+      },
+    ],
+  };
+  const coffee = filterCatalog(assigned, {
+    category: 'coffee',
+    sort: 'price-asc',
+  });
+  assert.equal(coffee.total, 3);
+  assert.deepEqual(coffee.products.map((p) => p.id).sort(), [
+    'beans',
+    'ground',
+    'tea',
+  ]);
+  assert.deepEqual(
+    coffee.products,
+    filterCatalog(assigned, { category: 'coffee-tea', sort: 'price-asc' })
+      .products,
+  );
+  assert.deepEqual(
+    filterCatalog(assigned, { category: 'coffee', brand: 'beta' }).products.map(
+      (p) => p.id,
+    ),
+    ['beans'],
+  );
+  assert.deepEqual(
+    filterCatalog(assigned, {
+      category: 'coffee',
+      q: 'French Roast',
+    }).products.map((p) => p.id),
+    ['ground'],
+  );
+  const moved = {
+    ...assigned,
+    products: assigned.products.map((p) =>
+      p.id === 'ground' ? { ...p, primary_category_id: 'specialty' } : p,
+    ),
+  };
+  assert.equal(filterCatalog(moved, { category: 'coffee' }).total, 2);
+  assert.equal(
+    filterCatalog({ ...assigned, categories: [] }, { category: 'coffee' })
+      .total,
+    0,
+  );
+});
 test('approved shipping boundary is identical for cart and server tier calculation', () => {
   assert.equal(calculateShipping(29.99), 9.95);
   assert.equal(calculateShipping(30), 12.95);

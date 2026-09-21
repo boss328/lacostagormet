@@ -46,7 +46,14 @@ export function categoryDescendants(
 export function filterCatalog(data: CatalogData, filters: CatalogFilters) {
   const { category, brand, q = '', sort = 'newest' } = filters;
   const collection = COLLECTIONS.find((c) => c.slug === category);
-  const dbCategory = data.categories.find((c) => c.slug === category);
+  // Coffee & Tea now has its own administrator-managed category. The old
+  // merchandising snapshot includes unrelated latte/tea mixes and omits
+  // coffee products moved out of Specialty Beverages, so it must not decide
+  // membership for this collection.
+  const useAssignedCategory = collection?.slug === 'coffee';
+  const dbCategory = data.categories.find(
+    (c) => c.slug === (useAssignedCategory ? collection.source : category),
+  );
   const categoryIds = dbCategory
     ? categoryDescendants(dbCategory.id, data.categories)
     : new Set<string>();
@@ -61,7 +68,7 @@ export function filterCatalog(data: CatalogData, filters: CatalogFilters) {
         ...product.product_categories.map((c) => c.category_id),
       ]);
       if (category) {
-        if (collection) {
+        if (collection && !useAssignedCategory) {
           const slugs = data.categories
             .filter((c) => ids.has(c.id))
             .map((c) => c.slug);

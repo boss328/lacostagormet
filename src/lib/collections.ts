@@ -57,7 +57,7 @@ export const COLLECTIONS = [
     slug: 'coffee',
     name: 'Coffee & Tea',
     image: 'coffee',
-    source: 'specialty-beverages',
+    source: 'coffee-tea',
     alt: 'Glass mug of freshly brewed coffee',
   },
 ] as const;
