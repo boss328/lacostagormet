@@ -40,6 +40,32 @@ async function main() {
     if (p.data!.length < 500) break;
   }
   const data: CatalogData = { products, categories: c.data!, brands: b.data! };
+  // The home-page alias must show the products assigned in admin, including
+  // freshly moved coffee products that the old merchandising file omitted.
+  const coffeeCategory = data.categories.find((c) => c.slug === 'coffee-tea');
+  assert.ok(coffeeCategory, 'Coffee & Tea category must exist in the catalog');
+  const coffeeIds = new Set([coffeeCategory.id]);
+  for (let size = 0; size !== coffeeIds.size; ) {
+    size = coffeeIds.size;
+    for (const category of data.categories)
+      if (category.parent_id && coffeeIds.has(category.parent_id))
+        coffeeIds.add(category.id);
+  }
+  const expectedCoffee = products.filter(
+    (p) =>
+      coffeeIds.has(p.primary_category_id ?? '') ||
+      p.product_categories.some((c) => coffeeIds.has(c.category_id)),
+  );
+  const coffeeFirst = filterCatalog(data, { category: 'coffee' });
+  const actualCoffee = Array.from(
+    { length: coffeeFirst.pageCount },
+    (_, i) => filterCatalog(data, { category: 'coffee', page: i + 1 }).products,
+  ).flat();
+  assert.deepEqual(
+    actualCoffee.map((p) => p.id).sort(),
+    expectedCoffee.map((p) => p.id).sort(),
+    'Homepage Coffee & Tea must match admin category assignments',
+  );
   const categories = [
     ...new Set([
       ...COLLECTIONS.map((c) => c.slug),
