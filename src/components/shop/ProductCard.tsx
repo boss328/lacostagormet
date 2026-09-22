@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ImageWithFallback } from './ImageWithFallback';
+import { ProductImage as FramedProductImage } from './ProductImage';
 import { ProductCardAdd } from './ProductCardAdd';
 import { bcImage } from '@/lib/bcImage';
 import { formatPackSize } from '@/lib/pack-size';
@@ -37,22 +37,19 @@ export function ProductCard({
     )[0];
   const price = Number(product.retail_price);
   const displayName = product.name.split(/\s-\s/)[0];
-  const image = (
-    <ImageWithFallback
-      src={img ? bcImage(img.url, 'card') : null}
+  const image = img ? (
+    <FramedProductImage
+      src={bcImage(img.url, 'mid')}
       alt={product.name}
-      width={500}
-      height={500}
       sizes="(min-width: 1024px) 280px, 45vw"
       priority={priority}
       className="product-card-img"
-      fallback={
-        <span className="image-placeholder">
-          {product.brands?.name ?? 'La Costa Gourmet'}
-          <small>{product.sku}</small>
-        </span>
-      }
     />
+  ) : (
+    <span className="image-placeholder">
+      {product.brands?.name ?? 'La Costa Gourmet'}
+      <small>{product.sku}</small>
+    </span>
   );
   if (compact)
     return (

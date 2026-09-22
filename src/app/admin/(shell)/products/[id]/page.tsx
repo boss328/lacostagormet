@@ -23,6 +23,7 @@ type ProductDetailRow = {
   is_featured: boolean;
   brand_id: string | null;
   primary_category_id: string | null;
+  product_categories: Array<{ categories: { slug: string } | null }>;
   brands: { name: string; slug: string } | null;
   primary_category: { name: string; slug: string } | null;
   product_images: Array<{
@@ -67,7 +68,7 @@ export default async function AdminProductEditPage({
     admin
       .from('products')
       .select(
-        'id, sku, slug, name, description, meta_description, weight_lb, upc, retail_price, is_active, is_featured, brand_id, primary_category_id, brands(name, slug), primary_category:categories!primary_category_id(name, slug), product_images(id, url, is_primary, display_order)',
+        'id, sku, slug, name, description, meta_description, weight_lb, upc, retail_price, is_active, is_featured, brand_id, primary_category_id, brands(name, slug), primary_category:categories!primary_category_id(name, slug), product_categories(categories(slug)), product_images(id, url, is_primary, display_order)',
       )
       .eq('id', params.id)
       .maybeSingle(),
@@ -149,6 +150,11 @@ export default async function AdminProductEditPage({
           sku: p.sku,
           retailPrice: Number(p.retail_price),
           categorySlug: p.primary_category?.slug ?? '',
+          additionalCategorySlugs: (p.product_categories ?? []).flatMap((c) =>
+            c.categories && c.categories.slug !== p.primary_category?.slug
+              ? [c.categories.slug]
+              : [],
+          ),
           brandSlug: p.brands?.slug ?? '',
           description: p.description ?? '',
           weightLb: p.weight_lb != null ? Number(p.weight_lb) : null,

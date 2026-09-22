@@ -4,7 +4,10 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { slugify } from '@/lib/admin/slug';
-import { MultiImageEditor, type ImageItem } from '@/components/admin/MultiImageEditor';
+import {
+  MultiImageEditor,
+  type ImageItem,
+} from '@/components/admin/MultiImageEditor';
 
 type Option = { id: string; name: string; slug: string };
 
@@ -21,6 +24,7 @@ export type EditProductInitial = {
   sku: string;
   retailPrice: number;
   categorySlug: string;
+  additionalCategorySlugs: string[];
   brandSlug: string;
   description: string;
   weightLb: number | null;
@@ -71,8 +75,13 @@ export function EditProductForm({ product, brands, categories }: Props) {
 
   const [name, setName] = useState(product.name);
   const [sku, setSku] = useState(product.sku);
-  const [retailPrice, setRetailPrice] = useState(product.retailPrice.toFixed(2));
+  const [retailPrice, setRetailPrice] = useState(
+    product.retailPrice.toFixed(2),
+  );
   const [categorySlug, setCategorySlug] = useState(product.categorySlug);
+  const [additionalCategorySlugs, setAdditionalCategorySlugs] = useState(
+    product.additionalCategorySlugs,
+  );
   const [brandSlug, setBrandSlug] = useState(product.brandSlug);
   const [description, setDescription] = useState(product.description);
   const [images, setImages] = useState<ImageItem[]>(() =>
@@ -98,7 +107,9 @@ export function EditProductForm({ product, brands, categories }: Props) {
   );
   const [upc, setUpc] = useState(product.upc);
   const [slugOverride, setSlugOverride] = useState(product.slug);
-  const [metaDescription, setMetaDescription] = useState(product.metaDescription);
+  const [metaDescription, setMetaDescription] = useState(
+    product.metaDescription,
+  );
   const [isActive, setIsActive] = useState(product.isActive);
   const [isFeatured, setIsFeatured] = useState(product.isFeatured);
 
@@ -115,7 +126,8 @@ export function EditProductForm({ product, brands, categories }: Props) {
       next.name = 'Name must be 2–200 characters.';
     }
     if (!/^[a-zA-Z0-9_-]{2,50}$/.test(sku.trim())) {
-      next.sku = 'SKU must be 2–50 alphanumeric characters, dashes, or underscores.';
+      next.sku =
+        'SKU must be 2–50 alphanumeric characters, dashes, or underscores.';
     }
     const priceNum = Number(retailPrice);
     if (!Number.isFinite(priceNum) || priceNum <= 0) {
@@ -149,6 +161,12 @@ export function EditProductForm({ product, brands, categories }: Props) {
       fd.set('sku', sku.trim());
       fd.set('retail_price', String(Number(retailPrice).toFixed(2)));
       fd.set('category_slug', categorySlug);
+      fd.set(
+        'additional_category_slugs',
+        JSON.stringify(
+          additionalCategorySlugs.filter((slug) => slug !== categorySlug),
+        ),
+      );
       fd.set('brand_slug', brandSlug);
       fd.set('description', description.trim());
       fd.set('slug', computedSlug);
@@ -163,8 +181,13 @@ export function EditProductForm({ product, brands, categories }: Props) {
       // is_primary / display_order are updated); rows that disappeared
       // get deleted. New files ride along under `newImages`, indexed
       // into `newImagesMeta` by position.
-      const existingManifest: Array<{ id: string; isPrimary: boolean; sortOrder: number }> = [];
-      const newImagesMeta: Array<{ isPrimary: boolean; sortOrder: number }> = [];
+      const existingManifest: Array<{
+        id: string;
+        isPrimary: boolean;
+        sortOrder: number;
+      }> = [];
+      const newImagesMeta: Array<{ isPrimary: boolean; sortOrder: number }> =
+        [];
       images.forEach((item, idx) => {
         if (item.kind === 'existing' && item.id) {
           existingManifest.push({
@@ -194,7 +217,10 @@ export function EditProductForm({ product, brands, categories }: Props) {
 
       if (!res.ok || !data.ok) {
         if (data.fieldErrors) setErrors(data.fieldErrors);
-        else setErrors({ general: data.errorMessage ?? 'Could not save changes.' });
+        else
+          setErrors({
+            general: data.errorMessage ?? 'Could not save changes.',
+          });
         setSubmitting(false);
         return;
       }
@@ -231,7 +257,9 @@ export function EditProductForm({ product, brands, categories }: Props) {
       };
 
       if (!res.ok || !data.ok) {
-        setErrors({ general: data.errorMessage ?? 'Could not delete product.' });
+        setErrors({
+          general: data.errorMessage ?? 'Could not delete product.',
+        });
         setDeleting(false);
         return;
       }
@@ -260,12 +288,19 @@ export function EditProductForm({ product, brands, categories }: Props) {
 
   return (
     <>
-      <form onSubmit={onSubmit} noValidate className="grid gap-10 lg:grid-cols-[1fr_320px] max-lg:gap-6">
+      <form
+        onSubmit={onSubmit}
+        noValidate
+        className="grid gap-10 lg:grid-cols-[1fr_320px] max-lg:gap-6"
+      >
         <div className="flex flex-col gap-8">
           {message && (
             <div
               className="bg-cream"
-              style={{ border: '1px solid var(--rule-strong)', padding: '14px 18px' }}
+              style={{
+                border: '1px solid var(--rule-strong)',
+                padding: '14px 18px',
+              }}
               role="status"
             >
               <p className="type-data-mono text-gold">{message}</p>
@@ -274,7 +309,10 @@ export function EditProductForm({ product, brands, categories }: Props) {
           {errors.general && (
             <div
               className="bg-cream"
-              style={{ border: '1px solid var(--accent)', padding: '14px 18px' }}
+              style={{
+                border: '1px solid var(--accent)',
+                padding: '14px 18px',
+              }}
               role="alert"
             >
               <p className="type-data-mono text-accent">{errors.general}</p>
@@ -321,7 +359,12 @@ export function EditProductForm({ product, brands, categories }: Props) {
                   <div className="flex items-stretch">
                     <span
                       className="font-display text-ink-muted flex items-center px-3"
-                      style={{ background: 'var(--color-paper-2)', border: '1px solid var(--rule-strong)', borderRight: 'none', fontSize: '15px' }}
+                      style={{
+                        background: 'var(--color-paper-2)',
+                        border: '1px solid var(--rule-strong)',
+                        borderRight: 'none',
+                        fontSize: '15px',
+                      }}
                     >
                       $
                     </span>
@@ -341,7 +384,7 @@ export function EditProductForm({ product, brands, categories }: Props) {
             </div>
             <div className="grid gap-5 max-md:gap-4 sm:grid-cols-2">
               <Field
-                label="Category"
+                label="Primary category"
                 required
                 error={errors.category_slug}
                 input={
@@ -381,6 +424,36 @@ export function EditProductForm({ product, brands, categories }: Props) {
                 }
               />
             </div>
+            <fieldset className="border border-rule rounded-lg p-4">
+              <legend className="text-sm px-2">Also show in</legend>
+              <p className="text-sm text-ink-muted mb-3">
+                Choose additional categories. For example, plant milks can
+                appear under both Plant-Based Milks and Coffee &amp; Tea.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {categories
+                  .filter((c) => c.slug !== categorySlug)
+                  .map((c) => (
+                    <label
+                      key={c.id}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={additionalCategorySlugs.includes(c.slug)}
+                        onChange={(e) =>
+                          setAdditionalCategorySlugs((current) =>
+                            e.target.checked
+                              ? [...current, c.slug]
+                              : current.filter((slug) => slug !== c.slug),
+                          )
+                        }
+                      />
+                      {c.name}
+                    </label>
+                  ))}
+              </div>
+            </fieldset>
             <Field
               label="Description"
               required
@@ -401,9 +474,9 @@ export function EditProductForm({ product, brands, categories }: Props) {
 
           <Section title="Images">
             <p className="type-data-mono text-ink-muted">
-              Up to 8 images. The starred one is the primary (shown first
-              on listings and on the product page). Use ← → to reorder,
-              × to remove. Removed images are deleted on save.
+              Up to 8 images. The starred one is the primary (shown first on
+              listings and on the product page). Use ← → to reorder, × to
+              remove. Removed images are deleted on save.
             </p>
             <MultiImageEditor
               items={images}
@@ -446,7 +519,10 @@ export function EditProductForm({ product, brands, categories }: Props) {
                         onChange={(e) => setSlugOverride(e.target.value)}
                         maxLength={80}
                         className={inputClass}
-                        style={{ ...inputStyle, fontFamily: 'var(--font-mono)' }}
+                        style={{
+                          ...inputStyle,
+                          fontFamily: 'var(--font-mono)',
+                        }}
                       />
                     }
                   />
@@ -487,7 +563,10 @@ export function EditProductForm({ product, brands, categories }: Props) {
                       className="accent-brand-deep"
                       style={{ width: 16, height: 16 }}
                     />
-                    <span className="font-display text-ink-2" style={{ fontSize: '14px' }}>
+                    <span
+                      className="font-display text-ink-2"
+                      style={{ fontSize: '14px' }}
+                    >
                       Visible on storefront
                     </span>
                   </label>
@@ -499,7 +578,10 @@ export function EditProductForm({ product, brands, categories }: Props) {
                       className="accent-brand-deep"
                       style={{ width: 16, height: 16 }}
                     />
-                    <span className="font-display text-ink-2" style={{ fontSize: '14px' }}>
+                    <span
+                      className="font-display text-ink-2"
+                      style={{ fontSize: '14px' }}
+                    >
                       Featured product
                     </span>
                   </label>
@@ -512,16 +594,30 @@ export function EditProductForm({ product, brands, categories }: Props) {
         <aside className="flex flex-col gap-3 self-start lg:sticky lg:top-6">
           <div
             className="bg-cream"
-            style={{ border: '1px solid var(--rule-strong)', padding: '20px 22px' }}
+            style={{
+              border: '1px solid var(--rule-strong)',
+              padding: '20px 22px',
+            }}
           >
             <p className="type-label text-ink mb-3">Summary</p>
             <dl className="flex flex-col gap-2">
               <Stat label="Name" value={name || '—'} />
               <Stat label="SKU" value={sku || '—'} mono />
               <Stat label="Slug" value={computedSlug || '—'} mono />
-              <Stat label="Price" value={retailPrice ? `$${retailPrice}` : '—'} />
-              <Stat label="Category" value={categories.find((c) => c.slug === categorySlug)?.name ?? '—'} />
-              <Stat label="Brand" value={brands.find((b) => b.slug === brandSlug)?.name ?? '—'} />
+              <Stat
+                label="Price"
+                value={retailPrice ? `$${retailPrice}` : '—'}
+              />
+              <Stat
+                label="Category"
+                value={
+                  categories.find((c) => c.slug === categorySlug)?.name ?? '—'
+                }
+              />
+              <Stat
+                label="Brand"
+                value={brands.find((b) => b.slug === brandSlug)?.name ?? '—'}
+              />
               <Stat
                 label="Images"
                 value={
@@ -540,7 +636,11 @@ export function EditProductForm({ product, brands, categories }: Props) {
             style={{ padding: '16px 22px' }}
           >
             <span>{submitting ? 'Saving…' : 'Save changes'}</span>
-            {!submitting && <span className="btn-arrow" aria-hidden="true">→</span>}
+            {!submitting && (
+              <span className="btn-arrow" aria-hidden="true">
+                →
+              </span>
+            )}
           </button>
           <Link
             href="/admin/products/"
@@ -551,7 +651,10 @@ export function EditProductForm({ product, brands, categories }: Props) {
         </aside>
       </form>
 
-      <section className="mt-16 pt-8" style={{ borderTop: '1px solid var(--rule)' }}>
+      <section
+        className="mt-16 pt-8"
+        style={{ borderTop: '1px solid var(--rule)' }}
+      >
         <p className="type-label text-accent mb-3">Danger zone</p>
         <p className="type-data-mono text-ink-muted mb-4 max-w-[640px]">
           Deletes this product and its primary image. If the product has any
@@ -607,7 +710,9 @@ function Section({
     <div className="flex items-baseline justify-between gap-4">
       <p className="type-label text-ink">{title}</p>
       {collapsible && (
-        <span className="type-data-mono text-ink-muted">{open ? '▾ Hide' : '▸ Show'}</span>
+        <span className="type-data-mono text-ink-muted">
+          {open ? '▾ Hide' : '▸ Show'}
+        </span>
       )}
     </div>
   );
@@ -649,16 +754,34 @@ function Field({
     <div className="flex flex-col gap-2">
       <label className="type-label-sm text-ink">
         {label}
-        {required && <span className="text-accent ml-1" aria-hidden="true">*</span>}
+        {required && (
+          <span className="text-accent ml-1" aria-hidden="true">
+            *
+          </span>
+        )}
       </label>
       {input}
-      {hint && !error && <span className="type-data-mono text-ink-muted">{hint}</span>}
-      {error && <span className="type-data-mono text-accent" role="alert">{error}</span>}
+      {hint && !error && (
+        <span className="type-data-mono text-ink-muted">{hint}</span>
+      )}
+      {error && (
+        <span className="type-data-mono text-accent" role="alert">
+          {error}
+        </span>
+      )}
     </div>
   );
 }
 
-function Stat({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+function Stat({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <dt className="type-data-mono text-ink-muted">{label}</dt>

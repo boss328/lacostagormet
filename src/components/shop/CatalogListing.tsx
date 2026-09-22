@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getCatalog } from '@/lib/catalog-query';
 import { filterCatalog } from '@/lib/catalog-filter';
-import { COLLECTIONS } from '@/lib/collections';
+import { COLLECTIONS, collectionImage } from '@/lib/collections';
 import { firstValue, parsePage, parseSort } from '@/lib/catalog-state';
 import { PageHeader } from './PageHeader';
 import { CatalogFilters } from './CatalogFilters';
@@ -84,7 +84,7 @@ export async function CatalogListing({
         banner={
           collection
             ? {
-                src: `/storefront/${collection.image}.webp`,
+                src: collectionImage(collection.image),
                 alt: collection.alt,
               }
             : undefined

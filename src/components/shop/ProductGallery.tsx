@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { ProductImage } from './ProductImage';
 import { useState } from 'react';
 import { bcImage } from '@/lib/bcImage';
 
@@ -19,7 +19,12 @@ type ProductGalleryProps = {
 const CREAM_BG =
   'radial-gradient(ellipse at center, var(--color-cream) 0%, var(--color-paper-2) 115%)';
 
-export function ProductGallery({ images, productName, brandName, sku }: ProductGalleryProps) {
+export function ProductGallery({
+  images,
+  productName,
+  brandName,
+  sku,
+}: ProductGalleryProps) {
   const [activeIdx, setActiveIdx] = useState(0);
 
   if (images.length === 0) {
@@ -31,7 +36,12 @@ export function ProductGallery({ images, productName, brandName, sku }: ProductG
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
           <span
             className="font-display italic text-brand-deep"
-            style={{ fontSize: '28px', lineHeight: 1.15, letterSpacing: '-0.02em', fontWeight: 500 }}
+            style={{
+              fontSize: '28px',
+              lineHeight: 1.15,
+              letterSpacing: '-0.02em',
+              fontWeight: 500,
+            }}
           >
             {brandName ?? '—'}
           </span>
@@ -54,16 +64,13 @@ export function ProductGallery({ images, productName, brandName, sku }: ProductG
         className="relative aspect-square overflow-hidden img-overlay-radial"
         style={{ background: CREAM_BG, border: '1px solid var(--rule)' }}
       >
-        <div className="absolute inset-0" style={{ padding: '32px' }}>
-          <Image
+        <div className="absolute inset-0">
+          <ProductImage
             key={active.url}
             src={bcImage(active.url, 'hero')}
             alt={active.alt_text ?? productName}
-            width={1200}
-            height={1200}
             sizes="(min-width: 1024px) 60vw, 100vw"
             priority
-            className="w-full h-full object-contain img-product"
           />
         </div>
       </div>
@@ -91,16 +98,13 @@ export function ProductGallery({ images, productName, brandName, sku }: ProductG
                     ? '1px solid var(--color-ink)'
                     : '1px solid var(--rule)',
                   cursor: 'pointer',
-                  padding: 6,
+                  padding: 0,
                 }}
               >
-                <Image
+                <ProductImage
                   src={bcImage(img.url, 'card')}
                   alt=""
-                  width={160}
-                  height={160}
                   sizes="82px"
-                  className="w-full h-full object-contain img-product"
                 />
               </button>
             );

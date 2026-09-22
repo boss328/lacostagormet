@@ -56,4 +56,15 @@ export const COLLECTIONS = [
     source: 'coffee-tea',
     alt: 'Glass mug of freshly brewed coffee',
   },
+  {
+    slug: 'plant-based-milks',
+    name: 'Plant-Based Milks',
+    image: 'plant-based-milks.png',
+    source: 'plant-based-milks',
+    alt: 'Glass and carafe of plant-based milk with almonds and oats',
+  },
 ] as const;
+
+export function collectionImage(image: string) {
+  return `/storefront/${image.includes('.') ? image : `${image}.webp`}`;
+}

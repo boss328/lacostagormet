@@ -105,7 +105,11 @@ export function MultiImageEditor({ items, onChange, errorMessage }: Props) {
     }
     let next = items.filter((i) => i.key !== key);
     // If we just removed the primary, promote the first remaining.
-    if (removed?.isPrimary && next.length > 0 && !next.some((i) => i.isPrimary)) {
+    if (
+      removed?.isPrimary &&
+      next.length > 0 &&
+      !next.some((i) => i.isPrimary)
+    ) {
       next = next.map((i, idx) => ({ ...i, isPrimary: idx === 0 }));
     }
     onChange(next);
@@ -158,9 +162,15 @@ export function MultiImageEditor({ items, onChange, errorMessage }: Props) {
           className="font-mono text-[12px] text-ink"
         />
         <span className="type-data-mono text-ink-muted">
-          {items.length} of {MAX_IMAGES} images · JPEG, PNG, or WebP · 8 MB max each
+          {items.length} of {MAX_IMAGES} images · JPEG, PNG, or WebP · 8 MB max
+          each
           {slotsLeft === 0 ? ' · limit reached' : ''}
         </span>
+        <p className="text-sm text-ink-muted">
+          Recommended: 1200 × 1200 pixels, white background, product centered
+          with about 10% space around it. JPG or WebP under 500 KB keeps pages
+          fast. Keep labels and packaging fully visible.
+        </p>
         {surfaceError && (
           <span className="type-data-mono text-accent" role="alert">
             {surfaceError}

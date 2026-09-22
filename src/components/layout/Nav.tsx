@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Menu, Search, User, X, ChevronDown } from 'lucide-react';
 import { CartBadge } from './CartBadge';
-import { COLLECTIONS } from '@/lib/collections';
+import { COLLECTIONS, collectionImage } from '@/lib/collections';
 
 export function Nav() {
   const [mobile, setMobile] = useState(false);
@@ -84,7 +84,7 @@ export function Nav() {
                         onClick={close}
                       >
                         <Image
-                          src={`/storefront/${c.image}.webp`}
+                          src={collectionImage(c.image)}
                           alt=""
                           width={64}
                           height={64}

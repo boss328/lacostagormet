@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Image from 'next/image';
+import { ProductImage } from '@/components/shop/ProductImage';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -293,15 +293,8 @@ export default async function OrderConfirmationPage({
                     }}
                   >
                     {imgUrl ? (
-                      <div className="absolute inset-0" style={{ padding: 6 }}>
-                        <Image
-                          src={imgUrl}
-                          alt=""
-                          width={160}
-                          height={160}
-                          sizes="80px"
-                          className="w-full h-full object-contain img-product"
-                        />
+                      <div className="absolute inset-0">
+                        <ProductImage src={imgUrl} alt="" sizes="80px" />
                       </div>
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
