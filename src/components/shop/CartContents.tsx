@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { ProductImage } from './ProductImage';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -66,18 +66,16 @@ function LineRow({ item }: { item: CartItem }) {
     >
       <div
         className="relative overflow-hidden"
-        style={{ width: 80, height: 80, background: CREAM_BG, border: '1px solid var(--rule)' }}
+        style={{
+          width: 80,
+          height: 80,
+          background: CREAM_BG,
+          border: '1px solid var(--rule)',
+        }}
       >
         {item.image_url ? (
-          <div className="absolute inset-0" style={{ padding: 6 }}>
-            <Image
-              src={item.image_url}
-              alt={item.name}
-              width={160}
-              height={160}
-              sizes="80px"
-              className="w-full h-full object-contain img-product"
-            />
+          <div className="absolute inset-0">
+            <ProductImage src={item.image_url} alt={item.name} sizes="80px" />
           </div>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -87,16 +85,16 @@ function LineRow({ item }: { item: CartItem }) {
       </div>
 
       <div className="min-w-0 flex flex-col gap-1">
-        <span className="type-label-sm text-ink-muted">{item.brand_name ?? '—'}</span>
+        <span className="type-label-sm text-ink-muted">
+          {item.brand_name ?? '—'}
+        </span>
         <Link
           href={`/product/${item.slug}`}
           className="type-product text-ink hover:text-brand-deep transition-colors duration-200 line-clamp-2"
         >
           {item.name}
         </Link>
-        {pack && (
-          <span className="type-data-mono text-brand">{pack}</span>
-        )}
+        {pack && <span className="type-data-mono text-brand">{pack}</span>}
         <button
           type="button"
           onClick={() => removeItem(item.product_id)}
@@ -219,9 +217,12 @@ export function CartContents() {
     recoveryTriedRef.current = true;
     void (async () => {
       try {
-        const res = await fetch(`/api/cart/recover?id=${encodeURIComponent(recoverId)}`, {
-          cache: 'no-store',
-        });
+        const res = await fetch(
+          `/api/cart/recover?id=${encodeURIComponent(recoverId)}`,
+          {
+            cache: 'no-store',
+          },
+        );
         const data = (await res.json()) as {
           ok: boolean;
           email?: string;
@@ -372,27 +373,33 @@ export function CartContents() {
       </header>
 
       <section className="max-w-content mx-auto px-8 py-16 max-sm:px-5 max-sm:py-10">
-        {hydrated && reorder.unavailableNotice && reorder.unavailableNotice.length > 0 && (
-          <div
-            role="status"
-            className="bg-paper-2 mb-8 flex items-start justify-between gap-4 max-md:flex-col"
-            style={{ border: '1px solid var(--rule)', padding: '14px 18px' }}
-          >
-            <p className="type-data-mono text-ink-2">
-              <span className="text-accent">Some items from your previous order couldn&rsquo;t be added</span>{' '}
-              — they&rsquo;re no longer available:{' '}
-              <span className="text-ink">{reorder.unavailableNotice.join(' · ')}</span>.{' '}
-              Your other items are below.
-            </p>
-            <button
-              type="button"
-              onClick={dismissUnavailable}
-              className="type-label-sm text-ink-muted hover:text-accent shrink-0"
+        {hydrated &&
+          reorder.unavailableNotice &&
+          reorder.unavailableNotice.length > 0 && (
+            <div
+              role="status"
+              className="bg-paper-2 mb-8 flex items-start justify-between gap-4 max-md:flex-col"
+              style={{ border: '1px solid var(--rule)', padding: '14px 18px' }}
             >
-              Dismiss
-            </button>
-          </div>
-        )}
+              <p className="type-data-mono text-ink-2">
+                <span className="text-accent">
+                  Some items from your previous order couldn&rsquo;t be added
+                </span>{' '}
+                — they&rsquo;re no longer available:{' '}
+                <span className="text-ink">
+                  {reorder.unavailableNotice.join(' · ')}
+                </span>
+                . Your other items are below.
+              </p>
+              <button
+                type="button"
+                onClick={dismissUnavailable}
+                className="type-label-sm text-ink-muted hover:text-accent shrink-0"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
         {!hydrated ? (
           <p className="type-label text-ink-muted">Loading cart…</p>
         ) : items.length === 0 ? (
@@ -405,7 +412,9 @@ export function CartContents() {
                 className="flex items-baseline justify-between pb-4 mb-2"
                 style={{ borderBottom: '1px solid var(--rule-strong)' }}
               >
-                <span className="type-label text-ink">&nbsp;&nbsp;Line items</span>
+                <span className="type-label text-ink">
+                  &nbsp;&nbsp;Line items
+                </span>
                 <span className="type-data-mono text-ink-muted">
                   {items.length} {items.length === 1 ? 'line' : 'lines'}
                 </span>
@@ -419,7 +428,10 @@ export function CartContents() {
             <aside className="lg:sticky lg:top-6 self-start">
               <div
                 className="bg-cream"
-                style={{ border: '1px solid var(--rule-strong)', padding: '28px' }}
+                style={{
+                  border: '1px solid var(--rule-strong)',
+                  padding: '28px',
+                }}
               >
                 <p className="type-label text-ink mb-6">&nbsp;&nbsp;Summary</p>
 
@@ -427,14 +439,21 @@ export function CartContents() {
                   className="flex flex-col"
                   style={{ borderTop: '1px solid var(--rule)' }}
                 >
-                  <SummaryRow label="Subtotal" value={<Price amount={subtotal} size={18} />} />
+                  <SummaryRow
+                    label="Subtotal"
+                    value={<Price amount={subtotal} size={18} />}
+                  />
                   <SummaryRow
                     label="Shipping"
                     value={
                       qualifiesFreeShipping ? (
                         <span
                           className="font-display italic text-gold-bright"
-                          style={{ fontSize: '16px', letterSpacing: '-0.01em', fontWeight: 500 }}
+                          style={{
+                            fontSize: '16px',
+                            letterSpacing: '-0.01em',
+                            fontWeight: 500,
+                          }}
                         >
                           FREE
                         </span>
@@ -453,7 +472,10 @@ export function CartContents() {
                 {(tier1 || tier2) && (
                   <div
                     className="mt-4 mb-2 flex items-center gap-2 flex-wrap"
-                    style={{ paddingTop: 14, borderTop: '1px dashed var(--rule)' }}
+                    style={{
+                      paddingTop: 14,
+                      borderTop: '1px dashed var(--rule)',
+                    }}
                   >
                     {tier1 && (
                       <span
@@ -483,7 +505,11 @@ export function CartContents() {
                 {tier1 && (
                   <p
                     className="font-display italic text-brand-deep mt-4 mb-2"
-                    style={{ fontSize: '13px', lineHeight: 1.5, letterSpacing: '-0.01em' }}
+                    style={{
+                      fontSize: '13px',
+                      lineHeight: 1.5,
+                      letterSpacing: '-0.01em',
+                    }}
                   >
                     Contact us for custom pricing on orders over $400 —{' '}
                     <a
@@ -527,12 +553,14 @@ export function CartContents() {
                   />
                   {recoveryStatus === 'saved' && (
                     <p className="type-data-mono text-gold mt-2">
-                      Saved · we&rsquo;ll email a reminder if you don&rsquo;t finish.
+                      Saved · we&rsquo;ll email a reminder if you don&rsquo;t
+                      finish.
                     </p>
                   )}
                   {recoveryStatus === 'error' && (
                     <p className="type-data-mono text-accent mt-2">
-                      We couldn&rsquo;t save your cart — try again or just check out.
+                      We couldn&rsquo;t save your cart — try again or just check
+                      out.
                     </p>
                   )}
                 </div>
@@ -544,7 +572,9 @@ export function CartContents() {
                     style={{ padding: '18px 26px' }}
                   >
                     <span>Checkout</span>
-                    <span className="btn-arrow" aria-hidden="true">→</span>
+                    <span className="btn-arrow" aria-hidden="true">
+                      →
+                    </span>
                   </Link>
                 </div>
 

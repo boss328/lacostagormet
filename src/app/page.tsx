@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCatalog } from '@/lib/catalog-query';
-import { COLLECTIONS } from '@/lib/collections';
+import { COLLECTIONS, collectionImage } from '@/lib/collections';
 import { SHIPPING_TIERS } from '@/lib/checkout/shipping';
 import { ProductCard } from '@/components/shop/ProductCard';
 import { FeaturedCarousel } from '@/components/home/FeaturedCarousel';
@@ -80,7 +80,7 @@ export default async function HomePage({
               key={c.slug}
             >
               <Image
-                src={`/storefront/${c.image}.webp`}
+                src={collectionImage(c.image)}
                 alt={c.alt}
                 width={600}
                 height={600}

@@ -373,7 +373,7 @@ summary {
 }
 .mega-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 .mega-grid a {
@@ -465,7 +465,7 @@ summary {
 }
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 }
 .category-card img {
@@ -787,7 +787,7 @@ summary {
   display: block;
   position: relative;
   aspect-ratio: 1;
-  padding: 22px;
+  padding: 0;
   background: #fff;
   border-radius: 16px;
 }
@@ -1230,7 +1230,7 @@ em.type-accent,
     font-size: 13px;
   }
   .product-picture {
-    padding: 18px;
+    padding: 0;
   }
   .catalog-results {
     padding-top: 24px;
@@ -1293,7 +1293,7 @@ em.type-accent,
     font-size: 12px;
   }
   .product-picture {
-    padding: 15px;
+    padding: 0;
   }
   .catalog-pagination {
     gap: 10px;
@@ -1456,4 +1456,15 @@ em.type-accent,
   padding: 6px 16px;
   text-align: center;
   font-size: 11px;
+}
+
+.product-photo-frame {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #fff;
+  border-radius: inherit;
 }

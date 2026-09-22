@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
 import { slugify } from '@/lib/admin/slug';
+import { productCategoryIds } from '@/lib/admin/product-categories';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,8 +22,7 @@ export const dynamic = 'force-dynamic';
  *   - newImagesMeta (JSON): [{isPrimary, sortOrder}, ...] indexed
  *     parallel to newImages.
  *
- * product_categories M2M is still rebuilt to match the new primary
- * category (single-category model — admin can't multi-tag yet).
+ * Additional categories can be edited explicitly; older clients preserve them.
  */
 
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -30,7 +30,11 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_IMAGES = 8;
 const STORAGE_BUCKET = 'product-images';
 
-type ExistingManifestEntry = { id: string; isPrimary: boolean; sortOrder: number };
+type ExistingManifestEntry = {
+  id: string;
+  isPrimary: boolean;
+  sortOrder: number;
+};
 type NewImagesMetaEntry = { isPrimary: boolean; sortOrder: number };
 
 function parseJsonArray<T>(raw: string | null): T[] {
@@ -62,13 +66,17 @@ function fail(status: number, errorMessage: string, fieldErrors?: FieldErrors) {
   );
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
   const productId = params.id;
 
   // ── Auth re-check ──────────────────────────────────────────────────
   const cookie = req.cookies.get(ADMIN_COOKIE)?.value;
   const expected = await expectedSessionToken();
-  if (!expected) return fail(503, 'Server misconfigured (ADMIN_PASSWORD missing).');
+  if (!expected)
+    return fail(503, 'Server misconfigured (ADMIN_PASSWORD missing).');
   if (cookie !== expected) return fail(401, 'Not authenticated.');
 
   // ── Parse form ─────────────────────────────────────────────────────
@@ -83,6 +91,24 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const sku = String(form.get('sku') ?? '').trim();
   const retailPriceRaw = String(form.get('retail_price') ?? '').trim();
   const categorySlug = String(form.get('category_slug') ?? '').trim();
+  let additionalSlugs: string[] | undefined;
+  if (form.has('additional_category_slugs')) {
+    try {
+      const value = JSON.parse(String(form.get('additional_category_slugs')));
+      if (
+        !Array.isArray(value) ||
+        value.length > 100 ||
+        !value.every(
+          (slug) =>
+            typeof slug === 'string' && slug.length > 0 && slug.length < 200,
+        )
+      )
+        return fail(400, 'Invalid additional categories.');
+      additionalSlugs = [...new Set(value as string[])];
+    } catch {
+      return fail(400, 'Invalid additional categories.');
+    }
+  }
   const brandSlug = String(form.get('brand_slug') ?? '').trim();
   const description = String(form.get('description') ?? '').trim();
   const slugRaw = String(form.get('slug') ?? '').trim();
@@ -107,9 +133,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   // ── Validate ───────────────────────────────────────────────────────
   const fieldErrors: FieldErrors = {};
-  if (name.length < 2 || name.length > 200) fieldErrors.name = 'Name must be 2–200 characters.';
+  if (name.length < 2 || name.length > 200)
+    fieldErrors.name = 'Name must be 2–200 characters.';
   if (!/^[a-zA-Z0-9_-]{2,50}$/.test(sku))
-    fieldErrors.sku = 'SKU must be 2–50 alphanumeric characters, dashes, or underscores.';
+    fieldErrors.sku =
+      'SKU must be 2–50 alphanumeric characters, dashes, or underscores.';
 
   const retailPrice = Number(retailPriceRaw);
   if (!Number.isFinite(retailPrice) || retailPrice <= 0) {
@@ -163,7 +191,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   // ── Confirm product exists ─────────────────────────────────────────
   const { data: existing, error: existsErr } = await admin
     .from('products')
-    .select('id, sku, slug')
+    .select(
+      'id, sku, slug, primary_category_id, product_categories(category_id)',
+    )
     .eq('id', productId)
     .maybeSingle();
   if (existsErr) {
@@ -175,24 +205,66 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   // ── SKU + slug uniqueness (excluding self) ─────────────────────────
   const [{ data: skuClash }, { data: slugClash }] = await Promise.all([
     sku !== existing.sku
-      ? admin.from('products').select('id').eq('sku', sku).neq('id', productId).maybeSingle()
+      ? admin
+          .from('products')
+          .select('id')
+          .eq('sku', sku)
+          .neq('id', productId)
+          .maybeSingle()
       : Promise.resolve({ data: null }),
     slug !== existing.slug
-      ? admin.from('products').select('id').eq('slug', slug).neq('id', productId).maybeSingle()
+      ? admin
+          .from('products')
+          .select('id')
+          .eq('slug', slug)
+          .neq('id', productId)
+          .maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
 
-  if (skuClash) return fail(400, 'SKU already exists.', { sku: 'SKU already exists.' });
-  if (slugClash) return fail(400, 'URL slug already exists.', { slug: 'URL slug already exists.' });
+  if (skuClash)
+    return fail(400, 'SKU already exists.', { sku: 'SKU already exists.' });
+  if (slugClash)
+    return fail(400, 'URL slug already exists.', {
+      slug: 'URL slug already exists.',
+    });
 
   // ── Resolve FK IDs ─────────────────────────────────────────────────
   const [{ data: brand }, { data: category }] = await Promise.all([
     admin.from('brands').select('id').eq('slug', brandSlug).maybeSingle(),
-    admin.from('categories').select('id').eq('slug', categorySlug).maybeSingle(),
+    admin
+      .from('categories')
+      .select('id')
+      .eq('slug', categorySlug)
+      .maybeSingle(),
   ]);
 
-  if (!brand) return fail(400, 'Validation failed.', { brand_slug: 'Unknown brand.' });
-  if (!category) return fail(400, 'Validation failed.', { category_slug: 'Unknown category.' });
+  if (!brand)
+    return fail(400, 'Validation failed.', { brand_slug: 'Unknown brand.' });
+  if (!category)
+    return fail(400, 'Validation failed.', {
+      category_slug: 'Unknown category.',
+    });
+  const additional = additionalSlugs?.length
+    ? await admin
+        .from('categories')
+        .select('id,slug')
+        .in('slug', additionalSlugs)
+        .eq('is_active', true)
+    : { data: [], error: null };
+  if (
+    additional.error ||
+    (additionalSlugs && additional.data!.length !== additionalSlugs.length)
+  )
+    return fail(400, 'One or more additional categories are unavailable.');
+  const categoryIds = productCategoryIds(
+    category.id,
+    existing.primary_category_id,
+    existing.product_categories.map((c) => c.category_id),
+    additionalSlugs === undefined
+      ? undefined
+      : additional.data!.map((c) => c.id),
+  );
 
   // ── Upload any new image files (in submission order) ──────────────
   const uploadedNew: Array<{ url: string; meta: NewImagesMetaEntry }> = [];
@@ -250,17 +322,40 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     console.error('[products/update] update failed', updErr);
     if (updErr?.code === '23505') {
       const detail = (updErr.message ?? '').toLowerCase();
-      if (detail.includes('sku')) return fail(400, 'SKU already exists.', { sku: 'SKU already exists.' });
-      if (detail.includes('slug')) return fail(400, 'URL slug already exists.', { slug: 'URL slug already exists.' });
+      if (detail.includes('sku'))
+        return fail(400, 'SKU already exists.', { sku: 'SKU already exists.' });
+      if (detail.includes('slug'))
+        return fail(400, 'URL slug already exists.', {
+          slug: 'URL slug already exists.',
+        });
     }
     return fail(500, updErr?.message ?? 'Update failed.');
   }
 
-  // ── Refresh product_categories M2M to match the new primary cat ────
-  await admin.from('product_categories').delete().eq('product_id', productId);
-  await admin
+  // Add desired memberships before removing only explicitly deselected tags.
+  const { error: categorySaveError } = await admin
     .from('product_categories')
-    .insert({ product_id: productId, category_id: category.id });
+    .upsert(
+      categoryIds.map((category_id) => ({
+        product_id: productId,
+        category_id,
+      })),
+      { onConflict: 'product_id,category_id', ignoreDuplicates: true },
+    );
+  if (categorySaveError)
+    return fail(500, 'Could not save product categories. Please retry.');
+  const removedIds = existing.product_categories
+    .map((c) => c.category_id)
+    .filter((id) => !categoryIds.includes(id));
+  if (removedIds.length) {
+    const { error } = await admin
+      .from('product_categories')
+      .delete()
+      .eq('product_id', productId)
+      .in('category_id', removedIds);
+    if (error)
+      return fail(500, 'Could not update product categories. Please retry.');
+  }
 
   // ── Reconcile product_images against the submitted manifest ───────
   // Pull the current set of rows for this product so we can diff.
