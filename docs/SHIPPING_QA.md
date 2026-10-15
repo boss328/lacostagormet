@@ -6,13 +6,14 @@ Reviewed the new order documents, local shipping UI/API, ShipStation adapter, la
 
 | Area | Verification |
 | --- | --- |
-| Shipping unit and route tests | 43 passing checks: authorization/origin/preview gates, actual body-size bounds, malformed input, reserved/remaining quantities, provider response validation, purchases, recovery, dispatch, email retries, sandbox-key rejection, document selection and PDF conversion |
+| Shipping unit and route tests | 45 passing checks: authorization/origin/preview gates, actual body-size bounds, malformed input, reserved/remaining quantities, provider response validation, merchandise service eligibility, purchases, recovery, dispatch, email retries, sandbox-key rejection, document selection and PDF conversion |
 | Shipping database | 26 passing checks using the actual migrations in PGlite: rollback, quantity bounds, supplier overlap, paid-order requirements, once-only purchase claims, uncertain purchase locks, partial fulfillment, delivered-state preservation, notification leases and role permissions |
 | Existing application regressions | 38 additional Node tests pass for catalog filters, category assignments, product image framing, analytics filters, payment reconciliation, wallet providers and verification |
 | Related database regressions | Wallet transaction/ownership/replay/permission suite and vendor warehouse/PO schema suite pass |
 | Compilation | Next.js production build, lint and TypeScript validation pass |
 | Browser workflow | Synthetic partial quote → interrupted purchase → recovery → dispatch → notification retry; manual tracking; blocked supplier items; packing-slip dirty state; long invoice rendering; 390px mobile layout with no horizontal overflow |
 | Production database | Both shipping migrations installed; replacement functions verified as invoker functions with fixed search paths, service-role execute access and no anon/authenticated execute access |
+| Production integration | ShipStation V2 account, six carrier connections, default origin/return addresses and authenticated admin HTTP checks verified. Live quotes returned on a zero-dollar, clearly marked test order; draft cancellation released the reserved item. No postage or customer email sent. |
 
 ## Fixes from this review
 
@@ -22,11 +23,12 @@ Reviewed the new order documents, local shipping UI/API, ShipStation adapter, la
 - Enforce the request limit on actual received bytes, including requests without a Content-Length header; reject malformed JSON/item shapes clearly.
 - Block purchases with ShipStation `TEST_` keys and reject explicitly voided labels during printing, recovery and dispatch.
 - Open manual tracking by default while provider setup is pending; explain supplier-blocked items and show package input limits.
+- Exclude Media Mail, Library Mail and Bound Printed Matter from merchandise quotes. Reject previously saved restricted service quotes before claiming a purchase or calling ShipStation. The live quote test exposed Media Mail as the cheapest service before this fix.
 
 ## Remaining acceptance checks
 
-- Jeff's ShipStation V2 production key, API entitlement, connected carriers, postage billing, origin and return address remain unverified.
-- Current production admin access is required for authenticated live screen checks. Local and synthetic authenticated workflows have been exercised.
+- Production credentials, API access, connected carriers and origin/return addresses are verified. Actual postage billing remains unverified.
+- Authenticated production HTTP checks passed; live authenticated browser rendering remains pending. Local and synthetic authenticated browser workflows have been exercised.
 - The first real label purchase, real customer email delivery, physical printer output and a real customer tracking journey remain pending. Keep purchase activation disabled until an approved parcel is ready.
 - PGlite uses a serialized connection. Its overlap tests do not prove contention behavior across independent PostgreSQL connections.
 - Browser print-preview automation was unavailable; document rendering and multi-page PDF conversion were checked separately.

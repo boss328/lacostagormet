@@ -28,7 +28,7 @@ function harness() {
     items: [{ id: itemId, product_name: "Coffee <script>alert(1)</script>", product_sku: "COFFEE", quantity: 3, assigned_vendor_id: null }],
     pos: [] as any[],
     shipments: [] as any[],
-    shipment: { id: shipmentId, external_id: shipmentId, status: "draft", carrier: "USPS", label_id: "se-label", label_download_url: "https://api.shipstation.com/v2/downloads/test.pdf", tracking_number: "TRACK123", tracking_url: "https://tools.usps.com/go/TrackConfirmAction?tLabels=TRACK123", local_shipment_items: [{ order_item_id: itemId, quantity: 2 }] },
+    shipment: { id: shipmentId, external_id: shipmentId, status: "draft", rates: [{ rateId: "se-rate", carrier: "USPS", service: "Ground", amount: 8.45, currency: "USD" }], carrier: "USPS", label_id: "se-label", label_download_url: "https://api.shipstation.com/v2/downloads/test.pdf", tracking_number: "TRACK123", tracking_url: "https://tools.usps.com/go/TrackConfirmAction?tLabels=TRACK123", local_shipment_items: [{ order_item_id: itemId, quantity: 2 }] },
     label: { status: "completed", label_id: "se-label", external_shipment_id: shipmentId, tracking_number: "TRACK123", carrier_code: "usps", label_download: { pdf: "https://api.shipstation.com/v2/downloads/test.pdf" } } as any,
     providerFailure: "",
     mutationFailure: "",
@@ -158,6 +158,16 @@ test("purchase gate and duplicate claim never call the provider", async () => {
     assert.ok(!h.calls.includes("buy")); assert.equal(h.emails.length, 0);
   }
 });
+test("previously saved restricted rates cannot be purchased or claim a shipment", async () => {
+  for (const service of ["USPS Media Mail", "usps_library_mail", "Bound Printed Matter"]) {
+    const h = harness(); h.state.shipment.rates[0].service = service;
+    const res = await h.request("POST", { action: "buy_label", shipmentId, rateId: "se-rate" });
+    assert.equal(res.status, 400);
+    assert.match((await res.json()).error, /cannot ship La Costa merchandise/);
+    assert.deepEqual(h.mutations, []); assert.ok(!h.calls.includes("buy")); assert.equal(h.emails.length, 0);
+  }
+});
+
 test("network or storage failure after a purchase leaves status unknown and never repurchases", async () => {
   for (const failure of ["provider", "storage"]) {
     const h = harness(); if (failure === "provider") h.state.providerFailure = "Timeout"; else h.state.mutationFailure = "store_label";
