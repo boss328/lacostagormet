@@ -1,6 +1,6 @@
 import "server-only";
 import { normalizeAddress, type ShippingAddress } from "./shipstation";
-import { shippingFlags } from "./flags";
+import { shippingApiKey, shippingFlags } from "./flags";
 
 export function shippingConfiguration() {
   let shipFrom: ShippingAddress | null = null;
@@ -19,7 +19,7 @@ export function shippingConfiguration() {
   } catch {
     /* Setup is reported through the admin panel, without exposing secrets. */
   }
-  const apiKey = process.env.SHIPSTATION_API_KEY || "";
+  const apiKey = shippingApiKey(process.env);
   const ready = Boolean(apiKey && shipFrom && returnTo);
   const flags = shippingFlags(process.env, ready);
   return {
@@ -37,8 +37,12 @@ export function shippingConfiguration() {
         ? "Preview: postage purchases and shipment changes are disabled."
         : !ready
           ? "Manual tracking is available. Finish ShipStation API access and ship-from/return-address setup to buy labels."
-          : !flags.purchaseEnabled
-            ? "Rates are available. Label purchasing is awaiting activation."
-            : null,
+          : flags.sandboxKey
+            ? "ShipStation sandbox key: test rates are available. Label purchases are blocked; configure a production V2 key for real postage."
+            : !flags.production
+              ? "Rates are available. Label purchasing requires a production runtime."
+              : !flags.purchaseEnabled
+                ? "Rates are available. Label purchasing is awaiting activation."
+                : null,
   };
 }

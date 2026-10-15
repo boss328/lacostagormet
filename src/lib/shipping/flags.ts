@@ -1,7 +1,14 @@
 type ShippingEnvironment = Record<string, string | undefined>;
 
+/** Keep runtime requests, purchase gates, and setup checks on the same key. */
+export function shippingApiKey(env: ShippingEnvironment) {
+  return (env.SHIPSTATION_API_KEY || '').trim();
+}
+
 /** Shared runtime gates for the server and read-only configuration checker. */
 export function shippingFlags(env: ShippingEnvironment, providerReady = false) {
+  const apiKey = shippingApiKey(env);
+  const sandboxKey = /^TEST_/i.test(apiKey);
   const production =
     env.VERCEL_ENV === 'production' ||
     (!env.VERCEL_ENV && env.NODE_ENV === 'production');
@@ -19,8 +26,9 @@ export function shippingFlags(env: ShippingEnvironment, providerReady = false) {
     readOnlyPreview,
     enabled,
     purchaseEnabled,
+    sandboxKey,
     canRecordManual: writable,
     canQuote: writable && providerReady,
-    canPurchase: writable && providerReady && production && purchaseEnabled,
+    canPurchase: writable && providerReady && production && purchaseEnabled && Boolean(apiKey) && !sandboxKey,
   };
 }

@@ -40,14 +40,16 @@ Set these as server environment variables in the intended environment; their nam
 | --- | --- |
 | `SHIPPING_ENABLED` | Unset/blank uses the production-runtime default; `true` explicitly enables shipment tools; `false` is the kill switch for all shipment mutations |
 | `SHIPPING_PURCHASE_ENABLED` | Separate `true` opt-in for live label purchases; keep `false` during initial configuration and rate review |
-| `SHIPSTATION_API_KEY` | V2 key for the intended account; account access has not yet been verified |
+| `SHIPSTATION_API_KEY` | Production V2 key for real postage; surrounding whitespace is trimmed. `TEST_` sandbox keys permit test rates but cannot purchase labels. Account access has not yet been verified |
 | `SHIPSTATION_SHIP_FROM_JSON` | Complete ship-from address, including contact phone |
 | `SHIPSTATION_RETURN_TO_JSON` | Optional complete return address; blank/unset uses ship-from |
 | `READ_ONLY_PREVIEW` | `true` blocks shipment changes; Vercel previews default to read-only unless explicitly overridden |
 
 Production means `VERCEL_ENV=production`, or `NODE_ENV=production` when `VERCEL_ENV` is unset. A Vercel preview with `NODE_ENV=production` still defaults off. Read-only mode always blocks mutations, including explicit shipping enablement. Preview deployments cannot purchase labels even if the preview write guard is overridden. A production-mode local server satisfies the fallback gate, so set `SHIPPING_ENABLED=false` when local shipment writes are unwanted and keep purchase activation false for local work.
 
-`SHIPPING_PURCHASE_ENABLED=true` alone is insufficient: purchasing also requires writable shipping tools, a production runtime, a V2 API key, and complete ship-from/return addresses. An existing explicit `SHIPPING_ENABLED=false` in the deployment environment continues to disable manual tracking; the production default does not override that setting.
+`SHIPPING_PURCHASE_ENABLED=true` alone is insufficient: purchasing also requires writable shipping tools, a production runtime, a non-sandbox V2 API key, and complete ship-from/return addresses. An existing explicit `SHIPPING_ENABLED=false` in the deployment environment continues to disable manual tracking; the production default does not override that setting.
+
+ShipStation API (formerly ShipEngine) accepts `TEST_` sandbox keys on the same API host as production. The app identifies these keys, labels their quotes as test rates, and blocks all label purchases with them, even when purchase activation is enabled. The ShipStation web platform currently has no sandbox. A key without the sandbox prefix is not proof of valid production access; verify the intended account and carrier connections separately. [ShipStation key and sandbox documentation](https://docs.shipstation.com/authentication).
 
 Example address shape, using placeholders rather than customer or business details:
 
@@ -81,7 +83,7 @@ To explicitly load a local environment file with Node 20.12+:
 node --env-file=.env.local --import tsx scripts/check-shipping-config.ts
 ```
 
-The default check needs no credentials and makes no network or database calls. It reports missing setup, address shape, and activation gates without printing keys or addresses. Exit `0` means configuration is internally consistent; disabled or manual-only operation can still have setup pending. Exit `1` means invalid configuration or a failed requested carrier check; exit `2` means unsupported arguments. An exit `0` is not proof of account readiness, migration installation, or deployment.
+The default check needs no credentials and makes no network or database calls. It reports missing setup, address shape, and activation gates without printing keys or addresses. Sandbox keys receive an explicit notice; requesting purchase activation with one exits `1`. The checker and server both trim surrounding key whitespace. Exit `0` means configuration is internally consistent; disabled or manual-only operation can still have setup pending. Exit `1` means invalid configuration or a failed requested carrier check; exit `2` means unsupported arguments. An exit `0` is not proof of account readiness, migration installation, or deployment.
 
 When a V2 key is securely configured, optionally add:
 
@@ -93,8 +95,8 @@ This makes only `GET https://api.shipstation.com/v2/carriers`. It reports a carr
 
 ## Activation runbook
 
-1. **Confirm the applied migration.** `supabase/migrations/20261015023211_local_shipping.sql` was applied through the CLI to project `yrlopskyvkdqxmmlxnat` on October 14, 2026 (Pacific), with RLS/access verified. Only this migration was applied; existing order data was not rewritten. It creates the shipment/item ledger and server-only RPCs and adds supplier/local overlap guards. For another environment, apply this file through the reviewed release process before enabling shipping. Confirm supplier PO review works with that database's existing columns; unrelated vendor migrations are outside this shipping rollout.
-2. **Deploy the reviewed implementation with purchases disabled.** The production code deployment is still pending. Keep `SHIPPING_PURCHASE_ENABLED` unset or `false`. With `SHIPPING_ENABLED` unset, production will offer printing and manual tracking without further ShipStation setup. An explicit `false` still disables mutations. Verify authenticated invoices and packing slips, rejection of invalid document selections, anonymous shipping denial, and the admin's setup notice. Manual tracking is a real dispatch action that can email the customer; use an authorized dispatched package when verifying it. The checker does not deploy code or verify the remote schema.
+1. **Confirm the applied migrations.** `supabase/migrations/20261015023211_local_shipping.sql` was applied through the CLI to project `yrlopskyvkdqxmmlxnat` on October 14, 2026 (Pacific), with RLS/access verified. `20261015074104_shipping_state_idempotency.sql` was applied on October 15; it preserves delivered status and original supplier dispatch times on retries. Existing order data was not rewritten. These create the shipment/item ledger and server-only RPCs and add supplier/local overlap guards. For another environment, apply both files through the reviewed release process before enabling shipping. Confirm supplier PO review works with that database's existing columns; unrelated vendor migrations are outside this shipping rollout.
+2. **Deploy the reviewed implementation with purchases disabled.** The initial implementation shipped in PR #5. Keep `SHIPPING_PURCHASE_ENABLED` unset or `false`. With `SHIPPING_ENABLED` unset, production offers printing and manual tracking without further ShipStation setup. An explicit `false` still disables mutations. Verify authenticated invoices and packing slips, rejection of invalid document selections, anonymous shipping denial, and the admin's setup notice. Current production admin access is still needed for authenticated acceptance. Manual tracking is a real dispatch action that can email the customer; use an authorized dispatched package when verifying it. The checker does not deploy code or verify the remote schema.
 3. **Confirm Jeff's account setup for labels.** Obtain the V2 key through the provider's account settings, confirm that its API plan supports carrier listing/rates/labels, connect the intended carriers, and confirm postage billing. A ShipStation platform key can perform live paid operations; do not assume it is a sandbox key. [Provider authentication and sandbox distinctions](https://docs.shipstation.com/authentication).
 4. **Configure origin and return addresses.** Once deployment settings are accessible, enter the V2 key, actual shipping contact, phone, and U.S. addresses as server variables. Run the default checker, then the optional carrier check. A successful carrier check establishes API access to carrier listing, not successful label purchasing. API/origin setup remains pending.
 5. **Verify rate preparation.** With writable shipping tools and provider setup complete, validate a paid order's available quantities, supplier assignment handling, package inputs, and rate comparison. Requesting rates reserves the selected quantities and creates a provider shipment; it does not buy a label. Cancel test drafts afterward. Keep `SHIPPING_PURCHASE_ENABLED` unset or `false` through this step.
@@ -110,10 +112,9 @@ Customer notifications use a stable key per shipment, a two-minute in-flight cla
 Run these checks without ShipStation credentials or production database access:
 
 ```sh
-pnpm exec tsx --test src/lib/shipping/flags.test.ts src/lib/shipping/shipstation.test.ts src/lib/admin/order-documents.test.ts
-pnpm exec tsx scripts/test-shipping-database.ts
+pnpm test:shipping
 pnpm exec tsx scripts/check-shipping-config.ts
 pnpm exec tsc --noEmit
 ```
 
-The database suite uses in-memory PGlite and synthetic roles/orders. Its concurrent callers share one serialized connection, so it does not prove multi-connection PostgreSQL lock contention. Provider tests use injected mock fetch responses, and PDF tests use generated files. These checks do not verify Jeff's API key, real carrier charges, printer output, live email delivery, or production rollout.
+The database suite uses in-memory PGlite and synthetic roles/orders. Its concurrent callers share one serialized connection, so it does not prove multi-connection PostgreSQL lock contention. Route tests execute the real handlers with explicit storage, provider, and email boundary doubles; they never reach live services. Provider tests use injected mock fetch responses, and PDF tests use generated multi-page files. These checks do not verify Jeff's API key, real carrier charges, printer output, live email delivery, or production rollout.

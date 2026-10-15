@@ -41,7 +41,12 @@ async function main() {
       ALTER DEFAULT PRIVILEGES IN SCHEMA public
         GRANT ALL ON TABLES TO anon, authenticated, service_role;
     `);
-    await db.exec(await readFile('supabase/migrations/20261015023211_local_shipping.sql', 'utf8'));
+    for (const migration of [
+      '20261015023211_local_shipping.sql',
+      '20261015074104_shipping_state_idempotency.sql',
+    ]) {
+      await db.exec(await readFile(`supabase/migrations/${migration}`, 'utf8'));
+    }
     await db.exec('SET ROLE service_role');
 
     async function test(name: string, run: () => Promise<void>) {
@@ -292,6 +297,60 @@ async function main() {
       await mutate(f.orderId, 'cancel', { shipmentId: draft.id });
       await manual(f, 1, 'MIXED-REMAINDER', 1);
       assert.equal(await fulfillment(f.orderId), 'shipped');
+    });
+
+    await test('repeated supplier shipment updates preserve the original dispatch time', async () => {
+      const supplier = await vendor();
+      const f = await fixture([1], 'paid', [supplier]);
+      const poId = await po(f.orderId, supplier);
+      await db.query('SELECT shipping_mark_vendor_shipped($1)', [poId]);
+      await db.query("UPDATE vendor_orders SET shipped_at='2026-10-01T12:00:00Z' WHERE id=$1", [poId]);
+      const original = (await db.query('SELECT status,shipped_at FROM vendor_orders WHERE id=$1', [poId])).rows[0];
+      await Promise.all([
+        db.query('SELECT shipping_mark_vendor_shipped($1)', [poId]),
+        db.query('SELECT shipping_mark_vendor_shipped($1)', [poId]),
+      ]);
+      assert.deepEqual((await db.query('SELECT status,shipped_at FROM vendor_orders WHERE id=$1', [poId])).rows[0], original);
+      assert.equal(await fulfillment(f.orderId), 'shipped');
+    });
+
+    await test('supplier shipment retries preserve delivered PO and complete delivered order', async () => {
+      const supplier = await vendor();
+      const f = await fixture([1], 'paid', [supplier]);
+      const poId = await po(f.orderId, supplier, 'delivered');
+      await db.query("UPDATE vendor_orders SET shipped_at='2026-10-01T12:00:00Z' WHERE id=$1", [poId]);
+      await db.query("UPDATE orders SET fulfillment_status='delivered' WHERE id=$1", [f.orderId]);
+      const original = (await db.query('SELECT status,shipped_at FROM vendor_orders WHERE id=$1', [poId])).rows[0];
+      await db.query('SELECT shipping_mark_vendor_shipped($1)', [poId]);
+      assert.deepEqual((await db.query('SELECT status,shipped_at FROM vendor_orders WHERE id=$1', [poId])).rows[0], original);
+      assert.equal(await fulfillment(f.orderId), 'delivered');
+    });
+
+    await test('refresh preserves delivered only while all item quantities are fulfilled', async () => {
+      const f = await fixture([1]);
+      await manual(f, 1, 'DELIVERED-LOCAL');
+      await db.query("UPDATE orders SET fulfillment_status='delivered' WHERE id=$1", [f.orderId]);
+      await db.query('SELECT shipping_refresh_fulfillment($1)', [f.orderId]);
+      assert.equal(await fulfillment(f.orderId), 'delivered');
+      // A later item correction must not keep an inconsistent order delivered.
+      await db.query('UPDATE order_items SET quantity=2 WHERE id=$1', [f.itemIds[0]]);
+      await db.query('SELECT shipping_refresh_fulfillment($1)', [f.orderId]);
+      assert.equal(await fulfillment(f.orderId), 'partially_shipped');
+    });
+
+    await test('supplier retries still recompute outstanding local balances on a delivered order', async () => {
+      const supplier = await vendor();
+      const localVendor = await vendor();
+      const f = await fixture([1, 1], 'paid', [supplier, localVendor]);
+      const poId = await po(f.orderId, supplier, 'delivered');
+      await db.query("UPDATE orders SET fulfillment_status='delivered' WHERE id=$1", [f.orderId]);
+      await db.query('SELECT shipping_mark_vendor_shipped($1)', [poId]);
+      assert.equal(await fulfillment(f.orderId), 'partially_shipped');
+      assert.equal((await db.query<{ status: string }>('SELECT status::text FROM vendor_orders WHERE id=$1', [poId])).rows[0].status, 'delivered');
+      const empty = await fixture([1]);
+      await db.query("UPDATE orders SET fulfillment_status='delivered' WHERE id=$1", [empty.orderId]);
+      await db.query('SELECT shipping_refresh_fulfillment($1)', [empty.orderId]);
+      assert.equal(await fulfillment(empty.orderId), 'unfulfilled');
     });
 
     await test('legacy whole-order shipping requires payment and valid tracking, and is idempotent', async () => {
