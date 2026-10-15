@@ -4,6 +4,8 @@ import { getSessionUser } from '@/lib/supabase/auth-helpers';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ReorderButton } from '@/components/orders/ReorderButton';
 import { detectCarrier } from '@/lib/email/carrier';
+import { getCustomerShipments } from '@/lib/shipping/repository';
+import { safeTrackingUrl } from '@/components/admin/shipping/shipping-input';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,6 +53,7 @@ export default async function AccountOrderDetailPage({
   params: { orderNumber: string };
 }) {
   const user = await getSessionUser();
+  if (!user?.email) notFound();
   const email = user?.email ?? '';
   const admin = createAdminClient();
 
@@ -65,6 +68,7 @@ export default async function AccountOrderDetailPage({
 
   if (!order) notFound();
   const o = order as OrderRow;
+  const shipments = await getCustomerShipments(o.id);
 
   const { data: items } = await admin
     .from('order_items')
@@ -133,6 +137,21 @@ export default async function AccountOrderDetailPage({
         </div>
 
         <aside className="flex flex-col gap-5">
+          {shipments.length > 0 && (
+            <section className="border border-rule-strong bg-cream p-6" aria-label="Shipments">
+              <h2 className="type-label text-ink mb-4">Your shipments</h2>
+              <p className="mb-4 text-sm text-ink-muted">{o.fulfillment_status === 'shipped' || o.fulfillment_status === 'delivered' ? 'All items have shipped.' : 'Your order is shipping in separate packages.'}</p>
+              <ul className="divide-y divide-rule">
+                {shipments.map((shipment) => {
+                  const url = safeTrackingUrl(shipment.trackingUrl);
+                  return <li key={shipment.id} className="py-3 text-sm">
+                    <p className="text-ink-muted">{shipment.carrier || 'Shipment'}{shipment.shippedAt ? ` · Shipped ${new Date(shipment.shippedAt).toLocaleDateString('en-US')}` : ''}</p>
+                    {url ? <a href={url} target="_blank" rel="noopener noreferrer" className="mt-1 block break-all text-brand-deep underline">Track {shipment.trackingNumber} ↗</a> : <p className="mt-1 break-all">{shipment.trackingNumber}</p>}
+                  </li>;
+                })}
+              </ul>
+            </section>
+          )}
           {o.tracking_number && (
             <div
               className="bg-cream"

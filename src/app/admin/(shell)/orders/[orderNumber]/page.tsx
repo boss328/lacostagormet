@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { AdminOrderStatusButtons } from '@/components/admin/AdminOrderStatusButtons';
 import { OrderVendorPos } from '@/components/admin/orders/OrderVendorPos';
+import { OrderShippingPanel } from '@/components/admin/shipping/OrderShippingPanel';
 import {
   STATUS_LABEL,
   STATUS_COLOR,
@@ -147,6 +148,24 @@ export default async function AdminOrderDetailPage({
           {o.source}
           {o.legacy_bc_order_id ? ` · BC #${o.legacy_bc_order_id}` : ''}
         </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <a
+            href={`/admin/orders/${encodeURIComponent(o.order_number)}/print/?type=invoice`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-outline min-h-[44px]"
+          >
+            Print invoice
+          </a>
+          <a
+            href={`/admin/orders/${encodeURIComponent(o.order_number)}/print/?type=packing-slip`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-outline min-h-[44px]"
+          >
+            Print packing slip
+          </a>
+        </div>
       </header>
 
       <section className="grid gap-4 max-lg:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -217,6 +236,8 @@ export default async function AdminOrderDetailPage({
         status={o.status}
         fulfillmentStatus={o.fulfillment_status}
       />
+
+      <OrderShippingPanel orderNumber={o.order_number} />
 
       <section className="mt-10 grid gap-8 max-lg:gap-6 lg:grid-cols-[1.5fr_1fr]">
         <div>

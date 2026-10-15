@@ -1,0 +1,60 @@
+.page { padding: 28px 18px 60px; color: #202622; font-family: Arial, Helvetica, sans-serif; }
+.toolbar { max-width: 8.5in; margin: 0 auto 24px; padding: 20px; background: white; border: 1px solid #d8dfd8; border-radius: 12px; font-size: 14px; line-height: 1.5; }
+.toolbar p { margin: 12px 0; color: #535c56; }
+.actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.actions a { color: #355b35; text-decoration: underline; text-underline-offset: 3px; }
+.toolbar button { padding: 10px 16px; border: 1px solid #355b35; border-radius: 7px; background: #355b35; color: white; font-weight: 600; cursor: pointer; }
+.toolbar button:disabled { opacity: .5; cursor: not-allowed; }
+.toolbar summary { cursor: pointer; font-weight: 600; padding-top: 8px; }
+.selectionList { margin: 12px 0 20px; }
+.selectionRow { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 12px 0; border-bottom: 1px solid #e0e5e0; }
+.selectionRow > label:first-child { display: flex; align-items: center; gap: 10px; }
+.selectionRow input[type='checkbox'] { width: 18px; height: 18px; accent-color: #355b35; flex-shrink: 0; }
+.selectionRow small { display: block; font-size: 11px; color: #535c56; }
+.quantityLabel { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.quantityLabel input { width: 65px; padding: 7px; border: 1px solid #a5b4a5; border-radius: 4px; }
+.toolbar .error { color: #a12020; font-weight: 600; }
+.document { width: 100%; max-width: 8.5in; margin: 0 auto; padding: .5in; background: white; box-shadow: 0 5px 24px #0000000d; font-size: 11px; line-height: 1.5; }
+.documentHeader { display: flex; justify-content: space-between; gap: 24px; padding-bottom: 22px; border-bottom: 2px solid #355b35; break-inside: avoid; }
+.logo { width: 155px; height: auto; margin-bottom: 12px; }
+.documentTitle { text-align: right; }
+.documentTitle h1 { font-size: 25px; line-height: 1.2; letter-spacing: -.03em; margin-bottom: 14px; font-weight: 600; }
+.documentTitle p + p { margin-top: 8px; }
+.addresses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin: 24px 0 16px; break-inside: avoid; }
+.addresses h2 { font-size: 10px; text-transform: uppercase; letter-spacing: .09em; font-weight: 700; margin-bottom: 7px; color: #4d5c4d; }
+.addresses address { font-style: normal; overflow-wrap: anywhere; }
+.customerEmail { margin-bottom: 20px; overflow-wrap: anywhere; }
+.items { width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 24px; }
+.tableCaption { text-align: left; font-size: 10px; color: #535c56; margin-bottom: 8px; }
+.items th { text-align: left; padding: 9px 7px; border-top: 1px solid #9ba69b; border-bottom: 1px solid #9ba69b; font-size: 10px; font-weight: 700; }
+.items td { padding: 11px 7px; border-bottom: 1px solid #d8dfd8; vertical-align: top; overflow-wrap: anywhere; }
+.items .number { text-align: right; font-variant-numeric: tabular-nums; }
+.sku { font-size: 10px; }
+.totals { width: 45%; min-width: 230px; margin: 22px 0 0 auto; break-inside: avoid; }
+.totals > div { display: flex; justify-content: space-between; gap: 20px; padding: 5px 7px; }
+.totals > div:last-child { font-size: 13px; font-weight: 700; margin-top: 5px; border-top: 1px solid #9ba69b; padding-top: 10px; }
+.totals dd { font-variant-numeric: tabular-nums; }
+.documentFooter { padding-top: 20px; margin-top: 35px; border-top: 1px solid #d8dfd8; font-size: 10px; color: #535c56; break-inside: avoid; }
+.documentFooter p + p { margin-top: 4px; }
+@media screen and (max-width: 600px) {
+  .page { padding: 16px 8px 30px; }
+  .document { padding: 22px 14px; }
+  .documentHeader { gap: 16px; }
+  .logo { width: 115px; }
+  .documentTitle h1 { font-size: 22px; }
+  .selectionRow { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .quantityLabel { margin-left: 28px; }
+  .items th, .items td { padding-left: 3px; padding-right: 3px; }
+  .totals { width: 75%; }
+}
+@page { size: letter; margin: .5in; }
+@media print {
+  .page { padding: 0; }
+  .toolbar { display: none !important; }
+  .document { width: auto; max-width: none; margin: 0; padding: 0; box-shadow: none; font-size: 10pt; color: black; }
+  .documentHeader { border-color: #777; }
+  .items thead { display: table-header-group; }
+  .items tr { break-inside: avoid; page-break-inside: avoid; }
+  .items th, .items td { padding-top: 9pt; padding-bottom: 9pt; }
+  .documentFooter { position: static; }
+}
