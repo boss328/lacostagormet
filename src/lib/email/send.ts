@@ -22,6 +22,8 @@ export type SendInput = {
   replyTo?: string;
   /** Free-form Resend tags for dashboard filtering. */
   tags?: EmailTag[];
+  /** Stable key for retrying the same notification without duplicate delivery. */
+  idempotencyKey?: string;
   /**
    * Override the From address. Default is RESEND_FROM_EMAIL
    * (customercare@). Use sparingly — most templates should ship from
@@ -45,7 +47,7 @@ export async function sendTransactionalEmail(input: SendInput): Promise<SendResu
       html: input.html,
       text: input.text,
       tags: input.tags,
-    });
+    }, input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined);
     if (result.error) {
       console.error('[email/send] resend error', {
         to: input.to,

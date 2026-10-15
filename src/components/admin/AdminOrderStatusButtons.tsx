@@ -57,8 +57,9 @@ export function AdminOrderStatusButtons({ orderNumber, status, fulfillmentStatus
       if (!res.ok) {
         setMessage(body.errorMessage ?? 'Could not mark shipped.');
       } else {
-        setMessage('Marked shipped. Reload to see updated status.');
+        setMessage(body.warning || 'Order marked shipped.');
         setShowShipForm(false);
+        router.refresh();
       }
     } catch (e) {
       console.error('[admin ship]', e);

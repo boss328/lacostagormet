@@ -237,7 +237,7 @@ export async function autoDraftVendorPosForOrder(orderId: string): Promise<numbe
 
     // Stamp the assigned_vendor_id on each order_item if it was previously null
     // (so the order detail UI groups items the same way).
-    void admin
+    const { error: assignmentError } = await admin
       .from('order_items')
       .update({ assigned_vendor_id: vendorId })
       .eq('order_id', orderRow.id)
@@ -246,6 +246,10 @@ export async function autoDraftVendorPosForOrder(orderId: string): Promise<numbe
         'product_sku',
         lineItems.map((i: LineItem) => i.product_sku),
       );
+    if (assignmentError) {
+      console.error('[vendor-po] item assignment failed', assignmentError.code);
+      continue;
+    }
 
     const { error: insErr } = await admin.from('vendor_orders').insert({
       order_id: orderRow.id,
