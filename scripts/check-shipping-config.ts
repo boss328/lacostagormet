@@ -1,5 +1,5 @@
 import { normalizeAddress } from '../src/lib/shipping/shipstation';
-import { shippingFlags } from '../src/lib/shipping/flags';
+import { shippingApiKey, shippingFlags } from '../src/lib/shipping/flags';
 
 // Read the current process environment only. Load an env file explicitly with
 // Node's --env-file option when needed; never print values or provider bodies.
@@ -25,19 +25,16 @@ async function main() {
       invalid = true;
     }
   }
-  const { enabled, purchaseEnabled, readOnlyPreview: preview, production } = shippingFlags(process.env);
-  const apiKey = process.env.SHIPSTATION_API_KEY || '';
-  const keyPresent = Boolean(apiKey.trim());
-  if (keyPresent && apiKey !== apiKey.trim()) {
-    console.error('INVALID: SHIPSTATION_API_KEY contains leading or trailing whitespace.');
-    invalid = true;
-  }
+  const { enabled, purchaseEnabled, readOnlyPreview: preview, production, sandboxKey } = shippingFlags(process.env);
+  const apiKey = shippingApiKey(process.env);
+  const keyPresent = Boolean(apiKey);
   console.log(`Shipping tools: ${enabled ? 'enabled' : 'disabled'}`);
   console.log(`Shipping enablement: ${process.env.SHIPPING_ENABLED ? 'explicit setting' : 'runtime default'}`);
   console.log(`Purchase flag: ${purchaseEnabled ? 'enabled' : 'disabled'}`);
   console.log(`Read-only preview: ${preview ? 'yes' : 'no'}`);
   console.log(`Production runtime gate: ${production ? 'yes' : 'no'}`);
   console.log(`ShipStation API key: ${keyPresent ? 'present; access not verified' : 'missing'}`);
+  if (sandboxKey) console.log('SANDBOX KEY: carrier checks and test rates are available; live label purchases are blocked.');
 
   function addressValid(name: string, raw: string | undefined) {
     if (!raw) {
@@ -71,7 +68,7 @@ async function main() {
   console.log(`Label purchase gate: ${capabilities.canPurchase ? 'open' : 'closed'}`);
   console.log('Database migration, carrier billing, email delivery, and live label purchases are not verified by these checks.');
   if (!ready) console.log('SETUP PENDING: configure the API key and ship-from/return addresses before requesting rates.');
-  if (purchaseEnabled && (!enabled || !ready || preview || !production)) {
+  if (purchaseEnabled && !capabilities.canPurchase) {
     console.error('INVALID: purchasing is requested but one or more activation gates are closed.');
     invalid = true;
   }
@@ -79,9 +76,6 @@ async function main() {
   if (args.includes('--check-carriers')) {
     if (!keyPresent) {
       console.error('CARRIER CHECK FAILED: SHIPSTATION_API_KEY is required; no request was sent.');
-      invalid = true;
-    } else if (apiKey !== apiKey.trim()) {
-      console.error('CARRIER CHECK FAILED: correct the API key whitespace first; no request was sent.');
       invalid = true;
     } else {
       try {

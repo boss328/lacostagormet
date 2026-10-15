@@ -8,7 +8,7 @@ export async function formatLabelPdf(
   if (format === "4x6") return bytes;
   const source = await PDFDocument.load(bytes);
   const result = await PDFDocument.create();
-  const pages = await result.embedPdf(source);
+  const pages = await result.embedPdf(source, source.getPageIndices());
   for (const embedded of pages) {
     const page = result.addPage([612, 792]);
     const scale = Math.min(1, 540 / embedded.width, 720 / embedded.height);

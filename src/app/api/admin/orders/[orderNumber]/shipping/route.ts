@@ -33,9 +33,35 @@ async function authenticated(req: NextRequest) {
   const expected = await expectedSessionToken();
   return Boolean(expected && req.cookies.get(ADMIN_COOKIE)?.value === expected);
 }
-const uuid = (value: unknown) =>
+const uuid = (value: unknown): value is string =>
   typeof value === "string" &&
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+
+/** Enforce the limit on bytes received, including requests without Content-Length. */
+async function readBody(req: NextRequest): Promise<Record<string, unknown>> {
+  const reader = req.body?.getReader();
+  if (!reader) throw new Error("Send a shipping request as a JSON object.");
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > 30_000) {
+      await reader.cancel();
+      throw new RangeError("Request too large.");
+    }
+    chunks.push(value);
+  }
+  const body = Buffer.concat(chunks).toString("utf8");
+  let parsed: unknown;
+  try { parsed = JSON.parse(body); } catch {
+    throw new Error("Send a shipping request as a JSON object.");
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+    throw new Error("Send a shipping request as a JSON object.");
+  return parsed as Record<string, unknown>;
+}
 
 export async function GET(req: NextRequest, { params }: Context) {
   if (!(await authenticated(req)))
@@ -58,7 +84,7 @@ export async function GET(req: NextRequest, { params }: Context) {
       let url = shipment.label_download_url;
       if (provider) {
         const label = await provider.getLabel(shipment.label_id);
-        if (label.status === "voided")
+        if (label.status === "voided" || label.voided === true)
           return json({ error: "This label was voided in ShipStation." }, 409);
         url = label.label_download?.pdf || label.label_download?.href || url;
       }
@@ -194,7 +220,7 @@ async function saveLabel(
   shipment: LocalShipment,
   label: ProviderLabel,
 ) {
-  if (label.status !== "completed" || !label.tracking_number || !label.label_id)
+  if (label.status !== "completed" || label.voided === true || !label.tracking_number || !label.label_id)
     throw new Error(
       "The label is still processing. Use Recover status shortly.",
     );
@@ -285,7 +311,7 @@ export async function POST(req: NextRequest, { params }: Context) {
       409,
     );
   try {
-    const body = await req.json();
+    const body = await readBody(req);
     const action = body.action;
     const order = await shippingOrder(params.orderNumber);
     const provider = config.apiKey ? new ShipStation(config.apiKey) : null;
@@ -295,16 +321,16 @@ export async function POST(req: NextRequest, { params }: Context) {
         !body.items.length ||
         body.items.length > 200 ||
         body.items.some(
-          (i: Record<string, unknown>) =>
-            !uuid(i.orderItemId) ||
+          (i) =>
+            !i || typeof i !== "object" || !uuid(i.orderItemId) ||
             !Number.isSafeInteger(i.quantity) ||
             Number(i.quantity) <= 0,
         )
       )
         throw new Error("Select valid items and whole quantities.");
       if (action === "manual_tracking") {
-        const carrier = String(body.carrier || "").trim();
-        const tracking = String(body.trackingNumber || "").trim();
+        const carrier = typeof body.carrier === "string" ? body.carrier.trim() : "";
+        const tracking = typeof body.trackingNumber === "string" ? body.trackingNumber.trim() : "";
         if (
           !carrier ||
           carrier.length > 80 ||
@@ -419,7 +445,7 @@ export async function POST(req: NextRequest, { params }: Context) {
               "ShipStation access is needed to verify this label before dispatch.",
             );
           const label = await provider.getLabel(shipment.label_id);
-          if (label.status !== "completed")
+          if (label.status !== "completed" || label.voided === true)
             throw new Error(
               "This label is not active. Check its status in ShipStation before shipping.",
             );
@@ -442,7 +468,7 @@ export async function POST(req: NextRequest, { params }: Context) {
             ? error.message
             : "Shipping request failed. Please check the shipment status.",
       },
-      400,
+      error instanceof RangeError ? 413 : 400,
     );
   }
 }

@@ -45,7 +45,7 @@ export function OrderShippingPanel({ orderNumber }: { orderNumber: string }) {
   const actionLock = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [mode, setMode] = useState<"label" | "manual">("label");
+  const [mode, setMode] = useState<"label" | "manual" | null>(null);
   const [quantities, setQuantities] = useState<Record<string, string>>({});
   const [packageValues, setPackageValues] = useState({
     weightLb: "",
@@ -229,6 +229,7 @@ export function OrderShippingPanel({ orderNumber }: { orderNumber: string }) {
 
   const chosenRate = quote?.rates.find((rate) => rate.rateId === rateId);
   const config = overview?.configuration;
+  const selectedMode = mode ?? (config?.canQuote ? "label" : "manual");
   const canPrepare =
     !!quote ||
     (!!config &&
@@ -291,6 +292,19 @@ export function OrderShippingPanel({ orderNumber }: { orderNumber: string }) {
         <p className="mt-5 border border-rule bg-paper p-3 text-sm text-ink-muted">
           {overview.notice}
         </p>
+      )}
+
+      {overview && !canPrepare && overview.items.every((item) => item.availableQuantity === 0) && (
+        <div className="mt-5 text-sm text-ink-muted">
+          <p>No items are available for a new local shipment.</p>
+          {overview.items.some((item) => item.blockedReason) && (
+            <ul className="mt-2 space-y-1">
+              {overview.items.filter((item) => item.blockedReason).map((item) => (
+                <li key={item.orderItemId}>{item.name}: {item.blockedReason}</li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
 
       {overview && canPrepare && (
@@ -366,24 +380,24 @@ export function OrderShippingPanel({ orderNumber }: { orderNumber: string }) {
               >
                 <button
                   type="button"
-                  aria-pressed={mode === "label"}
+                  aria-pressed={selectedMode === "label"}
                   disabled={!!busy}
                   onClick={() => setMode("label")}
-                  className={`${buttonClass} ${mode === "label" ? "bg-paper font-semibold" : ""}`}
+                  className={`${buttonClass} ${selectedMode === "label" ? "bg-paper font-semibold" : ""}`}
                 >
                   Buy a shipping label
                 </button>
                 <button
                   type="button"
-                  aria-pressed={mode === "manual"}
+                  aria-pressed={selectedMode === "manual"}
                   disabled={!!busy}
                   onClick={() => setMode("manual")}
-                  className={`${buttonClass} ${mode === "manual" ? "bg-paper font-semibold" : ""}`}
+                  className={`${buttonClass} ${selectedMode === "manual" ? "bg-paper font-semibold" : ""}`}
                 >
                   I already have tracking
                 </button>
               </div>
-              {mode === "label" ? (
+              {selectedMode === "label" ? (
                 <form
                   onSubmit={(event) => {
                     event.preventDefault();
@@ -410,6 +424,7 @@ export function OrderShippingPanel({ orderNumber }: { orderNumber: string }) {
                             type="number"
                             inputMode="decimal"
                             min="0.01"
+                            max={key === "weightLb" ? 150 : 108}
                             step="any"
                             required
                             value={packageValues[key]}

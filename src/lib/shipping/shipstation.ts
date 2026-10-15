@@ -28,6 +28,7 @@ export type ShippingRate = {
 export type ProviderLabel = {
   label_id: string;
   status: string;
+  voided?: boolean;
   shipment_id?: string;
   external_shipment_id?: string;
   tracking_number?: string;
@@ -45,6 +46,9 @@ export class ShippingProviderError extends Error {
   ) {
     super(message);
   }
+}
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 export function normalizeAddress(
   raw: Record<string, unknown>,
@@ -131,12 +135,13 @@ export function safeTrackingUrl(
 export function normalizeRates(raw: unknown): ShippingRate[] {
   if (!Array.isArray(raw)) return [];
   return raw
-    .flatMap((r: Record<string, unknown>) => {
+    .flatMap((r: unknown) => {
       if (
-        !r ||
+        !isRecord(r) ||
         typeof r.rate_id !== "string" ||
+        !r.rate_id.trim() ||
         r.validation_status === "invalid" ||
-        !r.shipping_amount
+        !isRecord(r.shipping_amount)
       )
         return [];
       const costs = [
@@ -146,23 +151,30 @@ export function normalizeRates(raw: unknown): ShippingRate[] {
         "other_amount",
         "tax_amount",
       ]
-        .map(
-          (key) => r[key] as { amount?: number; currency?: string } | undefined,
-        )
-        .filter(Boolean);
+        .map((key) => r[key])
+        .filter((cost) => cost !== undefined && cost !== null);
       if (
         !costs.length ||
         costs.some(
           (c) =>
-            c?.currency?.toLowerCase() !== "usd" ||
+            !isRecord(c) ||
+            typeof c.currency !== "string" ||
+            c.currency.toLowerCase() !== "usd" ||
             typeof c.amount !== "number" ||
             !Number.isFinite(c.amount),
         )
       )
         return [];
-      const amount =
-        Math.round(costs.reduce((sum, c) => sum + c!.amount!, 0) * 100) / 100;
-      if (amount < 0) return [];
+      const cents = Math.round(
+        costs.reduce<number>(
+          (sum, c) => sum + (c as { amount: number }).amount,
+          0,
+        ) * 100,
+      );
+      // Matches the shipment ledger's numeric(10,2) postage column.
+      if (!Number.isSafeInteger(cents) || cents < 0 || cents > 9_999_999_999)
+        return [];
+      const amount = cents / 100;
       return [
         {
           rateId: r.rate_id,
@@ -172,7 +184,9 @@ export function normalizeRates(raw: unknown): ShippingRate[] {
           service: String(r.service_type || r.service_code || "Shipping"),
           amount,
           currency: "USD",
-          ...(typeof r.delivery_days === "number"
+          ...(typeof r.delivery_days === "number" &&
+          Number.isInteger(r.delivery_days) &&
+          r.delivery_days >= 0
             ? { deliveryDays: r.delivery_days }
             : {}),
         },
@@ -216,7 +230,7 @@ export class ShipStation {
             : "ShipStation could not complete this request. Check the address, package and account settings.";
       throw new ShippingProviderError(message, response.status);
     }
-    if (!data)
+    if (!isRecord(data))
       throw new ShippingProviderError(
         "ShipStation returned an unreadable response.",
       );
@@ -230,17 +244,22 @@ export class ShipStation {
     shipTo: ShippingAddress;
     parcel: ShippingPackage;
   }) {
-    const carriers = await this.request<{
-      carriers: Array<{ carrier_id: string }>;
-    }>("/carriers");
-    if (!carriers.carriers?.length)
+    const carriers = await this.request<{ carriers?: unknown }>("/carriers");
+    const carrierIds = Array.isArray(carriers.carriers)
+      ? carriers.carriers.flatMap((carrier: unknown) =>
+          isRecord(carrier) && typeof carrier.carrier_id === "string" && carrier.carrier_id.trim()
+            ? [carrier.carrier_id]
+            : [],
+        )
+      : [];
+    if (!carrierIds.length)
       throw new Error("Connect a carrier in ShipStation before getting rates.");
     const response = await this.request<{
       shipment_id?: string;
       rate_response?: { rates?: unknown; errors?: unknown[] };
     }>("/rates", "POST", {
       rate_options: {
-        carrier_ids: carriers.carriers.map((c) => c.carrier_id),
+        carrier_ids: [...new Set(carrierIds)],
         preferred_currency: "usd",
       },
       shipment: {
