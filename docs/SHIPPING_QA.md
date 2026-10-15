@@ -6,8 +6,9 @@ Reviewed the new order documents, local shipping UI/API, ShipStation adapter, la
 
 | Area | Verification |
 | --- | --- |
-| Shipping unit and route tests | 45 passing checks: authorization/origin/preview gates, actual body-size bounds, malformed input, reserved/remaining quantities, provider response validation, merchandise service eligibility, purchases, recovery, dispatch, email retries, sandbox-key rejection, document selection and PDF conversion |
+| Shipping unit and route tests | 55 passing checks: authorization/origin/preview gates, supplier PO state transitions and send claims, actual body-size bounds, malformed input, reserved/remaining quantities, provider response validation, merchandise service eligibility, purchases, recovery, dispatch, email retries, sandbox-key rejection, document selection and PDF conversion |
 | Shipping database | 26 passing checks using the actual migrations in PGlite: rollback, quantity bounds, supplier overlap, paid-order requirements, once-only purchase claims, uncertain purchase locks, partial fulfillment, delivered-state preservation, notification leases and role permissions |
+| Supplier send database | 11 passing PGlite checks: one send claim, frozen payloads, cancellation ordering, failed finalization, unresolved-send dispatch denial, repeatable migration and preserved RPC permissions |
 | Existing application regressions | 38 additional Node tests pass for catalog filters, category assignments, product image framing, analytics filters, payment reconciliation, wallet providers and verification |
 | Related database regressions | Wallet transaction/ownership/replay/permission suite and vendor warehouse/PO schema suite pass |
 | Compilation | Next.js production build, lint and TypeScript validation pass |
@@ -24,6 +25,17 @@ Reviewed the new order documents, local shipping UI/API, ShipStation adapter, la
 - Block purchases with ShipStation `TEST_` keys and reject explicitly voided labels during printing, recovery and dispatch.
 - Open manual tracking by default while provider setup is pending; explain supplier-blocked items and show package input limits.
 - Exclude Media Mail, Library Mail and Bound Printed Matter from merchandise quotes. Reject previously saved restricted service quotes before claiming a purchase or calling ShipStation. The live quote test exposed Media Mail as the cheapest service before this fix.
+- Restrict supplier PO cancellation to the current draft state and acknowledgment to the current sent state. Atomic conditional updates reject stale tabs with a conflict instead of changing already shipped/delivered POs. Route tests cover every PO state, repeated requests and a status change immediately before the update executes. This final fix is prepared locally for the next release.
+- Claim and freeze a supplier PO before contacting the email provider. Block duplicate sends, cancellation, edits and dispatch while a pending send is unresolved; check both claim and finalization storage results. Explicit UI request state prevents overlapping clicks, and uncertain sends stay locked for support reconciliation rather than blind retry.
+
+## Final release review
+
+- Production remains at `562483b` while the supplier PO status fix is prepared on `fix/supplier-po-states`; no production changes were made during this final review.
+- The existing 38 application test entries and both wallet/vendor PGlite suites passed again. Authenticated live document/configuration/access checks also passed.
+- Live Chrome checks confirmed category navigation, the coffee category's products, Lion Coffee filtering, ascending price sorting, add-to-cart totals and checkout rendering. The test cart item was removed afterward; the cart is empty again. No payment or new order was submitted and no console errors were captured.
+- A local browser fixture using the real supplier editor confirmed the in-progress lock, interrupted-response warning, persisted-claim lock and normal fulfillment controls after a completed send. Its fetch boundary was mocked; no real supplier email or database calls were possible.
+- Read-only production schema inspection found the existing vendor warehouse migration missing. The [supplier release instructions](SUPPLIER_PO_RELEASE.md) record that prerequisite and the new send-claim migration; these have not been applied to production during this review.
+- [Jeff's first shipment](SHIPPING_FIRST_ORDER.md) covers parcel preparation, label printing, dispatch, recovery and the first supervised paid-label acceptance.
 
 ## Remaining acceptance checks
 
