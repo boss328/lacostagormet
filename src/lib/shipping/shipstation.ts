@@ -132,6 +132,16 @@ export function safeTrackingUrl(
     return `https://www.dhl.com/us-en/home/tracking.html?tracking-id=${number}`;
   return null;
 }
+/** La Costa ships merchandise that is ineligible for restricted printed-media services. */
+export function isMerchandiseService(...names: unknown[]): boolean {
+  return !names.some(
+    (name) =>
+      typeof name === "string" &&
+      /\b(?:media\s+mail|library\s+mail|bound\s+printed\s+matter)\b/i.test(
+        name.replace(/[_-]+/g, " "),
+      ),
+  );
+}
 export function normalizeRates(raw: unknown): ShippingRate[] {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -141,6 +151,7 @@ export function normalizeRates(raw: unknown): ShippingRate[] {
         typeof r.rate_id !== "string" ||
         !r.rate_id.trim() ||
         r.validation_status === "invalid" ||
+        !isMerchandiseService(r.service_code, r.service_type) ||
         !isRecord(r.shipping_amount)
       )
         return [];

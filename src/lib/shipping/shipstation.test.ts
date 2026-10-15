@@ -56,6 +56,23 @@ test("rates include all quoted charges and exclude invalid/foreign/malformed pri
   );
 });
 
+test("merchandise quotes exclude restricted media services by code or display name", () => {
+  const price = { shipping_amount: { amount: 5, currency: "usd" } };
+  const restricted = [
+    { service_code: "usps_media_mail", service_type: "Postal service" },
+    { service_code: "usps_library_mail" },
+    { service_code: "usps_bound_printed_matter" },
+    { service_type: "USPS Media Mail" },
+    { service_type: "LIBRARY-MAIL" },
+    { service_type: "Bound Printed Matter" },
+  ].map((service, index) => ({ ...price, ...service, rate_id: `restricted-${index}` }));
+  const allowed = [
+    { ...price, rate_id: "usps-ground", service_code: "usps_ground_advantage", service_type: "USPS Ground Advantage" },
+    { ...price, rate_id: "ups-ground", service_code: "ups_ground", service_type: "UPS Ground" },
+  ];
+  assert.deepEqual(normalizeRates([...restricted, ...allowed]).map(rate => rate.rateId), ["usps-ground", "ups-ground"]);
+});
+
 test("a malformed rate cannot discard valid alternatives or produce an unusable price", () => {
   const valid = { rate_id: "se-valid", shipping_amount: { amount: 8, currency: "usd" }, carrier_code: "usps", service_code: "ground" };
   const output = normalizeRates([

@@ -10,6 +10,7 @@ import {
   type LocalShipment,
 } from "@/lib/shipping/repository";
 import {
+  isMerchandiseService,
   normalizeAddress,
   safeTrackingUrl,
   ShipStation,
@@ -384,6 +385,11 @@ export async function POST(req: NextRequest, { params }: Context) {
         throw new Error("Live label purchasing has not been enabled.");
       if (typeof body.rateId !== "string")
         throw new Error("Choose a shipping rate.");
+      const selectedRate = shipment.rates.find((rate) => rate.rateId === body.rateId);
+      if (selectedRate && !isMerchandiseService(selectedRate.service))
+        throw new Error(
+          "This service cannot ship La Costa merchandise. Cancel this draft and request new rates.",
+        );
       const claim = await shippingMutation(order.id, "claim_purchase", {
         shipmentId: shipment.id,
         rateId: body.rateId,
