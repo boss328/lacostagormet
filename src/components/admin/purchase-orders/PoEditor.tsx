@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { VendorOrderStatus } from '@/lib/admin/vendor-po';
 
@@ -26,6 +26,7 @@ const DROPSHIP_LINE_RE = /Drop ship from: .*\n?/;
 export function PoEditor({
   poId,
   status,
+  emailSendStartedAt,
   subject: initialSubject,
   body: initialBody,
   warehouseId: initialWarehouseId,
@@ -35,6 +36,7 @@ export function PoEditor({
 }: {
   poId: string;
   status: VendorOrderStatus;
+  emailSendStartedAt: string | null;
   subject: string;
   body: string;
   warehouseId: string | null;
@@ -46,10 +48,14 @@ export function PoEditor({
   const [subject, setSubject] = useState(initialSubject);
   const [body, setBody] = useState(initialBody);
   const [warehouseId, setWarehouseId] = useState<string | null>(initialWarehouseId);
-  const [pending, start] = useTransition();
+  const [pending, setPending] = useState(false);
+  const actionLock = useRef(false);
+  const [sendAttempted, setSendAttempted] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
 
   const isDraft = status === 'pending';
+  const needsVerification = isDraft && (Boolean(emailSendStartedAt) || sendAttempted);
+  const editableDraft = isDraft && !needsVerification;
   const sent = status === 'sent' || status === 'confirmed' || status === 'shipped' || status === 'delivered';
 
   function changeWarehouse(nextId: string) {
@@ -72,13 +78,17 @@ export function PoEditor({
     });
   }
 
-  function call(action: 'save' | 'send' | 'cancel' | 'mark-acknowledged' | 'mark-shipped') {
+  async function call(action: 'save' | 'send' | 'cancel' | 'mark-acknowledged' | 'mark-shipped') {
+    if (actionLock.current || needsVerification) return;
+    actionLock.current = true;
+    setPending(true);
+    if (action === 'send') setSendAttempted(true);
     setMsg(null);
     const fd = new FormData();
     fd.append('subject', subject);
     fd.append('body', body);
     if (warehouseId) fd.append('warehouse_id', warehouseId);
-    start(async () => {
+    try {
       const res = await fetch(`/api/admin/purchase-orders/${poId}/${action}/`, {
         method: 'POST',
         body: fd,
@@ -89,8 +99,13 @@ export function PoEditor({
         return;
       }
       setMsg({ kind: 'ok', text: action === 'save' ? 'Saved.' : action === 'send' ? `Sent to ${vendorEmail}` : 'Updated.' });
+    } catch {
+      setMsg({ kind: 'err', text: action === 'send' ? 'The send response was interrupted. Verify the email status with support before sending again.' : 'The response was interrupted. Refresh to check the current status.' });
+    } finally {
+      actionLock.current = false;
+      setPending(false);
       router.refresh();
-    });
+    }
   }
 
   return (
@@ -100,14 +115,22 @@ export function PoEditor({
     >
       <p className="type-label text-ink mb-4">Email draft</p>
 
+      {needsVerification && (
+        <div className="mb-5 border border-rule-strong bg-paper p-4 text-sm" role="status">
+          <p className="font-semibold">{pending ? 'Sending purchase order…' : 'Send needs verification'}</p>
+          <p className="mt-2">This PO stays reserved while its email send is checked. Editing, cancellation, and another send are locked. Refresh the status, or contact support to verify delivery before making changes.</p>
+          <button type="button" className="mt-3 underline disabled:opacity-50" disabled={pending} onClick={() => window.location.reload()}>Refresh status</button>
+        </div>
+      )}
+
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
           <label className="type-label-sm text-ink" htmlFor="subject">Subject</label>
           <input
             id="subject"
-            value={subject}
+            value={emailSendStartedAt ? initialSubject : subject}
             onChange={(e) => setSubject(e.target.value)}
-            disabled={!isDraft}
+            disabled={!editableDraft || pending}
             className="bg-paper text-ink font-display"
             style={{ border: '1px solid var(--rule-strong)', padding: '9px 14px', fontSize: '14px' }}
           />
@@ -117,9 +140,9 @@ export function PoEditor({
           <label className="type-label-sm text-ink" htmlFor="warehouse">Drop-ship warehouse</label>
           <select
             id="warehouse"
-            value={warehouseId ?? ''}
+            value={(emailSendStartedAt ? initialWarehouseId : warehouseId) ?? ''}
             onChange={(e) => changeWarehouse(e.target.value)}
-            disabled={!isDraft || warehouses.length === 0}
+            disabled={!editableDraft || pending || warehouses.length === 0}
             className="bg-paper text-ink font-display"
             style={{ border: '1px solid var(--rule-strong)', padding: '9px 14px', fontSize: '14px' }}
           >
@@ -138,9 +161,9 @@ export function PoEditor({
           <label className="type-label-sm text-ink" htmlFor="body">Body</label>
           <textarea
             id="body"
-            value={body}
+            value={emailSendStartedAt ? initialBody : body}
             onChange={(e) => setBody(e.target.value)}
-            disabled={!isDraft}
+            disabled={!editableDraft || pending}
             rows={18}
             className="bg-paper text-ink font-mono"
             style={{
@@ -188,7 +211,7 @@ export function PoEditor({
       </div>
 
       <div className="mt-6 flex items-center gap-3 flex-wrap">
-        {isDraft && (
+        {editableDraft && (
           <>
             <button
               type="button"
@@ -267,7 +290,7 @@ export function PoEditor({
         )}
       </div>
 
-      {!vendorEmail && isDraft && (
+      {!vendorEmail && editableDraft && (
         <p className="type-data-mono text-accent mt-3">
           Vendor has no contact email set — Send is disabled. Edit the vendor to add one.
         </p>

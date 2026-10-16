@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react';
  * Bindings:
  *   g d  → /admin
  *   g o  → /admin/orders
+ *   g s  → /admin/shipping
  *   g c  → /admin/customers
  *   g p  → /admin/products
  *   g i  → /admin/imports
@@ -25,6 +26,7 @@ import { useEffect, useRef, useState } from 'react';
 type GotoTarget =
   | { key: 'd'; path: '/admin/' }
   | { key: 'o'; path: '/admin/orders/' }
+  | { key: 's'; path: '/admin/shipping/' }
   | { key: 'c'; path: '/admin/customers/' }
   | { key: 'p'; path: '/admin/products/' }
   | { key: 'v'; path: '/admin/vendors/' }
@@ -35,6 +37,7 @@ type GotoTarget =
 const GOTO_MAP: Record<string, string> = {
   d: '/admin/',
   o: '/admin/orders/',
+  s: '/admin/shipping/',
   c: '/admin/customers/',
   p: '/admin/products/',
   v: '/admin/vendors/',
@@ -139,6 +142,7 @@ export function AdminShortcuts() {
           <Row keys="/" label="Focus global search" />
           <Row keys="g d" label="Go to Dashboard" />
           <Row keys="g o" label="Go to Orders" />
+          <Row keys="g s" label="Go to Shipping" />
           <Row keys="g c" label="Go to Customers" />
           <Row keys="g p" label="Go to Products" />
           <Row keys="g v" label="Go to Vendors" />

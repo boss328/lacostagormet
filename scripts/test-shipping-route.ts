@@ -18,6 +18,132 @@ const itemId = "22222222-2222-4222-8222-222222222222";
 const shipmentId = "33333333-3333-4333-8333-333333333333";
 const origin = "https://store.test";
 const address = { first_name: "Test", last_name: "Buyer", phone: "5555550100", address1: "1 Test St", city: "Test", state: "CA", zip: "90001", country: "US" };
+
+// Run the real supplier transition routes and access guard against an atomic
+// update double. Filters are evaluated at execution time, as PostgreSQL does,
+// including when another request has changed the PO since this page was opened.
+function supplierTransitionHarness(action: "cancel" | "mark-acknowledged", initialStatus: string) {
+  const poId = "44444444-4444-4444-8444-444444444444";
+  const state = {
+    status: initialStatus,
+    emailSendStartedAt: null as string | null,
+    changeBeforeUpdate: null as string | null,
+    preview: false,
+    storageFailure: false,
+    clientCalls: 0,
+    writes: 0,
+  };
+  function execute(file: string, modules: Record<string, unknown>) {
+    const source = ts.transpileModule(readFileSync(new URL(file, import.meta.url), "utf8"), {
+      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    }).outputText;
+    const evaluated = { exports: {} as { POST: (req: NextRequest, context: { params: { id: string } }) => Promise<Response> } };
+    new Function("require", "module", "exports", source)((name: string) => {
+      if (!(name in modules)) throw new Error(`Unmocked supplier boundary: ${name}`);
+      return modules[name];
+    }, evaluated, evaluated.exports);
+    return evaluated.exports;
+  }
+  const guard = execute("../src/lib/admin/shipping-access.ts", {
+    "server-only": {},
+    "next/server": require("next/server"),
+    "./session": { ADMIN_COOKIE: "test-admin", expectedSessionToken: async () => "valid-token" },
+    "@/lib/preview-mode": { isReadOnlyPreview: () => state.preview },
+  });
+  const route = execute(`../src/app/api/admin/purchase-orders/[id]/${action}/route.ts`, {
+    "server-only": {},
+    "next/server": require("next/server"),
+    "@/lib/admin/shipping-access": guard,
+    "@/lib/supabase/admin": {
+      createAdminClient() {
+        state.clientCalls++;
+        return {
+          from(table: string) {
+            assert.equal(table, "vendor_orders");
+            let update: { status: string };
+            const filters = new Map<string, string | null>();
+            type Builder = {
+              update: (value: { status: string }) => Builder;
+              eq: (column: string, value: string) => Builder;
+              is: (column: string, value: null) => Builder;
+              select: (columns: string) => Builder;
+              maybeSingle: () => Builder;
+              then: (resolve: (value: unknown) => void) => void;
+            };
+            const builder: Builder = {
+              update(value: { status: string }) { update = value; return builder; },
+              eq(column: string, value: string) { filters.set(column, value); return builder; },
+              is(column: string, value: null) { filters.set(column, value); return builder; },
+              select(columns: string) { assert.equal(columns, "id"); return builder; },
+              maybeSingle() { return builder; },
+              then(resolve: (value: unknown) => void) {
+                if (state.changeBeforeUpdate) state.status = state.changeBeforeUpdate;
+                if (state.storageFailure) return resolve({ data: null, error: { message: "Storage unavailable" } });
+                const matches = filters.get("id") === poId && (!filters.has("status") || filters.get("status") === state.status) && (!filters.has("email_send_started_at") || filters.get("email_send_started_at") === state.emailSendStartedAt);
+                if (matches) { state.status = update.status; state.writes++; }
+                resolve({ data: matches ? { id: poId } : null, error: null });
+              },
+            };
+            return builder;
+          },
+        };
+      },
+    },
+  });
+  function request(options: { auth?: boolean; origin?: string | null } = {}) {
+    const headers: Record<string, string> = {};
+    if (options.auth !== false) headers.cookie = "test-admin=valid-token";
+    if (options.origin !== null) headers.origin = options.origin ?? origin;
+    return route.POST(new NextRequest(`${origin}/api/admin/purchase-orders/${poId}/${action}/`, { method: "POST", headers }), { params: { id: poId } });
+  }
+  return { state, request };
+}
+
+test("supplier cancellation and acknowledgment allow only their current permitted state", async () => {
+  for (const [action, permitted, target] of [["cancel", "pending", "cancelled"], ["mark-acknowledged", "sent", "confirmed"]] as const) {
+    for (const current of ["pending", "sent", "confirmed", "shipped", "delivered", "cancelled"]) {
+      const h = supplierTransitionHarness(action, current);
+      const response = await h.request();
+      assert.equal(response.status, current === permitted ? 200 : 409, `${action} from ${current}`);
+      assert.equal(h.state.status, current === permitted ? target : current);
+      assert.equal(h.state.writes, current === permitted ? 1 : 0);
+      if (current === permitted) {
+        assert.equal((await h.request()).status, 409, "a repeated stale request must not rewrite the PO");
+        assert.equal(h.state.writes, 1);
+      }
+    }
+  }
+});
+
+test("supplier transition predicates protect a PO changed before the update executes", async () => {
+  for (const [action, initial] of [["cancel", "pending"], ["mark-acknowledged", "sent"]] as const) {
+    for (const changed of ["shipped", "delivered", "cancelled"]) {
+      const h = supplierTransitionHarness(action, initial);
+      h.state.changeBeforeUpdate = changed;
+      assert.equal((await h.request()).status, 409);
+      assert.equal(h.state.status, changed);
+      assert.equal(h.state.writes, 0);
+    }
+  }
+});
+
+test("supplier transitions reject anonymous, cross-origin, and preview requests before storage", async () => {
+  for (const action of ["cancel", "mark-acknowledged"] as const) {
+    for (const scenario of ["anonymous", "cross-origin", "missing-origin", "preview"] as const) {
+      const h = supplierTransitionHarness(action, action === "cancel" ? "pending" : "sent");
+      h.state.preview = scenario === "preview";
+      const response = await h.request({ auth: scenario !== "anonymous", origin: scenario === "cross-origin" ? "https://other.test" : scenario === "missing-origin" ? null : origin });
+      assert.equal(response.status, scenario === "anonymous" ? 401 : scenario === "preview" ? 409 : 403);
+      assert.equal(h.state.clientCalls, 0);
+      assert.equal(h.state.writes, 0);
+    }
+    const h = supplierTransitionHarness(action, action === "cancel" ? "pending" : "sent");
+    h.state.storageFailure = true;
+    assert.equal((await h.request()).status, 500);
+    assert.equal(h.state.writes, 0);
+  }
+});
+
 function harness() {
   const mutations: Array<{ action: string; payload: any }> = [];
   const calls: string[] = [];

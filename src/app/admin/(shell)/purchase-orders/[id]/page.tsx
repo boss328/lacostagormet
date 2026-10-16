@@ -19,6 +19,7 @@ type Po = {
   email_subject: string | null;
   email_body: string | null;
   email_sent_at: string | null;
+  email_send_started_at: string | null;
   sent_by: string | null;
   total_wholesale: number | string | null;
   created_at: string;
@@ -47,7 +48,7 @@ export default async function PoDetailPage({
   const { data: poData } = await admin
     .from('vendor_orders')
     .select(
-      'id, order_id, vendor_id, warehouse_id, status, email_subject, email_body, email_sent_at, sent_by, total_wholesale, created_at, vendor:vendors(id, name, contact_email, terms), order:orders(id, order_number, customer_email, total, shipping_address), warehouse:vendor_warehouses(id, label)',
+      'id, order_id, vendor_id, warehouse_id, status, email_subject, email_body, email_sent_at, email_send_started_at, sent_by, total_wholesale, created_at, vendor:vendors(id, name, contact_email, terms), order:orders(id, order_number, customer_email, total, shipping_address), warehouse:vendor_warehouses(id, label)',
     )
     .eq('id', params.id)
     .maybeSingle();
@@ -138,7 +139,7 @@ export default async function PoDetailPage({
                 background: STATUS_COLOR[po.status],
               }}
             >
-              {STATUS_LABEL[po.status]}
+              {po.status === 'pending' && po.email_send_started_at ? 'Send needs verification' : STATUS_LABEL[po.status]}
             </span>
             <span className="type-data-mono text-ink-muted">
               Created {new Date(po.created_at).toLocaleString('en-US')}
@@ -151,6 +152,7 @@ export default async function PoDetailPage({
         <PoEditor
           poId={po.id}
           status={po.status}
+          emailSendStartedAt={po.email_send_started_at}
           subject={po.email_subject ?? ''}
           body={po.email_body ?? ''}
           warehouseId={po.warehouse_id}
