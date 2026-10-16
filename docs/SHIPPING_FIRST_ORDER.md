@@ -14,9 +14,9 @@ Invoices, packing slips, live rate comparisons and recording tracking bought els
 
 Never ship the QA order **LCG-10093**. It is a zero-dollar test record marked **DO NOT FULFILL**.
 
-## Save boxes you use often (next release)
+## Save boxes you use often
 
-Open **Workspace → Shipping → Box templates → New box template**. Give the box a recognizable name and enter its outside length, width and height in inches, then click **Save box**. It becomes available in **Saved box** on other orders and computers after this release is deployed. You can also create templates inside a paid order under **Ship from my location → Buy a shipping label**.
+Open **Workspace → Shipping → Box templates → New box template**. Give the box a recognizable name and enter its outside length, width and height in inches, then click **Save box**. It becomes available in **Saved box** on other orders and computers. You can also create templates inside a paid order under **Ship from my location → Buy a shipping label**.
 
 The **Shipping** page also has **View orders to ship** and an order search. Open the relevant order to print documents, compare rates or manage tracking. Use **g**, then **s** to open Shipping from anywhere in admin while you are not typing in a field.
 
@@ -52,6 +52,5 @@ For postage already bought elsewhere, use **I already have tracking** after disp
 - `SHIPPING_ENABLED=true`; `SHIPPING_PURCHASE_ENABLED=false`. Changing an environment value requires a new deployment before it takes effect.
 - To pause new label purchases, set `SHIPPING_PURCHASE_ENABLED=false` and redeploy. Keep shipping enabled so existing labels, recovery and notification retries remain usable. Use `SHIPPING_ENABLED=false` only when all shipment mutations need to stop.
 - Before a release, record the current production deployment in Vercel as the rollback target. A code rollback does not reverse purchases, emails or database changes; reconcile those separately.
-- Before deploying the final supplier PO fix, follow [the supplier release instructions](SUPPLIER_PO_RELEASE.md): an older missing warehouse migration and the new send-claim migration must be applied before the code release.
-- The saved-box feature also requires `20261016002226_shipping_box_templates.sql` before deploying this branch. It has been tested locally and has not been applied to production.
+- The [release instructions](SUPPLIER_PO_RELEASE.md) record all four database prerequisites, applied and verified in production on October 15 before this code release. Keep the same order when deploying another environment.
 - Remaining acceptance: live authenticated browser rendering, one real paid label, physical printing, actual notification delivery and customer tracking.

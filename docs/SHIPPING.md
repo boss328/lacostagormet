@@ -108,11 +108,11 @@ This makes only `GET https://api.shipstation.com/v2/carriers`. It reports a carr
 
 ## Implementation and local verification
 
-### Saved box templates (pending release)
+### Saved box templates
 
 **Workspace → Shipping** (`/admin/shipping/`) provides saved-box management, order search and a link to orders awaiting fulfillment. It is also available in the command palette and through **g s**. The order shipping panel offers the same **Saved box**, **New box template**, **Edit box** and **Delete box** controls. Templates store a name and outside dimensions in inches, shared across orders through `public.shipping_box_templates`. Each package still requires its actual packed weight; selecting a template only fills length, width and height. Editing custom dimensions does not update a saved template. Existing shipment drafts and labels keep their original package data.
 
-Apply `20261016002226_shipping_box_templates.sql` once before deploying these controls, following the full branch release order in [SUPPLIER_PO_RELEASE.md](SUPPLIER_PO_RELEASE.md). This new migration is local only. It enables RLS, grants CRUD only to the server role, enforces positive dimensions up to 108 inches and unique case-insensitive names, and advances a timestamp for stale-edit protection. `/api/admin/shipping/box-templates/` uses admin authentication for reads plus origin and read-only-preview guards for writes. Template storage does not depend on ShipStation credentials or purchase activation. Unavailable template storage leaves custom package input usable.
+Apply `20261016002226_shipping_box_templates.sql` once before deploying these controls, following the full release order in [SUPPLIER_PO_RELEASE.md](SUPPLIER_PO_RELEASE.md). All four release prerequisites were applied and verified in production on October 15, 2026. The box migration enables RLS, grants CRUD only to the server role, enforces positive dimensions up to 108 inches and unique case-insensitive names, and advances a timestamp for stale-edit protection. `/api/admin/shipping/box-templates/` uses admin authentication for reads plus origin and read-only-preview guards for writes. Template storage does not depend on ShipStation credentials or purchase activation. Unavailable template storage leaves custom package input usable.
 
 ### Shipment processing
 

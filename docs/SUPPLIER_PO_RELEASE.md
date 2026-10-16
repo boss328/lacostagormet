@@ -1,4 +1,4 @@
-# Supplier PO release — October 15, 2026
+# Shipping workspace and supplier PO release — October 15, 2026
 
 ## Why this patch is needed
 
@@ -8,7 +8,9 @@ The patch checks the current status in each update and records a send claim befo
 
 ## Apply the database updates before the code release
 
-This patch is prepared locally on `fix/supplier-po-states`. Production remains at `562483b`; no production database changes were made during the final review.
+This release includes the Shipping workspace, shared box templates and supplier PO race fixes. The pre-release production rollback target is `562483b`, Vercel deployment `dpl_5iUn6L69u4UKBngyR1jVB4SHd8SE`.
+
+The four database files below were applied and verified in production on October 15, 2026 (Pacific), before the application deployment. Both new tables have RLS enabled and service-role CRUD access, with no anon/authenticated table privileges. The supplier dispatch and box timestamp functions remain invoker functions with fixed search paths and service-role-only execution. Supabase security advisors showed the same four pre-existing warnings and no new warnings. Production has no migration-history table; do not infer that these files are unapplied from that absence.
 
 Read-only production inspection confirmed that the older vendor warehouse migration has not been applied: `vendor_warehouses` is absent, and `vendor_orders` has no `warehouse_id`, `sent_by` or `total_wholesale` columns. Existing supplier screens already expect those fields.
 
@@ -16,7 +18,7 @@ Read-only production inspection confirmed that the older vendor warehouse migrat
 2. Review and apply `supabase/migrations/0006_vendor_warehouses_and_po.sql` once. It adds the supplier warehouse table, enables its RLS and adds the PO fields already used by the application. Its trigger creation is not repeatable; check whether it was applied before rerunning it.
 3. Review and apply `supabase/migrations/20261015230709_supplier_po_send_claim.sql`. It adds the send claim and protects an unresolved send from being marked shipped.
 4. Review and apply `supabase/migrations/20261016002226_shipping_box_templates.sql` for the saved-box feature added to this branch. It creates an empty admin-only template table; no existing orders, shipments or labels are changed. This migration must be applied once, before deploying the new template controls.
-5. Verify the expected tables/columns and the updated shipment function in that database, and run Supabase advisors to confirm no new access warnings. The new box table must have RLS enabled, no anon/authenticated table privileges, and CRUD access for service_role only.
+5. Apply `supabase/migrations/20261016003642_vendor_warehouse_admin_access.sql`. It removes the legacy automatic public grants from the new warehouse table while retaining server-side admin access. Verify the expected tables/columns and the updated shipment function, and run Supabase advisors to confirm no new access warnings. Both new tables must have RLS enabled, no anon/authenticated table privileges, and CRUD access for service_role only.
 6. Deploy this branch through the normal reviewed GitHub/Vercel release. Keep postage purchasing disabled.
 7. Verify authenticated supplier PO pages and the new read-only warning for any claimed draft. Exercise real sending only with an approved PO and recipient; the automated tests use synthetic data and never email suppliers.
 8. In a paid order's **Ship from my location** section, create a named box, reload and select it. Verify its three dimensions fill in and the packed weight stays independent. Check edit/delete and custom dimensions before requesting rates. Template changes alone never request postage or notify customers.
