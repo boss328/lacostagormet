@@ -6,9 +6,10 @@ Reviewed the new order documents, local shipping UI/API, ShipStation adapter, la
 
 | Area | Verification |
 | --- | --- |
-| Shipping unit and route tests | 55 passing checks: authorization/origin/preview gates, supplier PO state transitions and send claims, actual body-size bounds, malformed input, reserved/remaining quantities, provider response validation, merchandise service eligibility, purchases, recovery, dispatch, email retries, sandbox-key rejection, document selection and PDF conversion |
+| Shipping unit and route tests | 63 passing checks: authorization/origin/preview gates, saved-box CRUD/validation/conflicts, supplier PO state transitions and send claims, actual body-size bounds, malformed input, reserved/remaining quantities, provider response validation, merchandise service eligibility, purchases, recovery, dispatch, email retries, sandbox-key rejection, document selection and PDF conversion |
 | Shipping database | 26 passing checks using the actual migrations in PGlite: rollback, quantity bounds, supplier overlap, paid-order requirements, once-only purchase claims, uncertain purchase locks, partial fulfillment, delivered-state preservation, notification leases and role permissions |
 | Supplier send database | 11 passing PGlite checks: one send claim, frozen payloads, cancellation ordering, failed finalization, unresolved-send dispatch denial, repeatable migration and preserved RPC permissions |
+| Box-template database | 6 passing PGlite checks: persisted CRUD, dimension and name constraints, duplicate names, stale edits/deletes, microsecond timestamp advancement, RLS and service-only privileges |
 | Existing application regressions | 38 additional Node tests pass for catalog filters, category assignments, product image framing, analytics filters, payment reconciliation, wallet providers and verification |
 | Related database regressions | Wallet transaction/ownership/replay/permission suite and vendor warehouse/PO schema suite pass |
 | Compilation | Next.js production build, lint and TypeScript validation pass |
@@ -36,6 +37,13 @@ Reviewed the new order documents, local shipping UI/API, ShipStation adapter, la
 - A local browser fixture using the real supplier editor confirmed the in-progress lock, interrupted-response warning, persisted-claim lock and normal fulfillment controls after a completed send. Its fetch boundary was mocked; no real supplier email or database calls were possible.
 - Read-only production schema inspection found the existing vendor warehouse migration missing. The [supplier release instructions](SUPPLIER_PO_RELEASE.md) record that prerequisite and the new send-claim migration; these have not been applied to production during this review.
 - [Jeff's first shipment](SHIPPING_FIRST_ORDER.md) covers parcel preparation, label printing, dispatch, recovery and the first supervised paid-label acceptance.
+
+## Saved box templates — next release
+
+- Added named recurring box dimensions to the order shipping panel, with create, select, rename/resize and delete controls. Templates are shared in server storage; packed weight remains separate for every shipment.
+- `pnpm test:shipping` passes all 106 checks (63 unit/route, 26 shipping database, 11 supplier-send database and 6 box-template database). The production build, lint and TypeScript checks pass.
+- Local Chrome checks used the real components with a mocked API boundary: create a 12 × 8 × 6 box, edit its name/height, reload/reselect, preserve weight, switch to custom dimensions, request rates with the correct dimensions and weight, lock package editing while quoted, cancel the draft, and delete a template without changing the package. Unavailable saved-box storage still permits custom package input. No console errors were captured.
+- Independent code review found no blocking issues. No production database changes, shipping calls, purchases or emails were made for this feature. Apply `20261016002226_shipping_box_templates.sql` before deploying, in addition to the supplier prerequisites recorded in [the release instructions](SUPPLIER_PO_RELEASE.md).
 
 ## Remaining acceptance checks
 

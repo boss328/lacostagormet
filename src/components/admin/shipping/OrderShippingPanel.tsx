@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { BoxTemplatePicker } from "./BoxTemplatePicker";
 import {
   safeTrackingUrl,
   selectedShippingItems,
@@ -42,6 +43,7 @@ export function OrderShippingPanel({ orderNumber }: { orderNumber: string }) {
   const [overview, setOverview] = useState<ShippingOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [templateBusy, setTemplateBusy] = useState(false);
   const actionLock = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -107,7 +109,7 @@ export function OrderShippingPanel({ orderNumber }: { orderNumber: string }) {
   }
 
   async function run(key: string, task: () => Promise<void>) {
-    if (actionLock.current) return;
+    if (actionLock.current || templateBusy) return;
     actionLock.current = true;
     setBusy(key);
     setError(null);
@@ -235,14 +237,14 @@ export function OrderShippingPanel({ orderNumber }: { orderNumber: string }) {
     (!!config &&
       (config.canQuote || config.canRecordManual) &&
       !!overview?.items.some((item) => item.availableQuantity > 0));
-  const locked = !!busy || !!quote;
+  const locked = !!busy || !!quote || templateBusy;
 
   return (
     <section
       id="local-shipping"
       className="mt-8 border border-rule-strong bg-cream p-5 sm:p-6"
       aria-labelledby="local-shipping-heading"
-      aria-busy={!!busy || loading}
+      aria-busy={!!busy || templateBusy || loading}
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -260,7 +262,7 @@ export function OrderShippingPanel({ orderNumber }: { orderNumber: string }) {
         <button
           type="button"
           className={buttonClass}
-          disabled={!!busy || loading}
+          disabled={!!busy || templateBusy || loading}
           onClick={() => run("refresh", load)}
         >
           {busy === "refresh" ? "Refreshing…" : "Refresh"}
@@ -381,7 +383,7 @@ export function OrderShippingPanel({ orderNumber }: { orderNumber: string }) {
                 <button
                   type="button"
                   aria-pressed={selectedMode === "label"}
-                  disabled={!!busy}
+                  disabled={!!busy || templateBusy}
                   onClick={() => setMode("label")}
                   className={`${buttonClass} ${selectedMode === "label" ? "bg-paper font-semibold" : ""}`}
                 >
@@ -390,7 +392,7 @@ export function OrderShippingPanel({ orderNumber }: { orderNumber: string }) {
                 <button
                   type="button"
                   aria-pressed={selectedMode === "manual"}
-                  disabled={!!busy}
+                  disabled={!!busy || templateBusy}
                   onClick={() => setMode("manual")}
                   className={`${buttonClass} ${selectedMode === "manual" ? "bg-paper font-semibold" : ""}`}
                 >
@@ -398,46 +400,53 @@ export function OrderShippingPanel({ orderNumber }: { orderNumber: string }) {
                 </button>
               </div>
               {selectedMode === "label" ? (
-                <form
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void requestRates();
-                  }}
-                >
-                  <fieldset disabled={!!busy || !config?.canQuote}>
-                    <legend className="type-label text-ink mb-3">
-                      2. Package details
-                    </legend>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                      {(
-                        [
-                          ["weightLb", "Weight (lb)"],
-                          ["lengthIn", "Length (in)"],
-                          ["widthIn", "Width (in)"],
-                          ["heightIn", "Height (in)"],
-                        ] as const
-                      ).map(([key, label]) => (
-                        <label key={key} className="text-sm text-ink">
-                          {label}
-                          <input
-                            className={`${inputClass} mt-2`}
-                            type="number"
-                            inputMode="decimal"
-                            min="0.01"
-                            max={key === "weightLb" ? 150 : 108}
-                            step="any"
-                            required
-                            value={packageValues[key]}
-                            onChange={(event) =>
-                              setPackageValues((previous) => ({
-                                ...previous,
-                                [key]: event.target.value,
-                              }))
-                            }
-                          />
-                        </label>
-                      ))}
-                    </div>
+                <div>
+                  <BoxTemplatePicker
+                    dimensions={packageValues}
+                    disabled={!!busy}
+                    onApply={(dimensions) => setPackageValues((previous) => ({ ...previous, ...dimensions }))}
+                    onBusyChange={setTemplateBusy}
+                  />
+                  <form
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void requestRates();
+                    }}
+                  >
+                    <fieldset disabled={!!busy || templateBusy || !config?.canQuote}>
+                      <legend className="type-label text-ink mb-3">
+                        2. Package details
+                      </legend>
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        {(
+                          [
+                            ["weightLb", "Weight (lb)"],
+                            ["lengthIn", "Length (in)"],
+                            ["widthIn", "Width (in)"],
+                            ["heightIn", "Height (in)"],
+                          ] as const
+                        ).map(([key, label]) => (
+                          <label key={key} className="text-sm text-ink">
+                            {label}
+                            <input
+                              className={`${inputClass} mt-2`}
+                              type="number"
+                              inputMode="decimal"
+                              min="0.01"
+                              max={key === "weightLb" ? 150 : 108}
+                              step="any"
+                              required
+                              value={packageValues[key]}
+                              onChange={(event) =>
+                                setPackageValues((previous) => ({
+                                  ...previous,
+                                  [key]: event.target.value,
+                                }))
+                              }
+                            />
+                          </label>
+                        ))}
+                      </div>
                     <p className="mt-3 text-xs text-ink-muted">
                       Use the packed box’s full weight and outside dimensions.
                       Rates use the saved ship-from address and this order’s
@@ -446,7 +455,7 @@ export function OrderShippingPanel({ orderNumber }: { orderNumber: string }) {
                     <button
                       type="submit"
                       className={`${buttonClass} mt-5`}
-                      disabled={!!busy || !config?.canQuote}
+                      disabled={!!busy || templateBusy || !config?.canQuote}
                     >
                       {busy === "rates"
                         ? "Getting rates…"
@@ -454,6 +463,7 @@ export function OrderShippingPanel({ orderNumber }: { orderNumber: string }) {
                     </button>
                   </fieldset>
                 </form>
+                </div>
               ) : (
                 <form
                   onSubmit={(event) => {

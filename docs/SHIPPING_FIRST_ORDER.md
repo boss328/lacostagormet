@@ -9,10 +9,18 @@ Invoices, packing slips, live rate comparisons and recording tracking bought els
 1. Open the customer's paid order in **Admin → Orders**. Check the recipient's address and phone number.
 2. Choose **Print invoice** for prices and totals, or **Print packing slip** for a list without prices. Select only the quantities in this box when printing a partial packing slip.
 3. Under **Ship from my location**, select those same item quantities. Supplier-assigned items and quantities already reserved or shipped are unavailable.
-4. Weigh the complete packed box in pounds. Measure its outside length, width and height in inches. Enter those figures and click **Compare shipping rates**.
+4. Weigh the complete packed box in pounds. Choose a **Saved box**, or measure and enter its outside length, width and height in inches. Enter the packed weight and click **Compare shipping rates**.
 5. Review the service and price. If you are only checking rates, cancel the draft afterward to release the selected quantities.
 
 Never ship the QA order **LCG-10093**. It is a zero-dollar test record marked **DO NOT FULFILL**.
+
+## Save boxes you use often (next release)
+
+In a paid order, open **Ship from my location → Buy a shipping label → New box template**. Give the box a recognizable name and enter its outside length, width and height in inches, then click **Save box**. It becomes available in **Saved box** on other orders and computers after this release is deployed.
+
+Select a saved box to fill the three dimensions. Always weigh the packed parcel: templates do not save or replace the shipment's weight. You can change an individual package's dimensions without editing its template; the picker then shows **Custom dimensions**.
+
+Select a template and use **Edit box** to rename or resize it, or **Delete box** to remove it from the list. These actions do not change existing shipment drafts or labels. Cancel an unpurchased rate draft before changing its package. If another admin changes the same template, refresh saved boxes and reopen the editor before saving again.
 
 ## First paid label — complete with Peter
 
@@ -43,4 +51,5 @@ For postage already bought elsewhere, use **I already have tracking** after disp
 - To pause new label purchases, set `SHIPPING_PURCHASE_ENABLED=false` and redeploy. Keep shipping enabled so existing labels, recovery and notification retries remain usable. Use `SHIPPING_ENABLED=false` only when all shipment mutations need to stop.
 - Before a release, record the current production deployment in Vercel as the rollback target. A code rollback does not reverse purchases, emails or database changes; reconcile those separately.
 - Before deploying the final supplier PO fix, follow [the supplier release instructions](SUPPLIER_PO_RELEASE.md): an older missing warehouse migration and the new send-claim migration must be applied before the code release.
+- The saved-box feature also requires `20261016002226_shipping_box_templates.sql` before deploying this branch. It has been tested locally and has not been applied to production.
 - Remaining acceptance: live authenticated browser rendering, one real paid label, physical printing, actual notification delivery and customer tracking.
