@@ -16,7 +16,9 @@ Never ship the QA order **LCG-10093**. It is a zero-dollar test record marked **
 
 ## Save boxes you use often (next release)
 
-In a paid order, open **Ship from my location → Buy a shipping label → New box template**. Give the box a recognizable name and enter its outside length, width and height in inches, then click **Save box**. It becomes available in **Saved box** on other orders and computers after this release is deployed.
+Open **Workspace → Shipping → Box templates → New box template**. Give the box a recognizable name and enter its outside length, width and height in inches, then click **Save box**. It becomes available in **Saved box** on other orders and computers after this release is deployed. You can also create templates inside a paid order under **Ship from my location → Buy a shipping label**.
+
+The **Shipping** page also has **View orders to ship** and an order search. Open the relevant order to print documents, compare rates or manage tracking. Use **g**, then **s** to open Shipping from anywhere in admin while you are not typing in a field.
 
 Select a saved box to fill the three dimensions. Always weigh the packed parcel: templates do not save or replace the shipment's weight. You can change an individual package's dimensions without editing its template; the picker then shows **Custom dimensions**.
 

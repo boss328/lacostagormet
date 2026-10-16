@@ -44,6 +44,7 @@ Reviewed the new order documents, local shipping UI/API, ShipStation adapter, la
 - `pnpm test:shipping` passes all 106 checks (63 unit/route, 26 shipping database, 11 supplier-send database and 6 box-template database). The production build, lint and TypeScript checks pass.
 - Local Chrome checks used the real components with a mocked API boundary: create a 12 × 8 × 6 box, edit its name/height, reload/reselect, preserve weight, switch to custom dimensions, request rates with the correct dimensions and weight, lock package editing while quoted, cancel the draft, and delete a template without changing the package. Unavailable saved-box storage still permits custom package input. No console errors were captured.
 - Independent code review found no blocking issues. No production database changes, shipping calls, purchases or emails were made for this feature. Apply `20261016002226_shipping_box_templates.sql` before deploying, in addition to the supplier prerequisites recorded in [the release instructions](SUPPLIER_PO_RELEASE.md).
+- Added **Shipping** directly below **Orders** in Workspace, with standalone box management and links/search into existing orders. Local Chrome verified sidebar navigation and active state, template creation, **g s**, the command-palette action and the order search's `q` destination. The page uses the existing admin guard and box-template API. Production build/lint/types pass; this navigation addition needs no further database migration and remains undeployed.
 
 ## Remaining acceptance checks
 

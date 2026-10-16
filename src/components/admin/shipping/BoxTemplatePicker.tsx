@@ -25,11 +25,13 @@ export function BoxTemplatePicker({
   disabled,
   onApply,
   onBusyChange,
+  mode = "shipment",
 }: {
   dimensions: Dimensions;
   disabled: boolean;
   onApply: (dimensions: Dimensions) => void;
   onBusyChange: (busy: boolean) => void;
+  mode?: "shipment" | "manage";
 }) {
   const [templates, setTemplates] = useState<ShippingBoxTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +47,8 @@ export function BoxTemplatePicker({
     selected.lengthIn === Number(dimensions.lengthIn) &&
     selected.widthIn === Number(dimensions.widthIn) &&
     selected.heightIn === Number(dimensions.heightIn);
-  const current = matches ? selected : undefined;
+  const managing = mode === "manage";
+  const current = managing || matches ? selected : undefined;
   const locked = disabled || busy;
 
   const load = useCallback(async (signal?: AbortSignal) => {
@@ -91,14 +94,14 @@ export function BoxTemplatePicker({
       if (method === "DELETE") {
         setTemplates((previous) => previous.filter((template) => template.id !== selectedId));
         setSelectedId("");
-        setMessage("Box template deleted. This package’s dimensions are unchanged.");
+        setMessage(managing ? "Box template deleted." : "Box template deleted. This package’s dimensions are unchanged.");
       } else {
         const template = body.template as ShippingBoxTemplate;
         setTemplates((previous) => [...previous.filter((item) => item.id !== template.id), template]
           .sort((a, b) => a.name.localeCompare(b.name)));
         setSelectedId(template.id);
         onApply(dimensionsOf(template));
-        setMessage("Box saved and selected. Enter the full packed weight for this shipment.");
+        setMessage(managing ? "Box template saved." : "Box saved and selected. Enter the full packed weight for this shipment.");
       }
       setEditor(null);
       setConfirmDelete(false);
@@ -128,7 +131,7 @@ export function BoxTemplatePicker({
               if (template) onApply(dimensionsOf(template));
             }}
           >
-            <option value="">{loading ? "Loading saved boxes…" : "Custom dimensions"}</option>
+            <option value="">{loading ? "Loading saved boxes…" : managing ? "Choose a saved box" : "Custom dimensions"}</option>
             {templates.map((template) => (
               <option key={template.id} value={template.id}>
                 {template.name} · {template.lengthIn} × {template.widthIn} × {template.heightIn} in
@@ -141,7 +144,7 @@ export function BoxTemplatePicker({
           className={buttonClass}
           disabled={locked || loading || !!editor}
           onClick={() => {
-            setEditor({ name: "", ...dimensions, original: null });
+            setEditor({ name: "", ...(managing ? { lengthIn: "", widthIn: "", heightIn: "" } : dimensions), original: null });
             setConfirmDelete(false);
             setError(null);
             setMessage(null);
@@ -160,7 +163,9 @@ export function BoxTemplatePicker({
         )}
       </div>
       <p className="mt-2 text-xs text-ink-muted">
-        Save recurring box sizes for every order. Dimensions are length × width × height in inches; packed weight is entered separately below.
+        {managing
+          ? "Save shared box sizes you use regularly. Dimensions are length × width × height in inches."
+          : "Save recurring box sizes for every order. Dimensions are length × width × height in inches; packed weight is entered separately below."}
       </p>
       {!loading && templates.length === 0 && !error && (
         <p className="mt-2 text-sm text-ink-muted">No saved boxes yet. Create a template for a size you use often.</p>
@@ -178,7 +183,7 @@ export function BoxTemplatePicker({
               setError(reason instanceof Error ? reason.message : "Could not load saved boxes.");
             } finally { setLoading(false); }
           }}>Refresh saved boxes</button>
-          <p className="mt-2 text-xs text-ink-muted">You can still enter custom package dimensions below.</p>
+          <p className="mt-2 text-xs text-ink-muted">{managing ? "Refresh saved boxes to load the latest templates before making changes." : "You can still enter custom package dimensions below."}</p>
         </div>
       )}
       {message && <p role="status" className="mt-3 text-sm text-ink">{message}</p>}
@@ -214,7 +219,7 @@ export function BoxTemplatePicker({
                 </label>
               ))}
             </div>
-            <p className="mt-3 text-xs text-ink-muted">Measure the outside of the box. Changes are saved for future orders and applied to this package.</p>
+            <p className="mt-3 text-xs text-ink-muted">{managing ? "Measure the outside of the box. These dimensions will be available when preparing future shipments." : "Measure the outside of the box. Changes are saved for future orders and applied to this package."}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button type="submit" className={buttonClass}>{busy ? "Saving…" : "Save box"}</button>
               <button type="button" className={buttonClass} onClick={() => { setEditor(null); setError(null); }}>Cancel editing</button>

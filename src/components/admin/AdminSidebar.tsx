@@ -26,14 +26,15 @@ type NavItem = { href: string; label: string; numeral: string; shortcut: string 
 const NAV: NavItem[] = [
   { href: '/admin/',                 label: 'Dashboard',       numeral: 'I',     shortcut: 'g d' },
   { href: '/admin/orders/',          label: 'Orders',          numeral: 'II',    shortcut: 'g o' },
-  { href: '/admin/customers/',       label: 'Customers',       numeral: 'III',   shortcut: 'g c' },
-  { href: '/admin/products/',        label: 'Products',        numeral: 'IV',    shortcut: 'g p' },
-  { href: '/admin/vendors/',         label: 'Vendors',         numeral: 'V',     shortcut: 'g v' },
-  { href: '/admin/purchase-orders/', label: 'Purchase Orders', numeral: 'VI',    shortcut: 'g u' },
-  { href: '/admin/inquiries/',       label: 'Inquiries',       numeral: 'VII',   shortcut: 'g n' },
-  { href: '/admin/imports/',         label: 'Imports',         numeral: 'VIII',  shortcut: 'g i' },
-  { href: '/admin/categories/',      label: 'Categories',      numeral: 'IX',    shortcut: '' },
-  { href: '/admin/brands/',          label: 'Brands',          numeral: 'X',     shortcut: '' },
+  { href: '/admin/shipping/',        label: 'Shipping',        numeral: 'III',   shortcut: 'g s' },
+  { href: '/admin/customers/',       label: 'Customers',       numeral: 'IV',    shortcut: 'g c' },
+  { href: '/admin/products/',        label: 'Products',        numeral: 'V',     shortcut: 'g p' },
+  { href: '/admin/vendors/',         label: 'Vendors',         numeral: 'VI',    shortcut: 'g v' },
+  { href: '/admin/purchase-orders/', label: 'Purchase Orders', numeral: 'VII',   shortcut: 'g u' },
+  { href: '/admin/inquiries/',       label: 'Inquiries',       numeral: 'VIII',  shortcut: 'g n' },
+  { href: '/admin/imports/',         label: 'Imports',         numeral: 'IX',    shortcut: 'g i' },
+  { href: '/admin/categories/',      label: 'Categories',      numeral: 'X',     shortcut: '' },
+  { href: '/admin/brands/',          label: 'Brands',          numeral: 'XI',    shortcut: '' },
 ];
 
 export function AdminSidebar() {
