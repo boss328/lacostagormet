@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { slugify } from '@/lib/admin/slug';
+import { STOCK_STATUS_OPTIONS } from '@/lib/product-availability';
 import { MultiImageEditor, type ImageItem } from '@/components/admin/MultiImageEditor';
 
 type Option = { id: string; name: string; slug: string };
@@ -50,6 +51,7 @@ export function NewProductForm({ brands, categories }: Props) {
   const [metaDescription, setMetaDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
+  const [stockStatus, setStockStatus] = useState('in_stock');
 
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -105,6 +107,7 @@ export function NewProductForm({ brands, categories }: Props) {
       fd.set('meta_description', metaDescription.trim());
       fd.set('is_active', isActive ? 'true' : 'false');
       fd.set('is_featured', isFeatured ? 'true' : 'false');
+      fd.set('stock_status', stockStatus);
 
       const primaryIndex = images.findIndex((i) => i.isPrimary);
       fd.set('primary_index', String(primaryIndex >= 0 ? primaryIndex : 0));
@@ -270,6 +273,23 @@ export function NewProductForm({ brands, categories }: Props) {
               }
             />
           </div>
+          <Field
+            label="Stock status"
+            hint="Update this when availability changes. Quantities are not synced automatically."
+            input={
+              <select
+                aria-label="Stock status"
+                value={stockStatus}
+                onChange={(e) => setStockStatus(e.target.value)}
+                className={inputClass}
+                style={inputStyle}
+              >
+                {STOCK_STATUS_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            }
+          />
           <Field
             label="Description"
             required

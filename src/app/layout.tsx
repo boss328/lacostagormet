@@ -5,16 +5,16 @@ import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { StorefrontChrome } from "@/components/layout/StorefrontChrome";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { HOME_DESCRIPTION, HOME_TITLE } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = {
   title: {
-    default: "La Costa Gourmet — Café-quality drinks shipped to your door",
+    default: HOME_TITLE,
     template: "%s · La Costa Gourmet",
   },
-  description:
-    "Café-quality chai, smoothies, oatmeal, specialty beverages, and more — shipped nationwide from La Costa Gourmet. Premium brands trusted by independent coffee shops since 2003.",
+  description: HOME_DESCRIPTION,
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001",
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.lacostagourmet.com",
   ),
 };
 

@@ -44,7 +44,7 @@ export const COLLECTIONS = [
   },
   {
     slug: 'cocoa',
-    name: 'Hot Chocolate',
+    name: 'Specialty Beverages',
     image: 'cocoa',
     source: 'specialty-beverages',
     alt: 'Cup of hot chocolate',

@@ -18,8 +18,8 @@ import {
  * Anon client + RLS (same as sitemap.ts): the feed ships exactly the
  * public catalog, and the service-role key stays out of a public route.
  * noStore keeps the reads out of Vercel's Data Cache; the CDN caches
- * the response for an hour via s-maxage instead, which is fresh enough
- * for a once-daily fetch without hitting Supabase per request.
+ * the response for five minutes via s-maxage. Availability edits reach
+ * the next feed fetch promptly without serving yesterday's stock status.
  */
 
 const SITE = (
@@ -202,7 +202,7 @@ export async function GET() {
   return new Response(xml, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
+      'Cache-Control': 'public, max-age=0, s-maxage=300, must-revalidate',
     },
   });
 }

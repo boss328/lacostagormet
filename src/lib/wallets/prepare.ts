@@ -6,6 +6,7 @@ import { computeShipping, loadShippingSettings, round2 } from '@/lib/checkout/pr
 import { z } from 'zod';
 import { walletConfig } from './config';
 import type { WalletAttempt } from './verification';
+import { isAvailableForPurchase } from '@/lib/product-availability';
 
 export const walletRequestSchema = checkoutCreateSchema.extend({
   requestId: z.string().uuid(), method: z.enum(['paypal', 'apple_pay', 'amazon_pay']),
@@ -18,10 +19,11 @@ export async function prepareWalletAttempt(body: unknown, clientIp: string, owne
   if (!config[p.method]) throw new Error('This payment method is not available');
   const admin = createAdminClient();
   const { data, error } = await admin.from('products')
-    .select('id,sku,name,retail_price,wholesale_cost,preferred_vendor_id,is_active').in('id', p.items.map(i => i.product_id));
+    .select('id,sku,name,retail_price,wholesale_cost,preferred_vendor_id,is_active,stock_status,deleted_at').in('id', p.items.map(i => i.product_id));
   if (error || !data) throw new Error('Unable to check product prices');
   const lines = p.items.map(item => {
-    const product = data.find(product => product.id === item.product_id && product.is_active);
+    const product = data.find(product => product.id === item.product_id && product.is_active &&
+      product.deleted_at === null && isAvailableForPurchase(product.stock_status));
     if (!product) throw new Error('An item is no longer available');
     const price = Number(product.retail_price);
     if (!Number.isFinite(price) || price < 0) throw new Error('Invalid product price');

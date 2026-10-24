@@ -2,6 +2,7 @@ import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { STOCK_STATUSES } from '@/lib/product-availability';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,7 +12,7 @@ const bodySchema = z.object({
   wholesale_cost: z.number().nonnegative().nullable(),
   is_active: z.boolean(),
   is_featured: z.boolean(),
-  stock_status: z.enum(['in_stock', 'out_of_stock', 'discontinued']),
+  stock_status: z.enum(STOCK_STATUSES),
   short_description: z.string().max(2000).optional().default(''),
 });
 

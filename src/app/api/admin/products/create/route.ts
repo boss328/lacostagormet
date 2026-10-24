@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
 import { slugify } from '@/lib/admin/slug';
+import { isStockStatus } from '@/lib/product-availability';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic';
  *
  * Fields (mostly mirroring NewProductForm):
  *   name, sku, retail_price, category_slug, brand_slug, description,
- *   slug, weight_lb, meta_description, is_active, is_featured,
+ *   slug, weight_lb, meta_description, is_active, is_featured, stock_status,
  *   images (multi-file), primary_index
  *
  * Server-side responsibilities:
@@ -84,6 +85,8 @@ export async function POST(req: NextRequest) {
   const metaDescription = String(form.get('meta_description') ?? '').trim();
   const isActive = String(form.get('is_active') ?? 'true') === 'true';
   const isFeatured = String(form.get('is_featured') ?? 'false') === 'true';
+  const stockStatus = form.get('stock_status') ?? 'in_stock';
+  if (!isStockStatus(stockStatus)) return fail(400, 'Choose a valid stock status.');
   const imageFiles = form
     .getAll('images')
     .filter((v): v is File => v instanceof File && v.size > 0);
@@ -207,6 +210,7 @@ export async function POST(req: NextRequest) {
       meta_description: metaDescription || null,
       is_active: isActive,
       is_featured: isFeatured,
+      stock_status: stockStatus,
     })
     .select('id, slug, name')
     .single();

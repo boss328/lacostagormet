@@ -13,6 +13,7 @@ import {
 } from '@/lib/checkout/pricing';
 import { cartHash } from '@/lib/checkout/cart-hash';
 import { getHostedPaymentToken } from '@/lib/authnet/hosted';
+import { isAvailableForPurchase } from '@/lib/product-availability';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -37,6 +38,8 @@ type ProductRow = {
   wholesale_cost: number | string | null;
   preferred_vendor_id: string | null;
   is_active: boolean;
+  stock_status: string | null;
+  deleted_at: string | null;
 };
 
 type OrderRow = {
@@ -90,7 +93,7 @@ export async function POST(req: NextRequest) {
     const productIds = payload.items.map((i) => i.product_id);
     const { data: products, error: productsErr } = await admin
       .from('products')
-      .select('id, sku, name, retail_price, wholesale_cost, preferred_vendor_id, is_active')
+      .select('id, sku, name, retail_price, wholesale_cost, preferred_vendor_id, is_active, stock_status, deleted_at')
       .in('id', productIds);
 
     if (productsErr) {
@@ -100,7 +103,9 @@ export async function POST(req: NextRequest) {
 
     const productsById = new Map<string, ProductRow>();
     for (const p of (products ?? []) as ProductRow[]) {
-      if (p.is_active) productsById.set(p.id, p);
+      if (p.is_active && p.deleted_at === null && isAvailableForPurchase(p.stock_status)) {
+        productsById.set(p.id, p);
+      }
     }
     if (payload.items.find((i) => !productsById.has(i.product_id))) {
       return json(400, { success: false, errorMessage: GENERIC_CART_ERROR });

@@ -1,11 +1,12 @@
 import { PageHeader } from '@/components/shop/PageHeader';
+import { pageMetadata } from '@/lib/seo/metadata';
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: 'Contact',
   description:
     'Reach La Costa Gourmet — Carlsbad, California. (858) 354-1120 · Monday through Friday, 9–5 Pacific.',
-  alternates: { canonical: '/contact/' },
-};
+  canonical: '/contact/',
+});
 
 export default function ContactPage() {
   return (

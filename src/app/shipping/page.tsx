@@ -1,11 +1,12 @@
 import { PageHeader } from '@/components/shop/PageHeader';
+import { pageMetadata } from '@/lib/seo/metadata';
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: 'Shipping',
   description:
-    'Four warehouses, coast to coast. Orders ship in 2 to 3 business days. Free shipping on continental US orders over $80.',
-  alternates: { canonical: '/shipping/' },
-};
+    'Review La Costa Gourmet shipping rates, delivery areas and order processing times. Free shipping on continental US orders of $80 or more.',
+  canonical: '/shipping/',
+});
 
 export default function ShippingPage() {
   return (

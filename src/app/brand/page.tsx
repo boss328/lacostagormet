@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { getCatalog } from '@/lib/catalog-query';
 import { PageHeader } from '@/components/shop/PageHeader';
+import { pageMetadata } from '@/lib/seo/metadata';
 export const dynamic = 'force-dynamic';
-export const metadata = {
+export const metadata = pageMetadata({
   title: 'Our brands',
-  alternates: { canonical: '/brand/' },
-};
+  description: 'Explore the café brands available at La Costa Gourmet. Shop coffee, chai, drink mixes, syrups and more by your favorite brand.',
+  canonical: '/brand/',
+});
 export default async function BrandsPage() {
   const { brands, products } = await getCatalog();
   return (

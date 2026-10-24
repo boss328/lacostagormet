@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
 import { slugify } from '@/lib/admin/slug';
 import { productCategoryIds } from '@/lib/admin/product-categories';
+import { isStockStatus } from '@/lib/product-availability';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -117,6 +118,11 @@ export async function POST(
   const metaDescription = String(form.get('meta_description') ?? '').trim();
   const isActive = String(form.get('is_active') ?? 'true') === 'true';
   const isFeatured = String(form.get('is_featured') ?? 'false') === 'true';
+  // An older open form may omit this field; preserve the stored status.
+  const stockStatus = form.get('stock_status');
+  if (stockStatus !== null && !isStockStatus(stockStatus)) {
+    return fail(400, 'Choose a valid stock status.');
+  }
   const newImageFiles = form
     .getAll('newImages')
     .filter((v): v is File => v instanceof File && v.size > 0);
@@ -313,6 +319,7 @@ export async function POST(
       meta_description: metaDescription || null,
       is_active: isActive,
       is_featured: isFeatured,
+      ...(stockStatus !== null ? { stock_status: stockStatus } : {}),
     })
     .eq('id', productId)
     .select('id, slug, name')

@@ -1,4 +1,4 @@
-import { parsePage } from '@/lib/catalog-query';
+import { parsePage } from '../catalog-state';
 
 /**
  * Canonical URL for paginated listing pages (/shop, /shop/[cat], /brand/[b]).
