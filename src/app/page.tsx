@@ -6,7 +6,12 @@ import { COLLECTIONS, collectionImage } from '@/lib/collections';
 import { SHIPPING_TIERS } from '@/lib/checkout/shipping';
 import { ProductCard } from '@/components/shop/ProductCard';
 import { FeaturedCarousel } from '@/components/home/FeaturedCarousel';
-export const metadata = { alternates: { canonical: '/' } };
+import { HOME_DESCRIPTION, HOME_TITLE, pageMetadata } from '@/lib/seo/metadata';
+export const metadata = pageMetadata({
+  title: HOME_TITLE,
+  description: HOME_DESCRIPTION,
+  canonical: '/',
+});
 export const dynamic = 'force-dynamic';
 export default async function HomePage({
   searchParams,

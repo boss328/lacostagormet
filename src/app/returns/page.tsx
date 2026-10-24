@@ -1,11 +1,12 @@
 import { PageHeader } from '@/components/shop/PageHeader';
+import { pageMetadata } from '@/lib/seo/metadata';
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: 'Returns',
   description:
     'Contact us within 30 days of receipt to arrange a return. La Costa Gourmet · Carlsbad, CA.',
-  alternates: { canonical: '/returns/' },
-};
+  canonical: '/returns/',
+});
 
 export default function ReturnsPage() {
   return (

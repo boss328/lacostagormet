@@ -3,6 +3,7 @@ import { ProductImage as FramedProductImage } from './ProductImage';
 import { ProductCardAdd } from './ProductCardAdd';
 import { bcImage } from '@/lib/bcImage';
 import { formatPackSize } from '@/lib/pack-size';
+import { isAvailableForPurchase } from '@/lib/product-availability';
 type ProductImage = {
   url: string;
   alt_text: string | null;
@@ -16,7 +17,7 @@ export type ProductCardData = {
   name: string;
   pack_size: string | null;
   retail_price: number | string;
-  stock_status?: string;
+  stock_status?: string | null;
   brands?: { name: string; slug: string } | null;
   product_images?: ProductImage[] | null;
 };
@@ -87,7 +88,7 @@ export function ProductCard({
         </p>
         <div className="product-purchase">
           <span className="type-price">${price.toFixed(2)}</span>
-          {product.stock_status === 'out_of_stock' ? (
+          {!isAvailableForPurchase(product.stock_status) ? (
             <span className="product-pack">Out of stock</span>
           ) : (
             <ProductCardAdd

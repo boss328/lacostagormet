@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { PageHeader } from '@/components/shop/PageHeader';
+import { pageMetadata } from '@/lib/seo/metadata';
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: 'Terms of Service',
   description:
     'The terms that govern orders on lacostagourmet.com — pricing, payment, shipping, returns, and the fine print, kept short.',
-  alternates: { canonical: '/terms/' },
-};
+  canonical: '/terms/',
+});
 
 function Section({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }) {
   return (

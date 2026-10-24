@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { PageHeader } from '@/components/shop/PageHeader';
 import { InquiryForm } from '@/components/forms/InquiryForm';
-export const metadata = {
+import { pageMetadata } from '@/lib/seo/metadata';
+export const metadata = pageMetadata({
   title: 'For business',
-  alternates: { canonical: '/for-business/' },
-};
+  description: 'Stock your café, coffee cart or office with La Costa Gourmet. Explore café supplies, get help choosing products and ask about volume pricing.',
+  canonical: '/for-business/',
+});
 export default function ForBusinessPage() {
   return (
     <>

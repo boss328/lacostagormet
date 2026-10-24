@@ -1,6 +1,7 @@
 import 'server-only';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { isAvailableForPurchase } from '@/lib/product-availability';
 import { getSessionUser } from '@/lib/supabase/auth-helpers';
 import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
 import { bcImage } from '@/lib/bcImage';
@@ -179,7 +180,7 @@ export async function POST(
       });
       continue;
     }
-    if (p.stock_status === 'out_of_stock') {
+    if (!isAvailableForPurchase(p.stock_status)) {
       unavailable.push({
         sku: item.product_sku,
         name: item.product_name,

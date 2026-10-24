@@ -1,3 +1,5 @@
+import { isAvailableForPurchase } from '../product-availability';
+
 /**
  * Shared helpers for the two places we describe products to Google:
  * the Merchant Center feed (/api/google-feed.xml) and the JSON-LD on
@@ -35,9 +37,7 @@ export function validGtin(raw: unknown): string | null {
 export function googleAvailability(
   stockStatus: string | null | undefined,
 ): 'in_stock' | 'out_of_stock' {
-  return stockStatus === 'out_of_stock' || stockStatus === 'discontinued'
-    ? 'out_of_stock'
-    : 'in_stock';
+  return isAvailableForPurchase(stockStatus) ? 'in_stock' : 'out_of_stock';
 }
 
 /**

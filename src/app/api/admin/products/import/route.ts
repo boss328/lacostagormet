@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { parseCsv } from '@/lib/admin/csv';
 import { validGtin } from '@/lib/seo/product-schema';
 import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
+import { STOCK_STATUSES as PRODUCT_STOCK_STATUSES } from '@/lib/product-availability';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,7 +34,7 @@ export const dynamic = 'force-dynamic';
  */
 
 const CLEAR = 'CLEAR';
-const STOCK_STATUSES = new Set(['in_stock', 'low_stock', 'out_of_stock', 'discontinued']);
+const STOCK_STATUSES = new Set<string>(PRODUCT_STOCK_STATUSES);
 
 // Import column → DB column. Aliases accept the vocabulary people
 // actually type. Columns absent from this map are ignored (reported).

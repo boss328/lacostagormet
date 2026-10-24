@@ -11,6 +11,8 @@ import { ProductDescription } from '@/components/shop/ProductDescription';
 import { ProductJsonLd } from '@/components/shop/ProductJsonLd';
 import { bcImage } from '@/lib/bcImage';
 import { formatPackSize } from '@/lib/pack-size';
+import { pageMetadata, productTitle } from '@/lib/seo/metadata';
+import { isAvailableForPurchase } from '@/lib/product-availability';
 
 type Params = { slug: string };
 
@@ -66,7 +68,7 @@ async function fetchProduct(slug: string): Promise<ProductRow | null> {
 async function fetchRelated(product: ProductRow): Promise<ProductCardData[]> {
   const supabase = createClient();
   const baseSelect =
-    'id, slug, sku, name, pack_size, retail_price, brands(name, slug), product_images(url, alt_text, is_primary, display_order)';
+    'id, slug, sku, name, pack_size, retail_price, stock_status, brands(name, slug), product_images(url, alt_text, is_primary, display_order)';
 
   if (product.brand_id) {
     const { data } = await supabase
@@ -160,25 +162,19 @@ function renderProductName(name: string) {
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const product = await fetchProduct(params.slug);
   if (!product) return { title: 'Product not found' };
-  const title = product.brands?.name
-    ? `${product.brands.name} — ${product.name}`
-    : product.name;
+  const title = productTitle(product.name, product.brands?.name);
   const description =
     product.short_description ??
     `${product.name} from La Costa Gourmet. Bulk café supplies shipped from Carlsbad since 2003.`;
   const primary = sortImages(product.product_images)[0] ?? null;
-  return {
+  return pageMetadata({
     title,
     description,
-    alternates: { canonical: `/product/${params.slug}/` },
-    openGraph: {
-      type: 'website',
-      title,
-      description,
-      url: `/product/${params.slug}/`,
-      images: primary ? [{ url: bcImage(primary.url, 'hero') }] : undefined,
-    },
-  };
+    canonical: `/product/${params.slug}/`,
+    image: primary
+      ? { url: bcImage(primary.url, 'hero'), alt: primary.alt_text || product.name }
+      : undefined,
+  });
 }
 
 export default async function ProductPage({ params }: { params: Params }) {
@@ -309,7 +305,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                 )}
               </div>
 
-              <ProductAddPanel item={addItemData} available={product.stock_status !== 'out_of_stock'} />
+              <ProductAddPanel item={addItemData} available={isAvailableForPurchase(product.stock_status)} />
 
               {tagList.length > 0 && (
                 <div

@@ -4,9 +4,8 @@
  * Source: /xmlsitemap.php crawled 2026-04-19 (204 URLs across 4 sub-sitemaps).
  * These preserve SEO equity during the BC → Next.js migration.
  *
- * Covers 82 explicit redirects. The remaining 122 product URLs are handled
- * by src/middleware.ts, which looks up root-level slugs against products.slug
- * and redirects to /product/<slug> if a match exists.
+ * Includes explicit category, brand and product redirects. Keep destinations
+ * pointed at the current catalog URLs to avoid chains through old slugs.
  *
  * Missing brands (routed to /brand index):
  *   hollander, two-leaves-and-a-bud, numi, cappuccine, lotus
@@ -28,13 +27,13 @@ export const bcRedirects = [
   // smoothie-bases → smoothies
   { source: '/shop/smoothie-bases/',     destination: '/shop/smoothies/',           permanent: true },
   { source: '/shop/smoothie-bases',      destination: '/shop/smoothies',            permanent: true },
-  // cocoa + frappes + syrups-and-sauces → specialty-beverages (merge)
+  // Legacy categories mapped to the current catalog (Oct 2026 audit).
   { source: '/shop/cocoa/',              destination: '/shop/specialty-beverages/', permanent: true },
   { source: '/shop/cocoa',               destination: '/shop/specialty-beverages',  permanent: true },
-  { source: '/shop/frappes/',            destination: '/shop/specialty-beverages/', permanent: true },
-  { source: '/shop/frappes',             destination: '/shop/specialty-beverages',  permanent: true },
-  { source: '/shop/syrups-and-sauces/',  destination: '/shop/specialty-beverages/', permanent: true },
-  { source: '/shop/syrups-and-sauces',   destination: '/shop/specialty-beverages',  permanent: true },
+  { source: '/shop/frappes/',            destination: '/shop/chai-and-matcha/', statusCode: 301 },
+  { source: '/shop/frappes',             destination: '/shop/chai-and-matcha/', statusCode: 301 },
+  { source: '/shop/syrups-and-sauces/',  destination: '/shop/syrups/', statusCode: 301 },
+  { source: '/shop/syrups-and-sauces',   destination: '/shop/syrups/', statusCode: 301 },
 
   // ───── Apr 2026 protein category rename ─────
   // protein-and-supplements → protein-and-energy
@@ -44,6 +43,10 @@ export const bcRedirects = [
   // ───── Apr 2026 brand rename: Lotus Plant Energy → Lotus Plant Power ─────
   { source: '/brand/lotus-plant-energy/', destination: '/brand/lotus-plant-power/', permanent: true },
   { source: '/brand/lotus-plant-energy',  destination: '/brand/lotus-plant-power',  permanent: true },
+
+  // Oct 2026 brand corrections. Preserve indexed URLs with explicit 301s.
+  { source: '/brand/island-osis/', destination: '/brand/island-oasis/', statusCode: 301 },
+  { source: '/brand/oatmilk-2/', destination: '/brand/minor-figures/', statusCode: 301 },
 
   // ───── Top-level pages ─────
   { source: '/blog/', destination: '/', permanent: true },
@@ -105,8 +108,8 @@ export const bcRedirects = [
 
   // ───── Categories → frappes ─────
   { source: '/frappes/mocafe-frappes/', destination: '/brand/mocafe', permanent: true },
-  { source: '/frappe-mixes/', destination: '/shop/specialty-beverages', permanent: true },
-  { source: '/frappe-mixes/carb-conscious/', destination: '/shop/specialty-beverages', permanent: true },
+  { source: '/frappe-mixes/', destination: '/shop/chai-and-matcha/', statusCode: 301 },
+  { source: '/frappe-mixes/carb-conscious/', destination: '/shop/chai-and-matcha/', statusCode: 301 },
   { source: '/blended-ice-coffee/big-train-frappe-power/', destination: '/brand/big-train', permanent: true },
   { source: '/blended-ice-coffee/cafe-essentials-dr-smoothie/', destination: '/brand/cafe-essentials', permanent: true },
   { source: '/blended-ice-coffee/davinci-blended-ice-coffee/', destination: '/brand/davinci-gourmet', permanent: true },
@@ -114,7 +117,8 @@ export const bcRedirects = [
   { source: '/blended-ice-creme/big-train-frappe-power/', destination: '/brand/big-train', permanent: true },
 
   // ───── Categories → cocoa ─────
-  { source: '/cocoa-powder/', destination: '/shop/specialty-beverages', permanent: true },
+  { source: '/cocoa/', destination: '/shop/specialty-beverages/', statusCode: 301 },
+  { source: '/cocoa-powder/', destination: '/shop/specialty-beverages/', statusCode: 301 },
   { source: '/gourmet-cocoa/dr-smoothie-gourmet-coco/', destination: '/brand/dr-smoothie', permanent: true },
   { source: '/gourmet-cocoa/big-train-gourmet-cocoa/', destination: '/brand/big-train', permanent: true },
   { source: '/gourmet-cocoa/mocafe-gourmet-cocoa/', destination: '/brand/mocafe', permanent: true },
@@ -134,7 +138,7 @@ export const bcRedirects = [
   { source: '/smoothie-mixes/davinci-gourmet/', destination: '/brand/davinci-gourmet', permanent: true },
 
   // ───── Categories → syrups-and-sauces ─────
-  { source: '/gourmet-sauces-and-syrups/', destination: '/shop/specialty-beverages', permanent: true },
+  { source: '/gourmet-sauces-and-syrups/', destination: '/shop/syrups/', statusCode: 301 },
   { source: '/gourmet-sauces-and-syrups/numi/', destination: '/brand', permanent: true },
   { source: '/gourmet-sauces-and-syrups/upouria-flavored-syrups/', destination: '/brand/upouria', permanent: true },
   { source: '/gourmet-sauces-and-syrups/monin/', destination: '/brand/monin', permanent: true },
@@ -142,11 +146,12 @@ export const bcRedirects = [
   { source: '/specialty-products/upouria-shakeable-toppers/', destination: '/brand/upouria', permanent: true },
   { source: '/specialty-products/upouria-flavored-syrups/', destination: '/brand/upouria', permanent: true },
 
-  // ───── Categories with no new-site equivalent ─────
+  // ───── Protein and energy ─────
   { source: '/energy-driks/lotus-plant-power-concentrate/', destination: '/brand', permanent: true },
   { source: '/energy-driks/lotus-plant-power-energy-drink/', destination: '/brand', permanent: true },
   { source: '/energy-driks/lotus-zero-sugar-plant-power-concentrate/', destination: '/brand', permanent: true },
-  { source: '/protein-supplement-powder/', destination: '/shop', permanent: true },
+  { source: '/protein-supplements/', destination: '/shop/protein-and-energy/', statusCode: 301 },
+  { source: '/protein-supplement-powder/', destination: '/shop/protein-and-energy/', statusCode: 301 },
   { source: '/supplement-power/dr-smoothie-cafe-essentials-protein-power/', destination: '/brand/dr-smoothie', permanent: true },
   { source: '/protein-supplements/upouria/', destination: '/brand/upouria', permanent: true },
   { source: '/protein-supplements/davinci-gourmet-beverage-syrup/', destination: '/brand/davinci-gourmet', permanent: true },

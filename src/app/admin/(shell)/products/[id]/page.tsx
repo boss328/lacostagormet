@@ -21,6 +21,7 @@ type ProductDetailRow = {
   retail_price: number | string;
   is_active: boolean;
   is_featured: boolean;
+  stock_status: string;
   brand_id: string | null;
   primary_category_id: string | null;
   product_categories: Array<{ categories: { slug: string } | null }>;
@@ -68,7 +69,7 @@ export default async function AdminProductEditPage({
     admin
       .from('products')
       .select(
-        'id, sku, slug, name, description, meta_description, weight_lb, upc, retail_price, is_active, is_featured, brand_id, primary_category_id, brands(name, slug), primary_category:categories!primary_category_id(name, slug), product_categories(categories(slug)), product_images(id, url, is_primary, display_order)',
+        'id, sku, slug, name, description, meta_description, weight_lb, upc, retail_price, is_active, is_featured, stock_status, brand_id, primary_category_id, brands(name, slug), primary_category:categories!primary_category_id(name, slug), product_categories(categories(slug)), product_images(id, url, is_primary, display_order)',
       )
       .eq('id', params.id)
       .maybeSingle(),
@@ -163,6 +164,7 @@ export default async function AdminProductEditPage({
           metaDescription: p.meta_description ?? '',
           isActive: p.is_active,
           isFeatured: p.is_featured,
+          stockStatus: p.stock_status,
           existingImages,
         }}
         brands={brands}

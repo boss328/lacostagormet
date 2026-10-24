@@ -42,16 +42,14 @@ const nextConfig = {
 
   async headers() {
     return [
-      // Brand assets (logo, favicon, hand-lettered art) — content-addressed
-      // by filename, can cache aggressively. Bumping the logo means changing
-      // the import path or the file content, both of which Next fingerprints
-      // anyway via /_next/image.
-      {
-        source: '/brand/:path*',
+      // Match only public brand assets, never /brand/<slug> catalog pages.
+      // These filenames are not versioned, so allow replacements to refresh.
+      ...['/brand/logo.png', '/brand/logo-small.png', '/brand/icon.png'].map((source) => ({
+        source,
         headers: [
-          { key: 'Cache-Control', value: `public, max-age=${ONE_YEAR}, immutable` },
+          { key: 'Cache-Control', value: `public, max-age=${ONE_HOUR}` },
         ],
-      },
+      })),
       // Self-hosted fonts (none today — next/font/google handles its own
       // long-cache via /_next/static — but if Phase 8 adds /public/fonts
       // we want them on the same lane).

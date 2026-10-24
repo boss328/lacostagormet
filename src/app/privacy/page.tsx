@@ -1,11 +1,12 @@
 import { PageHeader } from '@/components/shop/PageHeader';
+import { pageMetadata } from '@/lib/seo/metadata';
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: 'Privacy Policy',
   description:
     'What La Costa Gourmet collects, why, and who touches it. Plain-language privacy policy · Carlsbad, CA.',
-  alternates: { canonical: '/privacy/' },
-};
+  canonical: '/privacy/',
+});
 
 /**
  * Grounded in what the stack actually does: card entry happens on
