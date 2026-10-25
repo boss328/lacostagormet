@@ -52,6 +52,7 @@ export function NewProductForm({ brands, categories }: Props) {
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
   const [stockStatus, setStockStatus] = useState('in_stock');
+  const [setUpPacks, setSetUpPacks] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -70,7 +71,7 @@ export function NewProductForm({ brands, categories }: Props) {
     const priceNum = Number(retailPrice);
     if (!Number.isFinite(priceNum) || priceNum <= 0) {
       next.retail_price = 'Price must be a positive number.';
-    } else if (Math.round(priceNum * 100) !== priceNum * 100) {
+    } else if (Math.round(priceNum * 100) / 100 !== priceNum) {
       next.retail_price = 'Price must have at most two decimal places.';
     }
     if (!categorySlug) next.category_slug = 'Pick a category.';
@@ -140,7 +141,9 @@ export function NewProductForm({ brands, categories }: Props) {
       // Brief pause so the success banner renders, then bounce back to
       // the products list where the new row appears.
       setTimeout(() => {
-        router.push('/admin/products/');
+        router.push(setUpPacks && data.product?.id
+          ? `/admin/products/${data.product.id}/#pack-options`
+          : '/admin/products/');
         router.refresh();
       }, 900);
     } catch (err) {
@@ -306,6 +309,15 @@ export function NewProductForm({ brands, categories }: Props) {
               />
             }
           />
+        </Section>
+
+        <Section title="Pack options">
+          <label className="flex items-start gap-3 text-sm text-ink">
+            <input type="checkbox" checked={setUpPacks} onChange={(event) => setSetUpPacks(event.target.checked)} className="mt-0.5 accent-brand-deep" />
+            <span>Set up singles or multipacks after creating this product
+              <span className="mt-1 block text-xs leading-relaxed text-ink-muted">Save the base product first, then add each pack’s SKU, price, shipping weight and photo.</span>
+            </span>
+          </label>
         </Section>
 
         <Section title="Images">

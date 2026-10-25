@@ -17,6 +17,7 @@ import {
   type CartItem,
 } from '@/stores/cart';
 import { formatPackSize } from '@/lib/pack-size';
+import { getPackPricing } from '@/lib/product-pack-options';
 import { Button } from '@/components/design-system/Button';
 
 const CREAM_BG =
@@ -55,6 +56,7 @@ function LineRow({ item }: { item: CartItem }) {
   const removeItem = useCartStore((s) => s.removeItem);
   const lineTotal = item.price * item.quantity;
   const pack = formatPackSize(item.pack_size);
+  const packPricing = getPackPricing({ ...item, retail_price: item.price });
 
   return (
     <div
@@ -95,6 +97,11 @@ function LineRow({ item }: { item: CartItem }) {
           {item.name}
         </Link>
         {pack && <span className="type-data-mono text-brand">{pack}</span>}
+        {packPricing && (
+          <span className="pack-unit-price">
+            {packPricing.badge} · ${packPricing.unitPrice.toFixed(2)} per {packPricing.label}
+          </span>
+        )}
         <button
           type="button"
           onClick={() => removeItem(item.product_id)}

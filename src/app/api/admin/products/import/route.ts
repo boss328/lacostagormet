@@ -73,6 +73,8 @@ type DbProduct = {
   short_description: string | null;
   pack_size: string | null;
   units_per_pack: number | null;
+  pack_parent_id: string | null;
+  pack_unit_label: string | null;
   weight_lb: number | string | null;
   upc: string | null;
   meta_description: string | null;
@@ -169,7 +171,7 @@ export async function POST(req: NextRequest) {
       admin
         .from('products')
         .select(
-          'id, sku, name, retail_price, wholesale_cost, description, short_description, pack_size, units_per_pack, weight_lb, upc, meta_description, stock_status, is_active, is_featured, brand_id, primary_category_id',
+          'id, sku, name, retail_price, wholesale_cost, description, short_description, pack_size, units_per_pack, pack_parent_id, pack_unit_label, weight_lb, upc, meta_description, stock_status, is_active, is_featured, brand_id, primary_category_id',
         )
         .limit(5000),
       admin.from('brands').select('id, name'),
@@ -303,6 +305,14 @@ export async function POST(req: NextRequest) {
           break;
         }
         case 'units_per_pack': {
+          // Validate before applying ANY row: pack constraints can otherwise
+          // reject a late update after unrelated products were already saved.
+          if (current.pack_unit_label || current.pack_parent_id) {
+            if (isClear || Number(trimmed) !== current.units_per_pack) {
+              rowErr('Pack counts for configured products cannot be changed or CLEARed through CSV. Use Pack sizes on the product edit page.');
+            }
+            break;
+          }
           if (isClear) {
             if (current.units_per_pack !== null) update.units_per_pack = null;
             break;

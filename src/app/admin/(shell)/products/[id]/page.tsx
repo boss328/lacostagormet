@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { bcImage } from '@/lib/bcImage';
+import { ProductPackOptions } from '@/components/admin/ProductPackOptions';
 import {
   EditProductForm,
   type EditProductExistingImage,
@@ -170,6 +171,7 @@ export default async function AdminProductEditPage({
         brands={brands}
         categories={categories}
       />
+      <ProductPackOptions productId={p.id} />
     </>
   );
 }

@@ -13,6 +13,8 @@ type ReorderResponse = {
     slug: string;
     brand_name: string | null;
     pack_size: string | null;
+    units_per_pack: number | null;
+    pack_unit_label: string | null;
     image_url: string | null;
     quantity: number;
     current_price: number;
@@ -103,6 +105,8 @@ export function ReorderButton({ orderNumber, variant = 'outline', className = ''
         brand_name: it.brand_name,
         price: it.current_price,
         pack_size: it.pack_size,
+        units_per_pack: it.units_per_pack ?? undefined,
+        pack_unit_label: it.pack_unit_label ?? undefined,
         image_url: it.image_url,
         quantity: it.quantity,
       })),

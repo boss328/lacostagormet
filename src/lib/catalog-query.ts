@@ -41,7 +41,7 @@ export const getCatalog = cache(async () => {
     const { data, error } = await db
       .from('products')
       .select(
-        'id, slug, sku, name, description, pack_size, retail_price, stock_status, brand_id, primary_category_id, created_at, is_featured, brands(name, slug), product_categories(category_id), product_images(url, alt_text, is_primary, display_order)',
+        'id, slug, sku, name, description, pack_size, pack_parent_id, units_per_pack, pack_unit_label, retail_price, stock_status, brand_id, primary_category_id, created_at, is_featured, brands(name, slug), product_categories(category_id), product_images(url, alt_text, is_primary, display_order)',
       )
       .eq('is_active', true)
       .order('id')

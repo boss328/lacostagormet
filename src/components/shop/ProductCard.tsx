@@ -4,6 +4,7 @@ import { ProductCardAdd } from './ProductCardAdd';
 import { bcImage } from '@/lib/bcImage';
 import { formatPackSize } from '@/lib/pack-size';
 import { isAvailableForPurchase } from '@/lib/product-availability';
+import { getPackPricing, primaryProductImage, productCartItem } from '@/lib/product-pack-options';
 type ProductImage = {
   url: string;
   alt_text: string | null;
@@ -16,6 +17,9 @@ export type ProductCardData = {
   sku: string;
   name: string;
   pack_size: string | null;
+  pack_parent_id?: string | null;
+  units_per_pack?: number | null;
+  pack_unit_label?: string | null;
   retail_price: number | string;
   stock_status?: string | null;
   brands?: { name: string; slug: string } | null;
@@ -31,12 +35,9 @@ export function ProductCard({
   priority?: boolean;
   compact?: boolean;
 }) {
-  const img =
-    product.product_images?.find((i) => i.is_primary) ??
-    [...(product.product_images ?? [])].sort(
-      (a, b) => a.display_order - b.display_order,
-    )[0];
+  const img = primaryProductImage(product);
   const price = Number(product.retail_price);
+  const pack = getPackPricing(product);
   const displayName = product.name.split(/\s-\s/)[0];
   const image = img ? (
     <FramedProductImage
@@ -59,9 +60,11 @@ export function ProductCard({
           <div className="catalog-card-heading">
             <h2>{displayName}</h2>
             <span>${price.toFixed(2)}</span>
+            {pack && <p className="pack-unit-price">${pack.unitPrice.toFixed(2)} per {pack.label}</p>}
           </div>
           <div className="product-picture">
             {image}
+            {pack && <span className="product-pack-badge">{pack.badge}</span>}
             <span className="product-open" aria-hidden="true">
               +
             </span>
@@ -77,6 +80,7 @@ export function ProductCard({
         aria-label={product.name}
       >
         {image}
+        {pack && <span className="product-pack-badge">{pack.badge}</span>}
       </Link>
       <div className="product-card-copy">
         <p className="product-brand">{product.brands?.name}</p>
@@ -84,25 +88,17 @@ export function ProductCard({
           <h3>{displayName}</h3>
         </Link>
         <p className="product-pack">
-          {formatPackSize(product.pack_size) ?? 'See product for pack size'}
+          {formatPackSize(product.pack_size) ?? pack?.badge ?? 'See product for pack size'}
         </p>
         <div className="product-purchase">
-          <span className="type-price">${price.toFixed(2)}</span>
+          <div>
+            <span className="type-price">${price.toFixed(2)}</span>
+            {pack && <p className="pack-unit-price">${pack.unitPrice.toFixed(2)} per {pack.label}</p>}
+          </div>
           {!isAvailableForPurchase(product.stock_status) ? (
             <span className="product-pack">Out of stock</span>
           ) : (
-            <ProductCardAdd
-              item={{
-                product_id: product.id,
-                sku: product.sku,
-                name: product.name,
-                slug: product.slug,
-                brand_name: product.brands?.name ?? null,
-                price,
-                pack_size: product.pack_size,
-                image_url: img ? bcImage(img.url, 'mid') : null,
-              }}
-            />
+            <ProductCardAdd item={productCartItem(product)} />
           )}
         </div>
         <Link
