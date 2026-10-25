@@ -14,7 +14,8 @@ import { bcImage } from '@/lib/bcImage';
 import { formatPackSize } from '@/lib/pack-size';
 import { pageMetadata, productTitle } from '@/lib/seo/metadata';
 import { isAvailableForPurchase } from '@/lib/product-availability';
-import { getPackPricing, productCartItem, productPackOptions } from '@/lib/product-pack-options';
+import { getPackPricing, productCartItem, productPackOptions, productDisplayName } from '@/lib/product-pack-options';
+import { groupCatalogPacks } from '@/lib/catalog-pack-groups';
 
 type Params = { slug: string };
 
@@ -73,6 +74,10 @@ async function fetchRelated(product: ProductRow): Promise<ProductCardData[]> {
   const supabase = createClient();
   const baseSelect =
     'id, slug, sku, name, pack_size, pack_parent_id, units_per_pack, pack_unit_label, retail_price, stock_status, brands(name, slug), product_images(url, alt_text, is_primary, display_order)';
+  const rootId = product.pack_parent_id ?? product.id;
+  const grouped = (rows: unknown) => groupCatalogPacks((rows ?? []) as ProductCardData[])
+    .filter(candidate => (candidate.pack_parent_id ?? candidate.id) !== rootId)
+    .slice(0, 4);
 
   if (product.brand_id) {
     const { data } = await supabase
@@ -80,9 +85,12 @@ async function fetchRelated(product: ProductRow): Promise<ProductCardData[]> {
       .select(baseSelect)
       .eq('is_active', true)
       .eq('brand_id', product.brand_id)
-      .neq('id', product.id)
-      .limit(4);
-    if (data && data.length >= 3) return data as unknown as ProductCardData[];
+      .neq('id', rootId)
+      .or(`pack_parent_id.is.null,pack_parent_id.neq.${rootId}`)
+      .order('id')
+      .limit(24);
+    const related = grouped(data);
+    if (related.length >= 3) return related;
   }
 
   if (product.primary_category_id) {
@@ -91,9 +99,11 @@ async function fetchRelated(product: ProductRow): Promise<ProductCardData[]> {
       .select(`${baseSelect}, product_categories!inner(category_id)`)
       .eq('is_active', true)
       .eq('product_categories.category_id', product.primary_category_id)
-      .neq('id', product.id)
-      .limit(4);
-    if (data) return data as unknown as ProductCardData[];
+      .neq('id', rootId)
+      .or(`pack_parent_id.is.null,pack_parent_id.neq.${rootId}`)
+      .order('id')
+      .limit(24);
+    if (data) return grouped(data);
   }
 
   return [];
@@ -202,8 +212,9 @@ export default async function ProductPage({ params }: { params: Params }) {
   const gallery = sortImages(product.product_images);
   const brandName = product.brands?.name ?? null;
   const { dollars, cents } = splitPrice(product.retail_price);
-  const pack = formatPackSize(product.pack_size);
   const packPricing = getPackPricing(product);
+  const pack = packPricing?.sizeLabel ?? formatPackSize(product.pack_size);
+  const displayName = productDisplayName(product, brandName);
   const weight = product.weight_lb
     ? `${Number(product.weight_lb).toFixed(2).replace(/\.00$/, '')} lb`
     : null;
@@ -252,7 +263,7 @@ export default async function ProductPage({ params }: { params: Params }) {
               </>
             )}
             <span aria-hidden="true" className="text-ink-muted/60">·</span>
-            <span className="text-ink truncate max-w-[50ch]">{product.name}</span>
+            <span className="text-ink truncate max-w-[50ch]">{displayName}</span>
           </nav>
         </div>
       </section>
@@ -284,14 +295,14 @@ export default async function ProductPage({ params }: { params: Params }) {
                 </Link>
               )}
 
-              <h1 className="product-title">{renderProductName(product.name)}</h1>
+              <h1 className="product-title">{renderProductName(displayName)}</h1>
 
               <p className="type-data-mono text-ink-muted">SKU · {product.sku}</p>
 
               <ProductPackOptions options={packOptions} selectedId={product.id} />
 
               <div
-                className="flex items-baseline gap-3 pt-2 pb-6 max-md:pt-1 max-md:pb-4"
+                className="flex flex-wrap items-baseline gap-3 pt-2 pb-6 max-md:pt-1 max-md:pb-4"
                 style={{ borderBottom: '1px solid var(--rule)' }}
               >
                 <span
@@ -377,7 +388,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                   <DetailRow label="Category" value={product.primary_category.name} />
                 )}
                 {weight && (
-                  <DetailRow label="Weight" value={weight} />
+                  <DetailRow label="Shipping weight" value={weight} />
                 )}
                 {product.units_per_pack && (
                   <DetailRow label="Units / pack" value={String(product.units_per_pack)} />

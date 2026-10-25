@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCatalog } from '@/lib/catalog-query';
+import { featuredCatalogProducts } from '@/lib/catalog-pack-groups';
 import { COLLECTIONS, collectionImage } from '@/lib/collections';
 import { SHIPPING_TIERS } from '@/lib/checkout/shipping';
 import { ProductCard } from '@/components/shop/ProductCard';
@@ -21,14 +22,7 @@ export default async function HomePage({
   if (typeof searchParams.code === 'string')
     redirect(`/auth/callback?code=${encodeURIComponent(searchParams.code)}`);
   const catalog = await getCatalog();
-  const featured = [...catalog.products]
-    .sort(
-      (a, b) =>
-        Number(b.is_featured) - Number(a.is_featured) ||
-        b.created_at.localeCompare(a.created_at) ||
-        a.id.localeCompare(b.id),
-    )
-    .slice(0, 8);
+  const featured = featuredCatalogProducts(catalog.products);
   const brandSlugs = [
     'big-train',
     'david-rio',

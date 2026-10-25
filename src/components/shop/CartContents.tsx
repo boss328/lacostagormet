@@ -17,7 +17,7 @@ import {
   type CartItem,
 } from '@/stores/cart';
 import { formatPackSize } from '@/lib/pack-size';
-import { getPackPricing } from '@/lib/product-pack-options';
+import { getPackPricing, productDisplayName } from '@/lib/product-pack-options';
 import { Button } from '@/components/design-system/Button';
 
 const CREAM_BG =
@@ -94,12 +94,12 @@ function LineRow({ item }: { item: CartItem }) {
           href={`/product/${item.slug}`}
           className="type-product text-ink hover:text-brand-deep transition-colors duration-200 line-clamp-2"
         >
-          {item.name}
+          {productDisplayName(item, item.brand_name)}
         </Link>
-        {pack && <span className="type-data-mono text-brand">{pack}</span>}
+        {(packPricing || pack) && <span className="type-data-mono text-brand">{packPricing?.sizeLabel ?? pack}</span>}
         {packPricing && (
           <span className="pack-unit-price">
-            {packPricing.badge} · ${packPricing.unitPrice.toFixed(2)} per {packPricing.label}
+            ${packPricing.unitPrice.toFixed(2)} per {packPricing.label}
           </span>
         )}
         <button

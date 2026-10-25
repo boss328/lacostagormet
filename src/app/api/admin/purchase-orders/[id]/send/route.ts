@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const admin = createAdminClient();
   const { data: po, error: lookupError } = await admin
     .from('vendor_orders')
-    .select('status, email_send_started_at, order_id, vendor:vendors(contact_email)')
+    .select('status, email_send_started_at, order_id, vendor:vendors(contact_email,is_self_fulfilled)')
     .eq('id', params.id)
     .maybeSingle();
   if (lookupError) return new NextResponse('The PO could not be checked. No email was sent.', { status: 500 });
@@ -32,10 +32,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     status: string;
     email_send_started_at: string | null;
     order_id: string;
-    vendor: { contact_email: string | null } | null;
+    vendor: { contact_email: string | null; is_self_fulfilled: boolean } | null;
   };
   if (poRow.status !== 'pending') return new NextResponse('Only drafts can be sent', { status: 409 });
   if (poRow.email_send_started_at) return new NextResponse(verificationMessage, { status: 409 });
+  if (poRow.vendor?.is_self_fulfilled === true) {
+    return new NextResponse('This vendor ships from your own stock. Cancel this unsent supplier draft, then prepare the order in Shipping.', { status: 409 });
+  }
+  if (poRow.vendor?.is_self_fulfilled !== false) {
+    return new NextResponse('The supplier fulfillment type could not be verified. No email was sent.', { status: 409 });
+  }
   const to = poRow.vendor?.contact_email;
   if (!to) return new NextResponse('Vendor has no contact email — set one and retry', { status: 400 });
 

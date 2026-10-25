@@ -6,8 +6,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
  *
  * Drafting model: when an order transitions to 'paid', group its line items
  * by `assigned_vendor_id` (or fall back to product.preferred_vendor_id),
- * and create one `vendor_orders` row per vendor with status='pending'
- * (draft). Jeff reviews each one and clicks Send.
+ * and create one `vendor_orders` row per external supplier with status='pending'
+ * (draft). Local vendor assignments remain available to the Shipping workspace.
+ * Jeff reviews supplier drafts and clicks Send.
  *
  * Why we reuse vendor_orders (not the spec's vendor_purchase_orders):
  *   the existing schema already had everything we need, including the
@@ -140,19 +141,22 @@ function arr2Sep(n: number): string {
  * Auto-draft vendor POs for a paid order. Idempotent: if any vendor_orders
  * already exist for the order, this is a no-op (we don't replace human edits).
  *
- * Returns the number of POs created. Errors are logged but never thrown —
- * this runs fire-and-forget from the payment callback so customer flow
- * is never impacted.
+ * Returns the number of POs created. Database errors are logged without
+ * disrupting payment finalization; callers await completion before returning.
  */
 export async function autoDraftVendorPosForOrder(orderId: string): Promise<number> {
   const admin = createAdminClient();
 
   // Idempotency check
-  const { data: existing } = await admin
+  const { data: existing, error: existingErr } = await admin
     .from('vendor_orders')
     .select('id')
     .eq('order_id', orderId)
     .limit(1);
+  if (existingErr) {
+    console.error('[vendor-po] existing PO lookup failed', existingErr.code);
+    return 0;
+  }
   if (existing && existing.length > 0) return 0;
 
   // Order header (we need shipping_address + order_number)
@@ -205,12 +209,28 @@ export async function autoDraftVendorPosForOrder(orderId: string): Promise<numbe
   }
   if (grouped.size === 0) return 0;
 
-  // Pull primary warehouses for the relevant vendors in one query
+  // Classify every assigned vendor before writing anything. A missing/failed
+  // lookup must never turn local stock into a supplier purchase order.
   const vendorIds = Array.from(grouped.keys());
-  const { data: warehouses } = await admin
-    .from('vendor_warehouses')
-    .select('id, vendor_id, label, city, state, is_primary')
-    .in('vendor_id', vendorIds);
+  const { data: vendors, error: vendorErr } = await admin
+    .from('vendors')
+    .select('id,is_self_fulfilled')
+    .in('id', vendorIds);
+  const vendorById = new Map((vendors ?? []).map(vendor => [vendor.id, vendor]));
+  if (vendorErr || vendorIds.some(id => typeof vendorById.get(id)?.is_self_fulfilled !== 'boolean')) {
+    console.error('[vendor-po] fulfillment vendor lookup failed', vendorErr?.code ?? 'missing_vendor');
+    return 0;
+  }
+  const supplierIds = vendorIds.filter(id => !vendorById.get(id)!.is_self_fulfilled);
+  const { data: warehouses, error: warehouseErr } = supplierIds.length
+    ? await admin.from('vendor_warehouses')
+      .select('id, vendor_id, label, city, state, is_primary')
+      .in('vendor_id', supplierIds)
+    : { data: [], error: null };
+  if (warehouseErr) {
+    console.error('[vendor-po] warehouse lookup failed', warehouseErr.code);
+    return 0;
+  }
   const primaryByVendor = new Map<string, Warehouse>();
   for (const w of (warehouses ?? []) as Array<Warehouse & { vendor_id: string }>) {
     if (w.is_primary && !primaryByVendor.has(w.vendor_id)) {
@@ -218,25 +238,11 @@ export async function autoDraftVendorPosForOrder(orderId: string): Promise<numbe
     }
   }
 
-  let created = 0;
   const entries = Array.from(grouped.entries());
   for (const [vendorId, lineItems] of entries) {
-    const warehouse = primaryByVendor.get(vendorId) ?? null;
-    const warehouseLabel = warehouse?.label ?? null;
-    const { subject, body } = composeDraftEmail({
-      orderNumber: orderRow.order_number,
-      shippingAddress: orderRow.shipping_address ?? {},
-      items: lineItems,
-      warehouseLabel,
-    });
-    const totalWholesale = lineItems.reduce(
-      (s: number, i: LineItem) =>
-        s + (i.unit_wholesale_cost == null ? 0 : Number(i.unit_wholesale_cost)) * i.quantity,
-      0,
-    );
-
     // Stamp the assigned_vendor_id on each order_item if it was previously null
-    // (so the order detail UI groups items the same way).
+    // for both local and supplier items. A local item left unassigned would be
+    // ambiguous when the same order also has an external supplier PO.
     const { error: assignmentError } = await admin
       .from('order_items')
       .update({ assigned_vendor_id: vendorId })
@@ -248,8 +254,26 @@ export async function autoDraftVendorPosForOrder(orderId: string): Promise<numbe
       );
     if (assignmentError) {
       console.error('[vendor-po] item assignment failed', assignmentError.code);
-      continue;
+      return 0;
     }
+  }
+
+  let created = 0;
+  for (const [vendorId, lineItems] of entries) {
+    if (vendorById.get(vendorId)!.is_self_fulfilled) continue;
+
+    const warehouse = primaryByVendor.get(vendorId) ?? null;
+    const { subject, body } = composeDraftEmail({
+      orderNumber: orderRow.order_number,
+      shippingAddress: orderRow.shipping_address ?? {},
+      items: lineItems,
+      warehouseLabel: warehouse?.label ?? null,
+    });
+    const totalWholesale = lineItems.reduce(
+      (s: number, i: LineItem) =>
+        s + (i.unit_wholesale_cost == null ? 0 : Number(i.unit_wholesale_cost)) * i.quantity,
+      0,
+    );
 
     const { error: insErr } = await admin.from('vendor_orders').insert({
       order_id: orderRow.id,

@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
+import { catalogGroupCreatedAt } from './catalog-pack-groups';
 import {
   filterCatalog,
   type CatalogProduct,
@@ -41,9 +42,10 @@ export const getCatalog = cache(async () => {
     const { data, error } = await db
       .from('products')
       .select(
-        'id, slug, sku, name, description, pack_size, pack_parent_id, units_per_pack, pack_unit_label, retail_price, stock_status, brand_id, primary_category_id, created_at, is_featured, brands(name, slug), product_categories(category_id), product_images(url, alt_text, is_primary, display_order)',
+        'id, slug, sku, name, description, pack_size, pack_parent_id, units_per_pack, pack_unit_label, retail_price, stock_status, brand_id, primary_category_id, created_at, is_featured, is_active, deleted_at, brands(name, slug), product_categories(category_id), product_images(url, alt_text, is_primary, display_order)',
       )
       .eq('is_active', true)
+      .is('deleted_at', null)
       .order('id')
       .range(offset, offset + 499);
     if (error)
@@ -62,6 +64,7 @@ export async function queryCatalog(filters: CatalogFilters) {
 }
 export function isJustIn(product: ProductWithJustIn, threshold: string | null) {
   return (
-    product.is_featured || Boolean(threshold && product.created_at > threshold)
+    product.is_featured || product.pack_options?.some(option => option.is_featured)
+    || Boolean(threshold && catalogGroupCreatedAt(product) > threshold)
   );
 }
