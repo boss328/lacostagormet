@@ -14,7 +14,7 @@ import {
 } from '@/stores/cart';
 import { US_STATES, type AddressPayload } from '@/lib/checkout/validate';
 import { formatPackSize } from '@/lib/pack-size';
-import { getPackPricing } from '@/lib/product-pack-options';
+import { getPackPricing, productDisplayName } from '@/lib/product-pack-options';
 import { WalletPayments } from './WalletPayments';
 import { calculateShipping } from '@/lib/checkout/shipping';
 
@@ -608,14 +608,14 @@ function SummaryLine({ item }: { item: CartItem }) {
           className="font-display text-ink line-clamp-2"
           style={{ fontSize: '13px', lineHeight: 1.3 }}
         >
-          {item.name}
+          {productDisplayName(item, item.brand_name)}
         </p>
         <p className="type-data-mono text-ink-muted">
-          {pack ? `${pack} · ` : ''}qty {item.quantity}
+          {packPricing ? `${packPricing.sizeLabel} · ` : pack ? `${pack} · ` : ''}qty {item.quantity}
         </p>
         {packPricing && (
           <p className="pack-unit-price">
-            {packPricing.badge} · ${packPricing.unitPrice.toFixed(2)} per {packPricing.label}
+            ${packPricing.unitPrice.toFixed(2)} per {packPricing.label}
           </p>
         )}
       </div>

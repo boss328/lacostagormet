@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getPackPricing, productCartItem, productPackOptions, type PackProduct } from './product-pack-options';
+import { getPackPricing, packSavingsForOption, packUnitSize, productCartItem, productDisplayName, productPackOptions, type PackProduct } from './product-pack-options';
 
 const fourPack: PackProduct = {
   id: 'case-id',
@@ -67,4 +67,72 @@ test('cart image selection follows primary then display order without changing t
   assert.equal(productCartItem({ ...single, product_images: images }).image_url, '/first.jpg');
   assert.equal(images[0].url, '/second.jpg');
   assert.equal(productCartItem({ ...single, product_images: [...images, { ...images[0], url: '/primary.jpg', is_primary: true }] }).image_url, '/primary.jpg');
+});
+
+test('pack size describes actual net contents for case and single packaging', () => {
+  for (const pack_size of ['Four 4 lb. Bags', '4 × 4 lb', '4x4lb', '4 4 lbs bags']) {
+    assert.equal(getPackPricing({ ...fourPack, pack_size })?.sizeLabel, '4 bags · 4 lb each');
+  }
+  for (const pack_size of ['Four 3 lb. Bags', '4 × 3 lb', 'Four 3Lb. Bags']) {
+    assert.equal(getPackPricing({ ...fourPack, pack_size })?.sizeLabel, '4 bags · 3 lb each');
+  }
+  assert.equal(getPackPricing(single)?.sizeLabel, '1 bag · 4 lb');
+  assert.equal(getPackPricing({ ...single, pack_size: 'One 3 lb. Bag' })?.sizeLabel, '1 bag · 3 lb');
+  for (const ounces of [12, 16, 32]) {
+    assert.equal(packUnitSize(`${ounces} oz bottle`, 1), `${ounces} oz`, 'a single weight must not split into count and smaller weight');
+  }
+  assert.equal(packUnitSize('12 × 16 oz bottles', 12), '16 oz');
+  assert.equal(packUnitSize('6 32 fl oz bottles', 6), '32 fl oz');
+  assert.equal(getPackPricing({ ...fourPack, units_per_pack: 6, pack_unit_label: 'bottle', pack_size: '6 × 32 fl oz bottles' })?.sizeLabel, '6 bottles · 32 fl oz each');
+  assert.equal(getPackPricing({ ...fourPack, pack_unit_label: 'box', pack_size: null })?.sizeLabel, '4 boxes');
+});
+
+test('unclear packaging falls back to count without inferring net contents from shipping weight', () => {
+  for (const pack_size of [null, '', 'Foodservice case', '16 lb total', 'Four 0 lb. Bags', 'Three 4 lb. Bags', '16 lb']) {
+    const product = { ...fourPack, pack_size, weight_lb: 17 };
+    assert.equal(getPackPricing(product)?.sizeLabel, '4 bags');
+    assert.equal(getPackPricing(product)?.unitSize, null);
+  }
+  assert.equal(packUnitSize('Four 4 lb. Bags', 1), null);
+});
+
+test('visible configured pack names preserve flavors and dietary claims while omitting repeated packaging', () => {
+  const cases: [string, string][] = [
+    ['David Rio Elephant Vanilla Chai Mix, 4 lb Foodservice Bag (Case of 4) - ~65 Servings per Bag', 'Elephant Vanilla Chai Mix'],
+    ['David Rio Tiger Spice Chai Mix, 4 lb Foodservice Bag (Case of 4) - ~65 Servings per Bag', 'Tiger Spice Chai Mix'],
+    ['David Rio Power Chai Matcha, 3 lb Bag (Case of 4) - Sweetened Matcha Base', 'Power Chai Matcha · Sweetened Matcha Base'],
+    ['David Rio Orca Spice Sugar-Free Chai Mix, 3 lb Bag (Case of 4) - Sugar-Free Chai', 'Orca Spice Sugar-Free Chai Mix'],
+    ['David Rio Flamingo Vanilla Decaffeinated Sugar-Free Chai Mix, 3 lb Bag (Case of 4) - Sugar-Free Chai', 'Flamingo Vanilla Decaffeinated Sugar-Free Chai Mix'],
+    ['David Rio Elephant Vanilla Chai — One 4 lb. Bag', 'Elephant Vanilla Chai'],
+    ['David Rio Flamingo Vanilla Decaffeinated Sugar-Free Chai — One 3 lb. Bag', 'Flamingo Vanilla Decaffeinated Sugar-Free Chai'],
+    ['David Rio Orca Spice Sugar-Free Chai — One 3 lb. Bag', 'Orca Spice Sugar-Free Chai'],
+    ['David Rio Power Chai Matcha — One 3 lb. Bag', 'Power Chai Matcha'],
+    ['David Rio Tiger Spice Chai — One 4 lb. Bag', 'Tiger Spice Chai'],
+  ];
+  for (const [name, expected] of cases) {
+    const product = { ...fourPack, name };
+    assert.equal(productDisplayName(product, 'David Rio'), expected);
+    assert.equal(product.name, name, 'full catalog name stays intact');
+    assert.equal(productCartItem(product).name, name, 'orders retain full catalog name');
+  }
+  assert.equal(productDisplayName({ ...fourPack, name: 'David Riordan Black Tea Bags' }, 'David Rio'), 'David Riordan Black Tea Bags');
+  assert.equal(productDisplayName({ ...fourPack, name: 'Black Tea Bags' }), 'Black Tea Bags');
+  const legacy = { ...fourPack, pack_unit_label: null, name: cases[0][0] };
+  assert.equal(productDisplayName(legacy, 'David Rio'), legacy.name);
+});
+
+test('savings compare purchasable public singles with matching units and net contents', () => {
+  const fullCase = { ...fourPack, retail_price: 188.95 };
+  const oneBag = { ...single, retail_price: 51.96, is_active: true };
+  assert.equal(packSavingsForOption(fullCase, [fullCase, oneBag]), 18.89);
+  assert.equal(packSavingsForOption(oneBag, [fullCase, oneBag]), null);
+  for (const changes of [
+    { is_active: false }, { deleted_at: '2026-01-01' }, { stock_status: 'out_of_stock' },
+    { pack_unit_label: 'bottle' }, { pack_size: 'One 3 lb. Bag' }, { pack_size: null },
+    { pack_parent_id: 'unrelated-family' }, { retail_price: 'invalid' }, { retail_price: 47 },
+  ]) {
+    assert.equal(packSavingsForOption(fullCase, [fullCase, { ...oneBag, ...changes }]), null);
+  }
+  assert.equal(packSavingsForOption(fullCase, [fullCase]), null);
+  assert.equal(packSavingsForOption({ ...fullCase, pack_size: null }, [fullCase, oneBag]), null);
 });

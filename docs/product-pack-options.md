@@ -1,6 +1,16 @@
 # Product pack options
 
-Each pack size is a separate purchasable product with its own SKU, total price, availability, image, shipping weight and fulfillment vendor. Related products appear together in the product-page pack selector. Cards, cart, checkout and reorders retain the selected SKU and show a price per bag when configured.
+Each pack size is a separate purchasable product with its own SKU, total price, availability, image, shipping weight and fulfillment vendor. The catalog shows one card per configured product family, with links to its matching public pack sizes. Related products appear together in the product-page pack selector. Cards, cart, checkout and reorders retain the selected SKU and show a price per bag when configured.
+
+Pack labels state the actual contents, such as **1 bag · 4 lb** or **4 bags · 4 lb each**. The size comes from the saved pack description, never the shipping weight. Dollar savings compare the case price with the same number of purchasable single bags in the same family, only when both net sizes are verified to match. Full product names remain in catalog data and order records; visible pack titles omit redundant packaging and promotional suffixes.
+
+Catalog filters and exact SKU searches select matching products before grouping. A normal browse prefers the smallest available pack; an exact SKU search keeps that SKU. Homepage favorites retain Jeff's featured SKU and offer the other public sizes in the same family. Hidden drafts never appear as options.
+
+## Local fulfillment
+
+After payment, products assigned to a self-fulfilled vendor stay in the local Shipping workflow. Automatic supplier purchase orders are created only for verified external suppliers. Mixed orders keep local and supplier items separate. The supplier Send endpoint also rejects self-fulfilled vendors, so a legacy local draft cannot accidentally be emailed as a drop-ship request.
+
+The October 25 review found no existing self-fulfilled purchase orders requiring cleanup. `pnpm test:shipping` includes regression tests that exercise actual card and wallet finalization, automatic PO creation, and the database's local-shipping reservation rules without charging a payment or buying postage.
 
 ## Jeff's starting products
 

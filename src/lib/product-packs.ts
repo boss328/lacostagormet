@@ -69,6 +69,16 @@ export function packSavingsPercent(price: number, units: number, singlePrice: nu
   return savings > 0 ? savings : null;
 }
 
+/** Compare whole pack totals, never rounded display prices per unit. */
+export function packSavingsAmount(price: number, units: number, singlePrice: number): number | null {
+  const total = cents(price);
+  const single = cents(singlePrice);
+  if (total === null || single === null || single <= 0 || !Number.isInteger(units) || units <= 1) return null;
+  const individualTotal = single * units;
+  if (!Number.isSafeInteger(individualTotal) || total >= individualTotal) return null;
+  return (individualTotal - total) / 100;
+}
+
 export function packLabel(units: number, label = 'pack'): string {
   return `${units} ${label}`;
 }

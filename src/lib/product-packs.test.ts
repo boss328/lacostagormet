@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { packUnitPrice, packSavingsPercent, parsePackConfiguration, parsePackOptionInput } from './product-packs';
+import { packUnitPrice, packSavingsAmount, packSavingsPercent, parsePackConfiguration, parsePackOptionInput } from './product-packs';
 
 const input = {
   sku: 'CHAI-SINGLE', name: 'Chai single bag', slug: 'chai-single-bag', retail_price: 51.96,
@@ -30,6 +30,18 @@ test('new options default to unpublished and unavailable, without inherited imag
   assert.equal('wholesale_cost' in parsed, false);
   assert.equal('pack_parent_id' in parsed, false);
   assert.equal('is_featured' in parsed, false);
+});
+
+test('dollar savings compare total cents without rounding per-unit prices first', () => {
+  assert.equal(packSavingsAmount(188.95, 4, 51.96), 18.89);
+  assert.equal(packSavingsAmount(189, 4, 51.98), 18.92);
+  assert.equal(packSavingsAmount(1, 3, 0.34), 0.02);
+  assert.equal(packSavingsAmount(189, 4, 47.25), null);
+  assert.equal(packSavingsAmount(189.01, 4, 47.25), null);
+  assert.equal(packSavingsAmount(12, 1, 13), null);
+  assert.equal(packSavingsAmount(12, 4, 0), null);
+  for (const count of [0, -1, 1.5, NaN, Infinity]) assert.equal(packSavingsAmount(12, count, 4), null);
+  assert.equal(packSavingsAmount(NaN, 4, 4), null);
 });
 
 test('invalid prices, weights, counts, routing and visibility fail before a write', () => {

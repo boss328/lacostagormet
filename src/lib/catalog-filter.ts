@@ -1,14 +1,18 @@
 import type { ProductCardData } from '@/components/shop/ProductCard';
 import { COLLECTIONS } from './collections';
 import { PAGE_SIZE, parsePage, type SortKey } from './catalog-state';
+import { catalogGroupCreatedAt, groupCatalogPacks } from './catalog-pack-groups';
 
-export type CatalogProduct = ProductCardData & {
+export type CatalogProduct = Omit<ProductCardData, 'pack_options'> & {
   description?: string | null;
   brand_id: string | null;
   primary_category_id: string | null;
   created_at: string;
   is_featured: boolean;
+  is_active?: boolean;
+  deleted_at?: string | null;
   product_categories: { category_id: string }[];
+  pack_options?: CatalogProduct[];
 };
 export type CatalogCategory = {
   id: string;
@@ -56,7 +60,7 @@ export function filterCatalog(data: CatalogData, filters: CatalogFilters) {
     : new Set<string>();
   const brandRow = data.brands.find((b) => b.slug === brand);
   const search = q.trim().toLocaleLowerCase('en-US');
-  const filtered = data.products
+  const matching = data.products
     .filter((product) => {
       if (brand && (!brandRow || product.brand_id !== brandRow.id))
         return false;
@@ -80,7 +84,8 @@ export function filterCatalog(data: CatalogData, filters: CatalogFilters) {
       )
         return false;
       return true;
-    })
+    });
+  const filtered = groupCatalogPacks(matching, { search })
     .sort((a, b) => {
       const difference =
         sort === 'price-asc'
@@ -89,7 +94,7 @@ export function filterCatalog(data: CatalogData, filters: CatalogFilters) {
             ? Number(b.retail_price) - Number(a.retail_price)
             : sort === 'name-asc'
               ? a.name.localeCompare(b.name, 'en')
-              : b.created_at.localeCompare(a.created_at);
+              : catalogGroupCreatedAt(b).localeCompare(catalogGroupCreatedAt(a));
       return difference || a.id.localeCompare(b.id);
     });
   const total = filtered.length;
@@ -97,7 +102,7 @@ export function filterCatalog(data: CatalogData, filters: CatalogFilters) {
   const page = Math.min(parsePage(String(filters.page ?? 1)), pageCount);
   const newest = data.products.reduce(
     (value, product) =>
-      product.created_at > value ? product.created_at : value,
+      product.is_active !== false && !product.deleted_at && product.created_at > value ? product.created_at : value,
     '',
   );
   return {

@@ -42,7 +42,7 @@ function harness() {
       id: poId, status: 'pending', email_send_started_at: null as string | null,
       email_subject: 'Old subject', email_body: 'Old body', warehouse_id: null as string | null,
       order_id: '11111111-1111-4111-8111-111111111111',
-      vendor: { contact_email: 'supplier@example.test' as string | null },
+      vendor: { contact_email: 'supplier@example.test' as string | null, is_self_fulfilled: false as boolean | undefined },
     },
     preview: false,
     clientCalls: 0,
@@ -129,6 +129,18 @@ test('supplier send persists a frozen claim before emailing, then checks finaliz
   assert.equal(h.emails.length, 1);
   assert.equal((await h.request('mark-acknowledged')).status, 200);
   assert.equal(h.state.po.status, 'confirmed', 'successful claims do not block ordinary supplier lifecycle');
+});
+
+test('local or unverified fulfillment vendors cannot claim or send a supplier email', async () => {
+  for (const isSelfFulfilled of [true, undefined]) {
+    const h = harness();
+    h.state.po.vendor.is_self_fulfilled = isSelfFulfilled;
+    assert.equal((await h.request('send')).status, 409);
+    assert.deepEqual(h.events, ['lookup']);
+    assert.equal(h.state.po.email_send_started_at, null);
+    assert.equal(h.emails.length, 0);
+    assert.equal((await h.request('cancel')).status, 200, 'unsent local drafts remain cancellable so local shipping can proceed');
+  }
 });
 
 test('a send in progress blocks another send, cancellation, and payload edits', async () => {

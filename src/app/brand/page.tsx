@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getCatalog } from '@/lib/catalog-query';
+import { groupCatalogPacks } from '@/lib/catalog-pack-groups';
 import { PageHeader } from '@/components/shop/PageHeader';
 import { pageMetadata } from '@/lib/seo/metadata';
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,7 @@ export default async function BrandsPage() {
       <section className="home-section wrap">
         <div className="brand-directory">
           {brands.map((b) => {
-            const count = products.filter((p) => p.brand_id === b.id).length;
+            const count = groupCatalogPacks(products.filter((p) => p.brand_id === b.id)).length;
             return (
               <Link key={b.id} href={`/brand/${b.slug}`}>
                 <h2>{b.name}</h2>
