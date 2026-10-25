@@ -14,6 +14,7 @@ import {
 } from '@/stores/cart';
 import { US_STATES, type AddressPayload } from '@/lib/checkout/validate';
 import { formatPackSize } from '@/lib/pack-size';
+import { getPackPricing } from '@/lib/product-pack-options';
 import { WalletPayments } from './WalletPayments';
 import { calculateShipping } from '@/lib/checkout/shipping';
 
@@ -573,6 +574,7 @@ function TextField({
 
 function SummaryLine({ item }: { item: CartItem }) {
   const pack = formatPackSize(item.pack_size);
+  const packPricing = getPackPricing({ ...item, retail_price: item.price });
   const lineTotal = item.price * item.quantity;
   return (
     <li
@@ -611,6 +613,11 @@ function SummaryLine({ item }: { item: CartItem }) {
         <p className="type-data-mono text-ink-muted">
           {pack ? `${pack} · ` : ''}qty {item.quantity}
         </p>
+        {packPricing && (
+          <p className="pack-unit-price">
+            {packPricing.badge} · ${packPricing.unitPrice.toFixed(2)} per {packPricing.label}
+          </p>
+        )}
       </div>
       <span className="type-data-mono text-ink shrink-0">${lineTotal.toFixed(2)}</span>
     </li>

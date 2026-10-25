@@ -7,12 +7,14 @@ import { SectionHead } from '@/components/design-system/SectionHead';
 import { ProductCard, type ProductCardData } from '@/components/shop/ProductCard';
 import { ProductGallery, type GalleryImage } from '@/components/shop/ProductGallery';
 import { ProductAddPanel } from '@/components/shop/ProductAddPanel';
+import { ProductPackOptions } from '@/components/shop/ProductPackOptions';
 import { ProductDescription } from '@/components/shop/ProductDescription';
 import { ProductJsonLd } from '@/components/shop/ProductJsonLd';
 import { bcImage } from '@/lib/bcImage';
 import { formatPackSize } from '@/lib/pack-size';
 import { pageMetadata, productTitle } from '@/lib/seo/metadata';
 import { isAvailableForPurchase } from '@/lib/product-availability';
+import { getPackPricing, productCartItem, productPackOptions } from '@/lib/product-pack-options';
 
 type Params = { slug: string };
 
@@ -25,6 +27,8 @@ type ProductRow = {
   short_description: string | null;
   pack_size: string | null;
   units_per_pack: number | null;
+  pack_parent_id: string | null;
+  pack_unit_label: string | null;
   weight_lb: number | string | null;
   retail_price: number | string;
   upc: string | null;
@@ -45,7 +49,7 @@ type ProductRow = {
 };
 
 const PRODUCT_SELECT = `
-  id, slug, sku, name, description, short_description, pack_size, units_per_pack,
+  id, slug, sku, name, description, short_description, pack_size, units_per_pack, pack_parent_id, pack_unit_label,
   weight_lb, retail_price, upc, stock_status, brand_id, primary_category_id,
   brands(id, name, slug),
   primary_category:categories!primary_category_id(id, name, slug),
@@ -68,7 +72,7 @@ async function fetchProduct(slug: string): Promise<ProductRow | null> {
 async function fetchRelated(product: ProductRow): Promise<ProductCardData[]> {
   const supabase = createClient();
   const baseSelect =
-    'id, slug, sku, name, pack_size, retail_price, stock_status, brands(name, slug), product_images(url, alt_text, is_primary, display_order)';
+    'id, slug, sku, name, pack_size, pack_parent_id, units_per_pack, pack_unit_label, retail_price, stock_status, brands(name, slug), product_images(url, alt_text, is_primary, display_order)';
 
   if (product.brand_id) {
     const { data } = await supabase
@@ -93,6 +97,18 @@ async function fetchRelated(product: ProductRow): Promise<ProductCardData[]> {
   }
 
   return [];
+}
+
+async function fetchPackOptions(product: ProductRow): Promise<ProductRow[]> {
+  if (!getPackPricing(product)) return [];
+  const rootId = product.pack_parent_id ?? product.id;
+  const { data, error } = await createClient()
+    .from('products')
+    .select(PRODUCT_SELECT)
+    .eq('is_active', true)
+    .or(`id.eq.${rootId},pack_parent_id.eq.${rootId}`);
+  if (error) throw new Error(`product pack options: ${error.message}`);
+  return productPackOptions(product, (data ?? []) as unknown as ProductRow[]);
 }
 
 function sortImages(
@@ -181,13 +197,13 @@ export default async function ProductPage({ params }: { params: Params }) {
   const product = await fetchProduct(params.slug);
   if (!product) notFound();
 
-  const [related] = await Promise.all([fetchRelated(product)]);
+  const [related, packOptions] = await Promise.all([fetchRelated(product), fetchPackOptions(product)]);
 
   const gallery = sortImages(product.product_images);
-  const primary = gallery[0] ?? null;
   const brandName = product.brands?.name ?? null;
   const { dollars, cents } = splitPrice(product.retail_price);
   const pack = formatPackSize(product.pack_size);
+  const packPricing = getPackPricing(product);
   const weight = product.weight_lb
     ? `${Number(product.weight_lb).toFixed(2).replace(/\.00$/, '')} lb`
     : null;
@@ -200,16 +216,7 @@ export default async function ProductPage({ params }: { params: Params }) {
   if (product.primary_category_id) tagSet.delete(product.primary_category_id);
   const tagList = Array.from(tagSet.values());
 
-  const addItemData = {
-    product_id: product.id,
-    sku: product.sku,
-    name: product.name,
-    slug: product.slug,
-    brand_name: brandName,
-    price: Number(product.retail_price),
-    pack_size: product.pack_size,
-    image_url: primary ? bcImage(primary.url, 'mid') : null,
-  };
+  const addItemData = productCartItem(product);
 
   const categoryCrumb = product.primary_category
     ? { href: `/shop/${product.primary_category.slug}`, label: product.primary_category.name }
@@ -255,13 +262,15 @@ export default async function ProductPage({ params }: { params: Params }) {
         <div className="max-w-content mx-auto px-8 pt-8 pb-20 max-md:px-4 max-md:pt-4 max-md:pb-8">
           <div className="grid gap-12 max-lg:gap-8 max-md:gap-5 lg:grid-cols-[1.15fr_1fr]">
             {/* Gallery — capped on mobile so it doesn't dominate the viewport */}
-            <div className="product-gallery-shell">
+            <div className="product-gallery-shell relative">
               <ProductGallery
+                key={product.id}
                 images={gallery}
                 productName={product.name}
                 brandName={brandName}
                 sku={product.sku}
               />
+              {packPricing && <span className="product-pack-badge">{packPricing.badge}</span>}
             </div>
 
             {/* Info panel */}
@@ -278,6 +287,8 @@ export default async function ProductPage({ params }: { params: Params }) {
               <h1 className="product-title">{renderProductName(product.name)}</h1>
 
               <p className="type-data-mono text-ink-muted">SKU · {product.sku}</p>
+
+              <ProductPackOptions options={packOptions} selectedId={product.id} />
 
               <div
                 className="flex items-baseline gap-3 pt-2 pb-6 max-md:pt-1 max-md:pb-4"
@@ -305,7 +316,11 @@ export default async function ProductPage({ params }: { params: Params }) {
                 )}
               </div>
 
-              <ProductAddPanel item={addItemData} available={isAvailableForPurchase(product.stock_status)} />
+              {packPricing && (
+                <p className="pack-unit-price product-unit-price">${packPricing.unitPrice.toFixed(2)} per {packPricing.label}</p>
+              )}
+
+              <ProductAddPanel key={product.id} item={addItemData} available={isAvailableForPurchase(product.stock_status)} />
 
               {tagList.length > 0 && (
                 <div

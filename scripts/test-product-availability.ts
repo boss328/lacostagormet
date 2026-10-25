@@ -6,6 +6,7 @@ import ts from 'typescript';
 import { NextRequest } from 'next/server';
 import * as availability from '../src/lib/product-availability';
 import * as productSchema from '../src/lib/seo/product-schema';
+import * as productPackOptions from '../src/lib/product-pack-options';
 import { checkoutCreateSchema } from '../src/lib/checkout/validate';
 import { productCategoryIds } from '../src/lib/admin/product-categories';
 
@@ -198,6 +199,7 @@ test('product cards and JSON-LD agree for all availability states', () => {
     './ProductImage': { ProductImage: () => null }, './ProductCardAdd': { ProductCardAdd: () => react.createElement('button', {}, 'Add to cart') },
     '@/lib/bcImage': { bcImage: (value: string) => value }, '@/lib/pack-size': { formatPackSize: () => 'Case' },
     '@/lib/product-availability': availability,
+    '@/lib/product-pack-options': productPackOptions,
   });
   const schema = evaluate('../src/components/shop/ProductJsonLd.tsx', {
     'react/jsx-runtime': require('react/jsx-runtime'), '@/lib/seo/product-schema': productSchema,
@@ -258,5 +260,43 @@ test('product forms show stock options and preserve the saved edit status', () =
     assert.match(html, new RegExp(`<option value="${selected}" selected=""`));
     for (const status of availability.STOCK_STATUSES) assert.ok(html.includes(`value="${status}"`));
     assert.ok(html.includes('Quantities are not synced automatically.'));
+  }
+});
+
+test('Google feed keeps full pack prices and supplies per-unit measures only for configured packs', async () => {
+  const fixtures = [
+    { sku: 'CASE-4', retail_price: 40, units_per_pack: 4, pack_unit_label: 'bag' },
+    { sku: 'SINGLE-1', retail_price: 11, units_per_pack: 1, pack_unit_label: 'bag' },
+    { sku: 'LEGACY', retail_price: 40, units_per_pack: 4, pack_unit_label: null },
+    { sku: 'UNSET', retail_price: 20, units_per_pack: null, pack_unit_label: null },
+    { sku: 'INVALID', retail_price: 20, units_per_pack: 0, pack_unit_label: 'bag' },
+  ];
+  const rows = fixtures.map(fixture => ({ ...product('in_stock'), ...fixture,
+    product_images: [{ url: `${origin}/coffee.jpg`, is_primary: true, display_order: 0 }] }));
+  let selected = '';
+  const feed = evaluate('../src/app/api/google-feed.xml/route.ts', {
+    '@/lib/seo/product-schema': productSchema,
+    '@/lib/supabase/static': { createStaticClient: () => {
+      const query: any = { select: (columns: string) => { selected = columns; return query; }, eq: () => query, is: () => query,
+        range: async () => ({ data: rows, error: null }) };
+      return { from: () => query };
+    } },
+  });
+  const response = await feed.GET();
+  assert.equal(response.status, 200);
+  const xml = await response.text();
+  assert.match(selected, /units_per_pack/);
+  assert.match(selected, /pack_unit_label/);
+  for (const fixture of fixtures) {
+    const item = xml.split('<item>').find((part: string) => part.includes(`<g:id>${fixture.sku}</g:id>`));
+    assert.ok(item);
+    assert.ok(item.includes(`<g:price>${fixture.retail_price.toFixed(2)} USD</g:price>`));
+    if (fixture.sku === 'CASE-4' || fixture.sku === 'SINGLE-1') {
+      assert.ok(item.includes(`<g:unit_pricing_measure>${fixture.units_per_pack} ct</g:unit_pricing_measure>`));
+      assert.ok(item.includes('<g:unit_pricing_base_measure>1 ct</g:unit_pricing_base_measure>'));
+    } else {
+      assert.ok(!item.includes('<g:unit_pricing_'));
+    }
+    assert.ok(!item.includes('<g:multipack>'));
   }
 });

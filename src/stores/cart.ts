@@ -13,6 +13,8 @@ export type CartItem = {
   brand_name: string | null;
   price: number;
   pack_size: string | null;
+  units_per_pack?: number;
+  pack_unit_label?: string;
   image_url: string | null;
   quantity: number;
 };

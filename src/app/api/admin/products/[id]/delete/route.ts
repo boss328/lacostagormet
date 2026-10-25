@@ -27,6 +27,9 @@ export const dynamic = 'force-dynamic';
  *                                       was hidden instead
  *   { ok: false, errorMessage }       — anything else
  */
+const PACK_GROUP_DELETE_MESSAGE =
+  'This product has pack options. Turn off its Active setting to hide it, or remove its pack options before deleting the original product.';
+
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const productId = params.id;
 
@@ -57,6 +60,24 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
   if (!product) {
     return NextResponse.json({ ok: false, errorMessage: 'Product not found.' }, { status: 404 });
+  }
+
+  // A family root must remain available as the grouping anchor even if its
+  // original pack is hidden from customers. Include inactive/deleted options:
+  // the self-reference FK still protects those records from hard deletion.
+  const { count: packCount, error: packCountErr } = await admin
+    .from('products')
+    .select('id', { count: 'exact', head: true })
+    .eq('pack_parent_id', productId);
+  if (packCountErr) {
+    console.error('[products/delete] pack option count failed', packCountErr);
+    return NextResponse.json(
+      { ok: false, errorMessage: 'Could not check linked pack options. Please try again.' },
+      { status: 500 },
+    );
+  }
+  if ((packCount ?? 0) > 0) {
+    return NextResponse.json({ ok: false, errorMessage: PACK_GROUP_DELETE_MESSAGE }, { status: 409 });
   }
 
   // ── Order history check ────────────────────────────────────────────
@@ -100,8 +121,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { error: delErr } = await admin.from('products').delete().eq('id', productId);
   if (delErr) {
     console.error('[products/delete] delete failed', delErr);
+    // A new option can be created after the count above. The FK closes that
+    // race; translate its refusal rather than exposing database internals.
+    if (delErr.code === '23503') {
+      return NextResponse.json({
+        ok: false,
+        errorMessage: delErr.message?.includes('products_pack_parent_id_fkey')
+          ? PACK_GROUP_DELETE_MESSAGE
+          : 'This product is linked to another record. Turn off its Active setting to hide it instead of deleting it.',
+      }, { status: 409 });
+    }
     return NextResponse.json(
-      { ok: false, errorMessage: delErr.message ?? 'Delete failed.' },
+      { ok: false, errorMessage: 'Could not delete product. Please try again.' },
       { status: 500 },
     );
   }

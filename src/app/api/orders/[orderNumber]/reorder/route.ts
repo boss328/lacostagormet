@@ -51,6 +51,8 @@ type ProductLookup = {
   slug: string;
   name: string;
   pack_size: string | null;
+  units_per_pack: number | null;
+  pack_unit_label: string | null;
   retail_price: number | string;
   is_active: boolean;
   deleted_at: string | null;
@@ -142,7 +144,7 @@ export async function POST(
   const { data: productsData } = await admin
     .from('products')
     .select(
-      'id, sku, slug, name, pack_size, retail_price, is_active, deleted_at, stock_status, brands(name), product_images(url, is_primary, display_order)',
+      'id, sku, slug, name, pack_size, units_per_pack, pack_unit_label, retail_price, is_active, deleted_at, stock_status, brands(name), product_images(url, is_primary, display_order)',
     )
     .in('sku', skus);
   const products = (productsData ?? []) as unknown as ProductLookup[];
@@ -155,6 +157,8 @@ export async function POST(
     slug: string;
     brand_name: string | null;
     pack_size: string | null;
+    units_per_pack: number | null;
+    pack_unit_label: string | null;
     image_url: string | null;
     quantity: number;
     current_price: number;
@@ -196,6 +200,8 @@ export async function POST(
       slug: p.slug,
       brand_name: p.brands?.name ?? null,
       pack_size: p.pack_size,
+      units_per_pack: p.units_per_pack,
+      pack_unit_label: p.pack_unit_label,
       image_url: url ? bcImage(url, 'mid') : null,
       quantity: item.quantity,
       current_price: Number(p.retail_price),

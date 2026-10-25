@@ -48,7 +48,7 @@ const DEFAULT_GOOGLE_CATEGORY = '499676';
 
 const FEED_SELECT = `
   sku, name, slug, description, short_description, retail_price, upc,
-  weight_lb, stock_status,
+  weight_lb, stock_status, units_per_pack, pack_unit_label,
   brands(name),
   primary_category:categories!primary_category_id(name, slug),
   product_images(url, is_primary, display_order)
@@ -64,6 +64,8 @@ type FeedRow = {
   upc: string | null;
   weight_lb: number | string | null;
   stock_status: string | null;
+  units_per_pack: number | null;
+  pack_unit_label: string | null;
   brands: { name: string } | null;
   primary_category: { name: string; slug: string } | null;
   product_images: Array<{
@@ -164,6 +166,15 @@ export async function GET() {
         GOOGLE_CATEGORY[categorySlug] ?? DEFAULT_GOOGLE_CATEGORY
       }</g:google_product_category>`,
     ];
+
+    // Keep the advertised price as the complete pack price. Google derives
+    // the per-unit price from the actual count; legacy pack sizes stay unset.
+    const packUnits = row.units_per_pack;
+    if (row.pack_unit_label?.trim() && typeof packUnits === 'number'
+      && Number.isInteger(packUnits) && packUnits >= 1 && packUnits <= 1000) {
+      parts.push(`<g:unit_pricing_measure>${packUnits} ct</g:unit_pricing_measure>`);
+      parts.push('<g:unit_pricing_base_measure>1 ct</g:unit_pricing_base_measure>');
+    }
 
     if (row.primary_category) {
       parts.push(`<g:product_type>${esc(row.primary_category.name)}</g:product_type>`);

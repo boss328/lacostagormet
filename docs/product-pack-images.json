@@ -1,0 +1,89 @@
+{
+  "created": "2026-10-25",
+  "tool": "image_gen.imagegen",
+  "purpose": "Product pack merchandising images generated from existing catalog photographs. Original catalog photographs retained in gallery. Generated fine print is not a source for product ingredients or preparation guidance.",
+  "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
+  "images": [
+    {
+      "sku": "EV4B",
+      "flavor": "David Rio Elephant Vanilla Chai",
+      "size": "4 lb",
+      "count": 1,
+      "asset": "public/products/david-rio-packs/ev4b-1-pack.png",
+      "prompt": "Use case: precise-object-edit / product-mockup. Create a square ecommerce catalog photograph from the supplied existing David Rio Elephant Vanilla Chai 4 lb bag photo. The supplied photo is the exact product edit target; preserve its printed packaging design, color, logo, flavor name, bag proportions and actual net-weight text. Do not invent or reword packaging text or alter ingredients/claims. Show exactly 1 identical sealed bags of this exact product, one single bag centered, front facing. Realistic softly crinkled packaging, gentle studio light, subtle natural contact shadows, pure white seamless background. Consistent square composition with generous clean margin around the complete bag, no cropping. Preserve the original label artwork and small text rather than inventing details. No extra props, cups, loose powder, boxes, or fake outer packaging. No decorative text, prices, discounts, or pack-count text baked into image: the storefront supplies a small precise 1-pack badge separately. Product should occupy about 80 percent of canvas height. Premium restrained product photography, accurate recognizable package, no watermark.",
+      "correctionPrompt": "Edit this David Rio Elephant Vanilla single-bag product photo. Keep composition, realistic bag shape, blue design, elephant, brand logo, flavor name, shadow and exact NET WT.64 OZ.(4 LBS.)1.814kg line unchanged. Correct the center-bottom small printed copy to match the supplied original bag: brewing directions, NOT an ingredients/nutrition list. Remove the invented vegan claim and all invented ingredient/dietary claims. Under the big chai circle, use JUST ADD HOT WATER inside the circle. Below 'chai à la vanille' put three modest small-print blocks of brewing directions using this wording for the English block: JUST ADD HOT WATER: For a delicious creamy cup of chai, blend one part David Rio Elephant Vanilla Chai with two parts hot water. For an iced chai, add ice cubes. For a flavorful chai latte, add steamed milk. The rest of the original tiny foreign-language brewing directions can remain small and photographically soft rather than invented readable claims. Do not add any vegan/dairy-free/gluten-free claims, certifications or pricing. Preserve everything outside this copy correction. White background, one bag only."
+    },
+    {
+      "sku": "EV4B",
+      "flavor": "David Rio Elephant Vanilla Chai",
+      "size": "4 lb",
+      "count": 4,
+      "asset": "public/products/david-rio-packs/ev4b-4-pack.png",
+      "prompt": "Use case: precise-object-edit / product-mockup. Create a square ecommerce catalog photograph from the supplied existing David Rio Elephant Vanilla Chai 4 lb bag photo. The supplied photo is the exact product edit target; preserve its printed packaging design, color, logo, flavor name, bag proportions and actual net-weight text. Do not invent or reword packaging text or alter ingredients/claims. Show exactly 4 identical sealed bags of this exact product, four full-size identical bags arranged as an elegant compact two-by-two staggered group, each bag clearly countable with distinct top and bottom silhouettes, two slightly behind and two in front; all four front labels visible. Realistic softly crinkled packaging, gentle studio light, subtle natural contact shadows, pure white seamless background. Consistent square composition with generous clean margin around the complete bags, no cropping. Preserve the original label artwork and small text rather than inventing details. No extra props, cups, loose powder, boxes, or fake outer packaging. No decorative text, prices, discounts, or pack-count text baked into image: the storefront supplies a small precise 4-pack badge separately. Product should occupy about 80 percent of canvas height. Premium restrained product photography, accurate recognizable package, no watermark."
+    },
+    {
+      "sku": "FV4B",
+      "flavor": "David Rio Flamingo Vanilla Chai",
+      "size": "3 lb",
+      "count": 1,
+      "asset": "public/products/david-rio-packs/fv4b-1-pack.png",
+      "prompt": "Use case: precise-object-edit / product-mockup. Create a square ecommerce catalog photograph from the supplied existing David Rio Flamingo Vanilla Chai 3 lb bag photo. The supplied photo is the exact product edit target; preserve its printed packaging design, color, logo, flavor name, bag proportions and actual net-weight text. Do not invent or reword packaging text or alter ingredients/claims. Show exactly 1 identical sealed bags of this exact product, one single bag centered, front facing. Realistic softly crinkled packaging, gentle studio light, subtle natural contact shadows, pure white seamless background. Consistent square composition with generous clean margin around the complete bag, no cropping. Preserve the original label artwork and small text rather than inventing details. No extra props, cups, loose powder, boxes, or fake outer packaging. No decorative text, prices, discounts, or pack-count text baked into image: the storefront supplies a small precise 1-pack badge separately. Product should occupy about 80 percent of canvas height. Premium restrained product photography, accurate recognizable package, no watermark."
+    },
+    {
+      "sku": "FV4B",
+      "flavor": "David Rio Flamingo Vanilla Chai",
+      "size": "3 lb",
+      "count": 4,
+      "asset": "public/products/david-rio-packs/fv4b-4-pack.png",
+      "prompt": "Use case: precise-object-edit / product-mockup. Create a square ecommerce catalog photograph from the supplied existing David Rio Flamingo Vanilla Chai 3 lb bag photo. The supplied photo is the exact product edit target; preserve its printed packaging design, color, logo, flavor name, bag proportions and actual net-weight text. Do not invent or reword packaging text or alter ingredients/claims. Show exactly 4 identical sealed bags of this exact product, four full-size identical bags arranged as an elegant compact two-by-two staggered group, each bag clearly countable with distinct top and bottom silhouettes, two slightly behind and two in front; all four front labels visible. Realistic softly crinkled packaging, gentle studio light, subtle natural contact shadows, pure white seamless background. Consistent square composition with generous clean margin around the complete bags, no cropping. Preserve the original label artwork and small text rather than inventing details. No extra props, cups, loose powder, boxes, or fake outer packaging. No decorative text, prices, discounts, or pack-count text baked into image: the storefront supplies a small precise 4-pack badge separately. Product should occupy about 80 percent of canvas height. Premium restrained product photography, accurate recognizable package, no watermark."
+    },
+    {
+      "sku": "OS4B",
+      "flavor": "David Rio Orca Spice Chai",
+      "size": "3 lb",
+      "count": 1,
+      "asset": "public/products/david-rio-packs/os4b-1-pack.png",
+      "prompt": "Use case: precise-object-edit / product-mockup. Create a square ecommerce catalog photograph from the supplied existing David Rio Orca Spice Chai 3 lb bag photo. The supplied photo is the exact product edit target; preserve its printed packaging design, color, logo, flavor name, bag proportions and actual net-weight text. Do not invent or reword packaging text or alter ingredients/claims. Show exactly 1 identical sealed bags of this exact product, one single bag centered, front facing. Realistic softly crinkled packaging, gentle studio light, subtle natural contact shadows, pure white seamless background. Consistent square composition with generous clean margin around the complete bag, no cropping. Preserve the original label artwork and small text rather than inventing details. No extra props, cups, loose powder, boxes, or fake outer packaging. No decorative text, prices, discounts, or pack-count text baked into image: the storefront supplies a small precise 1-pack badge separately. Product should occupy about 80 percent of canvas height. Premium restrained product photography, accurate recognizable package, no watermark."
+    },
+    {
+      "sku": "OS4B",
+      "flavor": "David Rio Orca Spice Chai",
+      "size": "3 lb",
+      "count": 4,
+      "asset": "public/products/david-rio-packs/os4b-4-pack.png",
+      "prompt": "Use case: precise-object-edit / product-mockup. Create a square ecommerce catalog photograph from the supplied existing David Rio Orca Spice Chai 3 lb bag photo. The supplied photo is the exact product edit target; preserve its printed packaging design, color, logo, flavor name, bag proportions and actual net-weight text. Do not invent or reword packaging text or alter ingredients/claims. Show exactly 4 identical sealed bags of this exact product, four full-size identical bags arranged as an elegant compact two-by-two staggered group, each bag clearly countable with distinct top and bottom silhouettes, two slightly behind and two in front; all four front labels visible. Realistic softly crinkled packaging, gentle studio light, subtle natural contact shadows, pure white seamless background. Consistent square composition with generous clean margin around the complete bags, no cropping. Preserve the original label artwork and small text rather than inventing details. No extra props, cups, loose powder, boxes, or fake outer packaging. No decorative text, prices, discounts, or pack-count text baked into image: the storefront supplies a small precise 4-pack badge separately. Product should occupy about 80 percent of canvas height. Premium restrained product photography, accurate recognizable package, no watermark."
+    },
+    {
+      "sku": "OPC3B",
+      "flavor": "David Rio Power Chai Matcha",
+      "size": "3 lb",
+      "count": 1,
+      "asset": "public/products/david-rio-packs/opc3b-1-pack.png",
+      "prompt": "Use case: precise-object-edit / product-mockup. Create a square ecommerce catalog photograph from the supplied existing David Rio Power Chai Matcha 3 lb bag photo. The supplied photo is the exact product edit target; preserve its printed packaging design, color, logo, flavor name, bag proportions and actual net-weight text. Do not invent or reword packaging text or alter ingredients/claims. Show exactly 1 identical sealed bags of this exact product, one single bag centered, front facing. Realistic softly crinkled packaging, gentle studio light, subtle natural contact shadows, pure white seamless background. Consistent square composition with generous clean margin around the complete bag, no cropping. Preserve the original label artwork and small text rather than inventing details. No extra props, cups, loose powder, boxes, or fake outer packaging. No decorative text, prices, discounts, or pack-count text baked into image: the storefront supplies a small precise 1-pack badge separately. Product should occupy about 80 percent of canvas height. Premium restrained product photography, accurate recognizable package, no watermark."
+    },
+    {
+      "sku": "OPC3B",
+      "flavor": "David Rio Power Chai Matcha",
+      "size": "3 lb",
+      "count": 4,
+      "asset": "public/products/david-rio-packs/opc3b-4-pack.png",
+      "prompt": "Use case: precise-object-edit / product-mockup. Create a square ecommerce catalog photograph from the supplied existing David Rio Power Chai Matcha 3 lb bag photo. The supplied photo is the exact product edit target; preserve its printed packaging design, color, logo, flavor name, bag proportions and actual net-weight text. Do not invent or reword packaging text or alter ingredients/claims. Show exactly 4 identical sealed bags of this exact product, four full-size identical bags arranged as an elegant compact two-by-two staggered group, each bag clearly countable with distinct top and bottom silhouettes, two slightly behind and two in front; all four front labels visible. Realistic softly crinkled packaging, gentle studio light, subtle natural contact shadows, pure white seamless background. Consistent square composition with generous clean margin around the complete bags, no cropping. Preserve the original label artwork and small text rather than inventing details. No extra props, cups, loose powder, boxes, or fake outer packaging. No decorative text, prices, discounts, or pack-count text baked into image: the storefront supplies a small precise 4-pack badge separately. Product should occupy about 80 percent of canvas height. Premium restrained product photography, accurate recognizable package, no watermark."
+    },
+    {
+      "sku": "TS4B",
+      "flavor": "David Rio Tiger Spice Chai",
+      "size": "4 lb",
+      "count": 1,
+      "asset": "public/products/david-rio-packs/ts4b-1-pack.png",
+      "prompt": "Use case: precise-object-edit / product-mockup. Create a square ecommerce catalog photograph from the supplied existing David Rio Tiger Spice Chai 4 lb bag photo. The supplied photo is the exact product edit target; preserve its printed packaging design, color, logo, flavor name, bag proportions and actual net-weight text. Do not invent or reword packaging text or alter ingredients/claims. Show exactly 1 identical sealed bags of this exact product, one single bag centered, front facing. Realistic softly crinkled packaging, gentle studio light, subtle natural contact shadows, pure white seamless background. Consistent square composition with generous clean margin around the complete bag, no cropping. Preserve the original label artwork and small text rather than inventing details. No extra props, cups, loose powder, boxes, or fake outer packaging. No decorative text, prices, discounts, or pack-count text baked into image: the storefront supplies a small precise 1-pack badge separately. Product should occupy about 80 percent of canvas height. Premium restrained product photography, accurate recognizable package, no watermark."
+    },
+    {
+      "sku": "TS4B",
+      "flavor": "David Rio Tiger Spice Chai",
+      "size": "4 lb",
+      "count": 4,
+      "asset": "public/products/david-rio-packs/ts4b-4-pack.png",
+      "prompt": "Use case: precise-object-edit / product-mockup. Create a square ecommerce catalog photograph from the supplied existing David Rio Tiger Spice Chai 4 lb bag photo. The supplied photo is the exact product edit target; preserve its printed packaging design, color, logo, flavor name, bag proportions and actual net-weight text. Do not invent or reword packaging text or alter ingredients/claims. Show exactly 4 identical sealed bags of this exact product, four full-size identical bags arranged as an elegant compact two-by-two staggered group, each bag clearly countable with distinct top and bottom silhouettes, two slightly behind and two in front; all four front labels visible. Realistic softly crinkled packaging, gentle studio light, subtle natural contact shadows, pure white seamless background. Consistent square composition with generous clean margin around the complete bags, no cropping. Preserve the original label artwork and small text rather than inventing details. No extra props, cups, loose powder, boxes, or fake outer packaging. No decorative text, prices, discounts, or pack-count text baked into image: the storefront supplies a small precise 4-pack badge separately. Product should occupy about 80 percent of canvas height. Premium restrained product photography, accurate recognizable package, no watermark."
+    }
+  ]
+}

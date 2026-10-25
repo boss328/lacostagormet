@@ -135,7 +135,7 @@ export function EditProductForm({ product, brands, categories }: Props) {
     const priceNum = Number(retailPrice);
     if (!Number.isFinite(priceNum) || priceNum <= 0) {
       next.retail_price = 'Price must be a positive number.';
-    } else if (Math.round(priceNum * 100) !== priceNum * 100) {
+    } else if (Math.round(priceNum * 100) / 100 !== priceNum) {
       next.retail_price = 'Price must have at most two decimal places.';
     }
     if (!categorySlug) next.category_slug = 'Pick a category.';
