@@ -932,6 +932,11 @@ a:hover .product-card-img {
 .product-card-pack-link {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  background: #fff;
+  cursor: pointer;
   padding: 9px 10px;
   border: 1px solid #dce3de;
   border-radius: 9px;
@@ -950,6 +955,7 @@ a:hover .product-card-img {
 }
 .product-card-pack-line {
   display: flex;
+  width: 100%;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 3px 8px;
@@ -979,6 +985,10 @@ a:hover .product-card-img {
   align-items: center;
   gap: 10px;
   min-width: 0;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
   padding: 14px;
   border: 1px solid #dce3de;
   border-radius: 12px;

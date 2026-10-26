@@ -1,14 +1,19 @@
-import Link from 'next/link';
+'use client';
+
 import { ProductImage } from './ProductImage';
 import { bcImage } from '@/lib/bcImage';
 import { isAvailableForPurchase } from '@/lib/product-availability';
 import { getPackPricing, packSavingsForOption, primaryProductImage, type PackProduct } from '@/lib/product-pack-options';
 
-export function ProductPackOptions({ options, selectedId }: { options: PackProduct[]; selectedId: string }) {
+export function ProductPackOptions({ options, selectedId, onSelect }: {
+  options: PackProduct[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+}) {
   if (options.length < 2) return null;
 
   return (
-    <nav className="pack-options" aria-label="Choose your size">
+    <div className="pack-options" role="group" aria-label="Choose your size">
       <p className="pack-options-heading">Choose your size</p>
       <div className="pack-options-grid">
         {options.map((option) => {
@@ -18,12 +23,12 @@ export function ProductPackOptions({ options, selectedId }: { options: PackProdu
           const savings = packSavingsForOption(option, options);
           const selected = selectedId === option.id;
           return (
-            <Link
+            <button
               key={option.id}
-              href={`/product/${option.slug}/`}
-              scroll={false}
+              type="button"
+              onClick={() => onSelect(option.id)}
               className={`pack-option${selected ? ' is-selected' : ''}`}
-              aria-current={selected ? 'page' : undefined}
+              aria-pressed={selected}
             >
               {primary && (
                 <span className="pack-option-image">
@@ -42,10 +47,10 @@ export function ProductPackOptions({ options, selectedId }: { options: PackProdu
                 )}
               </span>
               <span className="pack-option-check" aria-hidden="true">{selected ? '✓' : ''}</span>
-            </Link>
+            </button>
           );
         })}
       </div>
-    </nav>
+    </div>
   );
 }
