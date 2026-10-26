@@ -58,6 +58,9 @@ function SelectableProductCard({
   const img = primaryProductImage(selected);
   const price = Number(selected.retail_price);
   const pack = getPackPricing(selected);
+  const savings = isAvailableForPurchase(selected.stock_status)
+    ? packSavingsForOption(selected, options)
+    : null;
   const displayName = pack ? productDisplayName(selected, selected.brands?.name) : selected.name.split(/\s-\s/)[0];
   const image = img ? (
     <FramedProductImage
@@ -82,6 +85,7 @@ function SelectableProductCard({
             <span aria-live="polite" aria-atomic="true">${price.toFixed(2)}</span>
             {pack && <p className="product-card-size">{pack.sizeLabel}</p>}
             {pack && <p className="pack-unit-price">${pack.unitPrice.toFixed(2)} per {pack.label}</p>}
+            {pack && savings !== null && <p className="product-card-selected-saving">Save ${savings.toFixed(2)} vs. {pack.units} single {pack.pluralLabel}</p>}
           </div>
           <div className="product-picture">
             {image}
@@ -116,6 +120,7 @@ function SelectableProductCard({
           <div aria-live="polite" aria-atomic="true">
             <span className="type-price">${price.toFixed(2)}</span>
             {pack && <p className="pack-unit-price">${pack.unitPrice.toFixed(2)} per {pack.label}</p>}
+            {pack && savings !== null && <p className="product-card-selected-saving">Save ${savings.toFixed(2)} vs. {pack.units} single {pack.pluralLabel}</p>}
           </div>
           {!isAvailableForPurchase(selected.stock_status) ? (
             <span className="product-pack">Out of stock</span>
@@ -143,26 +148,25 @@ function CardPackOptions({ product, options, onSelect }: {
   if (options.length < 2) return null;
   return (
     <div className="product-card-packs" role="group" aria-label={`Choose size for ${productDisplayName(product, product.brands?.name)}`}>
-      <p className="product-card-packs-title">Choose size</p>
-      {options.map(option => {
-        const pack = getPackPricing(option);
-        if (!pack) return null;
-        const savings = packSavingsForOption(option, options);
-        return (
-          <button
-            key={option.id}
-            type="button"
-            aria-pressed={option.id === product.id}
-            onClick={() => onSelect(option.id)}
-            className={`product-card-pack-link${option.id === product.id ? ' is-shown' : ''}`}
-          >
-            <span className="product-card-pack-line"><span>{pack.sizeLabel}</span><strong>${Number(option.retail_price).toFixed(2)}</strong></span>
-            <span className="pack-unit-price">${pack.unitPrice.toFixed(2)} per {pack.label}</span>
-            {savings !== null && <span className="pack-option-saving">Save ${savings.toFixed(2)} vs. {pack.units} single {pack.pluralLabel}</span>}
-            {!isAvailableForPurchase(option.stock_status) && <span className="pack-option-unavailable">Out of stock</span>}
-          </button>
-        );
-      })}
+      <p className="product-card-packs-title">Size</p>
+      <div className="product-card-pack-options">
+        {options.map(option => {
+          const pack = getPackPricing(option);
+          if (!pack) return null;
+          return (
+            <button
+              key={option.id}
+              type="button"
+              aria-pressed={option.id === product.id}
+              onClick={() => onSelect(option.id)}
+              className={`product-card-pack-link${option.id === product.id ? ' is-shown' : ''}`}
+            >
+              <span>{pack.selectionLabel}</span>
+              {!isAvailableForPurchase(option.stock_status) && <span className="pack-option-unavailable">Out of stock</span>}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

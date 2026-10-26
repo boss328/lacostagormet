@@ -13,9 +13,10 @@ type Row = Record<string, unknown>;
 
 function harness() {
   const rows: Row[] = [
-    { id: 'legacy', sku: 'LEGACY', name: 'Legacy item', retail_price: 10, units_per_pack: 5, pack_unit_label: null, pack_parent_id: null },
-    { id: 'case', sku: 'CASE', name: 'Four pack', retail_price: 188.95, units_per_pack: 4, pack_unit_label: 'bag', pack_parent_id: null },
-    { id: 'single', sku: 'SINGLE', name: 'Single bag', retail_price: 51.96, units_per_pack: 1, pack_unit_label: 'bag', pack_parent_id: 'case' },
+    { id: 'legacy', sku: 'LEGACY', name: 'Legacy item', retail_price: 10, units_per_pack: 5, pack_size: 'Five 4 lb. Bags', pack_unit_label: null, pack_parent_id: null },
+    { id: 'case', sku: 'CASE', name: 'Four pack', retail_price: 188.95, units_per_pack: 4, pack_size: 'Four 4 lb. Bags', pack_unit_label: 'bag', pack_parent_id: null },
+    { id: 'single', sku: 'SINGLE', name: 'Single bag', retail_price: 51.96, units_per_pack: 1, pack_size: 'One 4 lb. Bag', pack_unit_label: 'bag', pack_parent_id: 'case' },
+    { id: 'can', sku: 'CAN', name: 'Single can', retail_price: 15, units_per_pack: 1, pack_size: '14 oz can', pack_unit_label: 'can', pack_parent_id: 'case' },
   ];
   const writes: Array<{ id: string; values: Row }> = [];
   const modules: Record<string, unknown> = {
@@ -103,6 +104,52 @@ test('legacy unconfigured pack counts keep existing import behavior', async () =
     const result = await h.request('apply', `sku,units_per_pack\nLEGACY,${value}`);
     assert.equal(result.status, 200);
     assert.deepEqual(h.writes, [{ id: 'legacy', values: { units_per_pack: expected } }]);
+  }
+});
+
+for (const sku of ['CASE', 'SINGLE', 'CAN']) {
+  test(`CSV rejects changed or cleared ${sku} net contents before any earlier valid row is written`, async () => {
+    for (const value of ['CLEAR', '12 oz can', 'unknown size']) {
+      const h = harness();
+      const csv = `sku,retail_price,pack_size\nLEGACY,20.01,\n${sku},,${value}`;
+      const preview = await h.request('preview', csv);
+      assert.equal(preview.status, 200);
+      assert.equal(preview.body.ok, false);
+      assert.equal(preview.body.rows_with_changes, 1);
+      assert.equal(preview.body.errors[0].line, 3);
+      assert.match(preview.body.errors[0].message, /Pack sizes/);
+      const applied = await h.request('apply', csv);
+      assert.equal(applied.status, 400);
+      assert.match(applied.body.error, /nothing was written/);
+      assert.equal(h.writes.length, 0);
+    }
+  });
+}
+
+test('unchanged mixed bag and can sizes round-trip without rewriting SKU identity', async () => {
+  const h = harness();
+  const result = await h.request('apply', 'sku,retail_price,pack_size\nCASE,32.05, Four 4 lb. Bags \nSINGLE,20.01,One 4 lb. Bag\nCAN,16.00,14 oz can');
+  assert.equal(result.status, 200);
+  assert.equal(result.body.applied, 3);
+  assert.deepEqual(h.writes, [
+    { id: 'case', values: { retail_price: 32.05 } },
+    { id: 'single', values: { retail_price: 20.01 } },
+    { id: 'can', values: { retail_price: 16 } },
+  ]);
+});
+
+test('blank configured sizes remain no-op and legacy size edits still apply', async () => {
+  const h = harness();
+  const blank = await h.request('apply', 'sku,pack_size\nCASE,\nSINGLE,\nCAN,');
+  assert.equal(blank.status, 200);
+  assert.equal(blank.body.applied, 0);
+  assert.equal(h.writes.length, 0);
+
+  for (const [value, expected] of [['Six 4 lb. Bags', 'Six 4 lb. Bags'], ['CLEAR', null]] as const) {
+    const legacy = harness();
+    const result = await legacy.request('apply', `sku,pack_size\nLEGACY,${value}`);
+    assert.equal(result.status, 200);
+    assert.deepEqual(legacy.writes, [{ id: 'legacy', values: { pack_size: expected } }]);
   }
 });
 

@@ -36,7 +36,10 @@ export function getPackPricing(product: Pick<PackProduct, 'retail_price' | 'unit
   const badge = `${units} ${units === 1 ? label : pluralUnitLabel(label)}`;
   const unitSize = packUnitSize(product.pack_size, units);
   const sizeLabel = unitSize ? `${badge} · ${unitSize}${units > 1 ? ' each' : ''}` : badge;
-  return { units, label, pluralLabel: pluralUnitLabel(label), unitPrice, badge, sizeLabel, unitSize };
+  const selectionLabel = unitSize
+    ? units === 1 ? `${unitSize} ${label}` : `${units} × ${unitSize} ${pluralUnitLabel(label)}`
+    : badge;
+  return { units, label, pluralLabel: pluralUnitLabel(label), unitPrice, badge, sizeLabel, selectionLabel, unitSize };
 }
 
 function pluralUnitLabel(label: string) {
@@ -96,14 +99,17 @@ export function productDisplayName(product: Pick<PackProduct, 'name' | 'units_pe
 
 export function packSavingsForOption(option: PackProduct, options: readonly PackProduct[]): number | null {
   const pack = getPackPricing(option);
+  if (!pack || pack.units <= 1 || !pack.unitSize) return null;
   const rootId = option.pack_parent_id ?? option.id;
-  const single = options.find(candidate => candidate.units_per_pack === 1
-    && (candidate.pack_parent_id ?? candidate.id) === rootId
-    && candidate.is_active !== false && !candidate.deleted_at
-    && isAvailableForPurchase(candidate.stock_status));
-  const singlePack = single && getPackPricing(single);
-  if (!pack || !single || !singlePack || pack.label !== singlePack.label) return null;
-  if (!pack.unitSize || !singlePack.unitSize || pack.unitSize !== singlePack.unitSize) return null;
+  const single = options.find(candidate => {
+    if (candidate.units_per_pack !== 1
+      || (candidate.pack_parent_id ?? candidate.id) !== rootId
+      || candidate.is_active === false || candidate.deleted_at
+      || !isAvailableForPurchase(candidate.stock_status)) return false;
+    const singlePack = getPackPricing(candidate);
+    return singlePack?.label === pack.label && singlePack.unitSize === pack.unitSize;
+  });
+  if (!single) return null;
   return packSavingsAmount(Number(option.retail_price), pack.units, Number(single.retail_price));
 }
 
@@ -137,5 +143,8 @@ export function productPackOptions<T extends PackProduct>(selected: PackProduct,
       (candidate.id === rootId || candidate.pack_parent_id === rootId)
       && getPackPricing(candidate) !== null,
     )
-    .sort((a, b) => (a.units_per_pack! - b.units_per_pack!) || a.id.localeCompare(b.id));
+    .sort((a, b) => (a.units_per_pack! - b.units_per_pack!)
+      || a.pack_unit_label!.localeCompare(b.pack_unit_label!)
+      || (a.pack_size ?? '').localeCompare(b.pack_size ?? '', undefined, { numeric: true })
+      || a.id.localeCompare(b.id));
 }

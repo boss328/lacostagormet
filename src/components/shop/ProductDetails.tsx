@@ -8,7 +8,7 @@ import { ProductPackOptions } from './ProductPackOptions';
 import { ProductDescription } from './ProductDescription';
 import { formatPackSize } from '@/lib/pack-size';
 import { isAvailableForPurchase } from '@/lib/product-availability';
-import { getPackPricing, productCartItem, productPackOptions, productDisplayName } from '@/lib/product-pack-options';
+import { getPackPricing, packSavingsForOption, productCartItem, productPackOptions, productDisplayName } from '@/lib/product-pack-options';
 
 export type ProductDetailData = {
   id: string;
@@ -109,6 +109,7 @@ export function ProductDetails({ product: initialProduct, options }: {
   const gallery = sortImages(product.product_images);
   const brandName = product.brands?.name ?? null;
   const packPricing = getPackPricing(product);
+  const savings = isAvailableForPurchase(product.stock_status) ? packSavingsForOption(product, packOptions) : null;
   const pack = packPricing?.sizeLabel ?? formatPackSize(product.pack_size);
   const displayName = productDisplayName(product, brandName);
   const weight = product.weight_lb
@@ -193,24 +194,26 @@ export function ProductDetails({ product: initialProduct, options }: {
 
               <p className="type-data-mono text-ink-muted">SKU · {product.sku}</p>
 
-              <ProductPackOptions options={packOptions} selectedId={product.id} onSelect={setSelectedId} />
-
               <div aria-live="polite" aria-atomic="true" className="product-selected-price">
-                <div
-                  className="flex flex-wrap items-baseline gap-3 pt-2 pb-6 max-md:pt-1 max-md:pb-4"
-                  style={{ borderBottom: '1px solid var(--rule)' }}
-                >
+                <div className="flex flex-wrap items-baseline gap-3">
                   <span className="type-price max-md:!text-[28px]" style={{ fontSize: '40px', lineHeight: 1 }}>
                     ${Number(product.retail_price).toFixed(2)}
                   </span>
                   {pack && <span className="type-data-mono text-ink-muted">{pack}</span>}
                 </div>
                 {packPricing && (
-                  <p className="pack-unit-price" style={{ marginTop: '12px', fontSize: '14px' }}>
+                  <p className="pack-unit-price product-selected-unit-price">
                     ${packPricing.unitPrice.toFixed(2)} per {packPricing.label}
                   </p>
                 )}
+                {packPricing && savings !== null && savings > 0 && (
+                  <p className="pack-option-saving product-selected-saving">
+                    Save ${savings.toFixed(2)} vs. {packPricing.units} single {packPricing.pluralLabel}
+                  </p>
+                )}
               </div>
+
+              <ProductPackOptions options={packOptions} selectedId={product.id} onSelect={setSelectedId} />
 
               <ProductAddPanel key={product.id} item={addItemData} available={isAvailableForPurchase(product.stock_status)} />
 

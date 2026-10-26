@@ -9,6 +9,7 @@ export type PackOption = {
   retail_price: number;
   units_per_pack: number | null;
   pack_unit_label: string | null;
+  pack_size: string | null;
   weight_lb: number | null;
   stock_status: StockStatus;
   is_active: boolean;
@@ -32,6 +33,8 @@ export type PackOptionInput = {
   units_per_pack: number;
   parent_units_per_pack: number;
   pack_unit_label: string;
+  parent_pack_unit_label?: string;
+  pack_size?: string | null;
   weight_lb: number;
   vendor_id: string;
   description: string;
@@ -111,7 +114,7 @@ function positiveAmount(value: unknown, field: string, max: number): number {
 
 function unitLabel(value: unknown): string {
   const label = text(value, 'Unit label', 1, 30);
-  if (!/^[a-zA-Z][a-zA-Z -]*$/.test(label)) throw new PackInputError('Use a simple unit label, such as bag, bottle, or carton.');
+  if (!/^[a-zA-Z][a-zA-Z -]*$/.test(label)) throw new PackInputError('Use a simple unit label, such as bag, can, or bottle.');
   return label.toLowerCase();
 }
 
@@ -129,7 +132,6 @@ export function parsePackOptionInput(value: unknown): PackOptionInput {
   if (!isPackProductId(input.vendor_id)) throw new PackInputError('Choose who fulfills this pack option.');
   const units = count(input.units_per_pack);
   const parentUnits = count(input.parent_units_per_pack);
-  if (units === parentUnits) throw new PackInputError('This pack count already belongs to the original product.');
   const stock = input.stock_status ?? 'out_of_stock';
   if (!isStockStatus(stock)) throw new PackInputError('Choose a valid stock status.');
   if (input.is_active !== undefined && typeof input.is_active !== 'boolean') throw new PackInputError('Product visibility must be true or false.');
@@ -143,6 +145,8 @@ export function parsePackOptionInput(value: unknown): PackOptionInput {
     units_per_pack: units,
     parent_units_per_pack: parentUnits,
     pack_unit_label: unitLabel(input.pack_unit_label),
+    ...(input.parent_pack_unit_label !== undefined ? { parent_pack_unit_label: unitLabel(input.parent_pack_unit_label) } : {}),
+    ...(input.pack_size !== undefined ? { pack_size: input.pack_size === null ? null : text(input.pack_size, 'Net contents', 1, 200) } : {}),
     weight_lb: positiveAmount(input.weight_lb, 'Shipping weight', 9999.99),
     vendor_id: input.vendor_id,
     description: text(input.description, 'Description', 10, 5000),

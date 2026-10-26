@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 type Context = { params: { id: string } };
 const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 const fail = (status: number, errorMessage: string) => json({ ok: false, errorMessage }, status);
-const columns = 'id,sku,name,slug,description,retail_price,units_per_pack,pack_unit_label,weight_lb,stock_status,is_active,preferred_vendor_id,pack_parent_id,product_images(id,url,alt_text,product_id,is_primary,display_order)';
+const columns = 'id,sku,name,slug,description,retail_price,units_per_pack,pack_unit_label,pack_size,weight_lb,stock_status,is_active,preferred_vendor_id,pack_parent_id,product_images(id,url,alt_text,product_id,is_primary,display_order)';
 class BodyTooLargeError extends Error {}
 
 async function access(req: NextRequest, id: string, write = false) {
@@ -50,9 +50,9 @@ async function readBody(req: NextRequest): Promise<unknown> {
 
 function storageError(error: { code?: string; message?: string }) {
   if (error.code === 'P0002') return fail(404, 'Product not found.');
-  if (error.code === '23505') return fail(409, 'This SKU, URL slug, or pack count already exists. Choose a different one.');
+  if (error.code === '23505') return fail(409, 'This SKU, URL slug, or package size already exists. Choose a different one.');
   if (['22023', '23514', '22P02', '23503', '22003'].includes(error.code || '')) {
-    return fail(400, 'Pack details could not be saved. Check the pack count, uploaded image, and fulfillment vendor. An existing group’s original count cannot change.');
+    return fail(400, 'Pack details could not be saved. Check the package size, uploaded image, and fulfillment vendor. Refresh if the original product’s size or unit has changed.');
   }
   if (['42P01', '42703', 'PGRST202', 'PGRST204', 'PGRST205'].includes(error.code || '')) {
     return fail(503, 'Pack options are not available yet. Ask support to finish their setup.');
@@ -78,7 +78,8 @@ function option(row: ProductRow): PackOption {
   return {
     id: row.id, sku: row.sku, name: row.name, slug: row.slug, description: row.description,
     retail_price: Number(row.retail_price), units_per_pack: row.units_per_pack,
-    pack_unit_label: row.pack_unit_label, weight_lb: row.weight_lb == null ? null : Number(row.weight_lb),
+    pack_unit_label: row.pack_unit_label, pack_size: row.pack_size ?? null,
+    weight_lb: row.weight_lb == null ? null : Number(row.weight_lb),
     stock_status: isStockStatus(row.stock_status) ? row.stock_status : 'out_of_stock',
     is_active: row.is_active, vendor_id: row.preferred_vendor_id,
     primary_image_url: images[0]?.url || null,

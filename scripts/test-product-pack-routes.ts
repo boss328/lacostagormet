@@ -22,7 +22,7 @@ function harness() {
   const state = { preview: false, token: 'admin-token', clients: 0, rpcCalls: [] as Array<{ name: string; args: Record<string, unknown> }>, error: null as null | { code: string; message: string }, missing: false };
   const image = { id: 'image', product_id: parentId, url: 'https://image.example/chai.jpg', alt_text: 'Chai bag', is_primary: true, display_order: 0 };
   const rows = [
-    { id: parentId, ...input, sku: 'CASE', units_per_pack: 4, pack_parent_id: null, preferred_vendor_id: vendorId, product_images: [image], is_active: true, stock_status: 'in_stock' },
+    { id: parentId, ...input, sku: 'CASE', units_per_pack: 4, pack_size: 'Four 4 lb Bags', pack_parent_id: null, preferred_vendor_id: vendorId, product_images: [image], is_active: true, stock_status: 'in_stock' },
     { id: childId, ...input, pack_parent_id: parentId, preferred_vendor_id: vendorId, product_images: [], is_active: false, stock_status: 'out_of_stock' },
   ];
   const modules: Record<string, unknown> = {
@@ -114,9 +114,25 @@ test('GET includes draft siblings, resolves the original from a child, and retur
   assert.equal(result.body.options.length, 2);
   assert.equal(result.body.options.find((row: packs.PackOption) => row.id === childId).is_active, false);
   assert.equal(result.body.options[0].vendor_id, vendorId);
+  assert.equal(result.body.options[0].pack_size, 'Four 4 lb Bags');
+  assert.equal(result.body.options[1].pack_size, null);
   assert.equal(result.body.options[0].primary_image_url, 'https://image.example/chai.jpg');
   assert.deepEqual(result.body.vendors, [{ id: vendorId, name: 'Local shipping', is_self_fulfilled: true }]);
   assert.equal(result.body.images[0].product_id, parentId);
+});
+
+test('POST keeps can contents and original bag configuration separate in the atomic RPC', async () => {
+  const h = harness();
+  const result = await h.request('POST', {
+    ...input, units_per_pack: 4, parent_pack_unit_label: 'bag', pack_unit_label: 'can', pack_size: '4 × 14 oz can',
+  });
+  assert.equal(result.status, 201);
+  assert.equal(h.state.rpcCalls.length, 1);
+  const payload = h.state.rpcCalls[0].args.p_input as packs.PackOptionInput;
+  assert.equal(payload.units_per_pack, 4);
+  assert.equal(payload.parent_pack_unit_label, 'bag');
+  assert.equal(payload.pack_unit_label, 'can');
+  assert.equal(payload.pack_size, '4 × 14 oz can');
 });
 
 test('POST uses exactly one atomic RPC and defaults to a draft without copying unsafe case fields', async () => {
