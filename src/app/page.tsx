@@ -52,6 +52,17 @@ export default async function HomePage({
               Find your drink ›
             </a>
           </div>
+          <Link href="/shipping" className="hero-shipping-note">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 7h11v10H3zM14 10h4l3 4v3h-7" />
+              <circle cx="6.5" cy="17.5" r="2" fill="currentColor" stroke="none" />
+              <circle cx="17.5" cy="17.5" r="2" fill="currentColor" stroke="none" />
+            </svg>
+            <span className="hero-shipping-copy">
+              <strong>Free ground shipping on orders ${SHIPPING_TIERS.freeThreshold}+</strong>
+              <span>Contiguous U.S. · See details <span aria-hidden="true">›</span></span>
+            </span>
+          </Link>
         </div>
         <div className="hero-stage">
           <Image

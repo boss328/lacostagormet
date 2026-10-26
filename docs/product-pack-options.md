@@ -14,17 +14,21 @@ The October 25 review found no existing self-fulfilled purchase orders requiring
 
 ## Jeff's starting products
 
-Requested by email on October 24, 2026. The existing four-bag case prices remain unchanged. The proposed single-bag prices below add 10% over the unrounded case price per bag; they are not approved selling prices yet.
+Requested by email on October 24, 2026. Customer prices were confirmed on October 25; these replace the earlier proposed single-bag markup. Wholesale costs remain unknown, so the figures below do not establish profit margins.
 
-| Case SKU | Single SKU | Bag size | Case price | Proposed single price | Provisional single shipping weight |
+| Case SKU | Single SKU | Bag size | Approved pack price | Approved single price | Provisional single shipping weight |
 | --- | --- | --- | --- | --- | --- |
-| EV4B | EV4B-1 | 4 lb | $188.95 | $51.96 | 4.25 lb |
-| FV4B | FV4B-1 | 3 lb | $188.95 | $51.96 | 3.26 lb |
-| OS4B | OS4B-1 | 3 lb | $188.95 | $51.96 | 3.25 lb |
-| OPC3B | OPC3B-1 | 3 lb | $189.00 | $51.98 | 3.25 lb |
-| TS4B | TS4B-1 | 4 lb | $188.95 | $51.96 | 4.25 lb |
+| EV4B | EV4B-1 | 4 lb | $170 / 4 bags | $47 | 4.25 lb |
+| FV4B | FV4B-1 | 3 lb | $190 / 4 bags | $50 | 3.26 lb |
+| OS4B | OS4B-1 | 3 lb | $190 / 4 bags | $50 | 3.25 lb |
+| OPC3B-3 (draft) | OPC3B-1 | 3 lb | $147 / 3 bags | $49 | 3.25 lb |
+| TS4B | TS4B-1 | 4 lb | $170 / 4 bags | $47 | 4.25 lb |
 
-The seed creates all five singles hidden and out of stock, routed to the existing Home/Garage fulfillment vendor. Before publishing, confirm the selling prices, receipt of warehouse stock, and actual packaged shipping weights. The listed shipping weights are quarter-case estimates. UPCs and case wholesale costs are deliberately not copied onto singles.
+All five singles remain hidden and out of stock, routed to the existing Home/Garage fulfillment vendor. Before publishing, confirm receipt of warehouse stock and actual packaged shipping weights. The listed single shipping weights are quarter-case estimates. UPCs and case wholesale costs are deliberately not copied onto singles.
+
+The three-bag offer is a distinct hidden `OPC3B-3` option with its own image and URL. Its fulfillment vendor and packaged shipping weight remain unset pending confirmation. The existing supplier-shipped `OPC3B` four-bag case stays at $189 with its original identity; changing that SKU to three bags would alter what existing carts and reorders request. Do not publish the three-bag option until its shipping setup and availability are confirmed.
+
+EV4B/TS4B save $18 per four-pack compared with four singles; FV4B/OS4B save $10. OPC3B-3 has no quantity discount at $147 = 3 × $49. Savings are displayed only when the matching single is publicly purchasable.
 
 ## Add another product or pack size
 
@@ -38,13 +42,15 @@ The optional premium calculator fills a suggested price only when clicked. Exist
 
 ## Images
 
-Ten square 1254 × 1254 PNG assets are in `public/products/david-rio-packs/`, with source prompts in `docs/product-pack-images.json`. They were made with `image_gen.imagegen` from the existing catalog photographs. One- and four-pack badges are rendered as text in the interface so they remain readable at small sizes.
+Eleven square 1254 × 1254 PNG assets are in `public/products/david-rio-packs/`, with source prompts in `docs/product-pack-images.json`, including the new three-bag OPC3B composition. They were made with `image_gen.imagegen` from the existing catalog photographs. Pack-count badges are rendered as text in the interface so they remain readable at small sizes.
 
 Generated pack compositions preserve the product/flavor and stated net weight. Tiny reproduced label text is not authoritative product information; original catalog photos remain available in the gallery. The files carry IPTC DigitalSourceType `trainedAlgorithmicMedia`; metadata is inserted without changing image pixels. Google receives original storage URLs, not metadata-stripping display transformations. See [Google's image requirements](https://support.google.com/merchants/answer/6324350?hl=en).
 
 ## Deployment and verification
 
 Apply only `supabase/migrations/20261025214603_product_pack_options.sql` before deploying code that queries its columns. Upload the ten assets to `product-images/david-rio-packs-20261025/`, then run `scripts/sql/seed-david-rio-packs.sql`. The guarded transaction preserves existing case pricing and skips already-created singles on reruns. Do not use a blanket migration push against this project's legacy migration history.
+
+The original seed is historical. For the October 25 approved prices, upload `opc3b-3-pack.png`, then run `scripts/sql/apply-approved-david-rio-prices.sql` after taking a catalog backup. This separate guarded transaction changes only approved prices and creates the hidden three-bag draft. Its regression test is `pnpm exec tsx scripts/test-approved-david-rio-prices.ts`. Do not rerun the original seed against the newly approved prices.
 
 Tests cover API authorization, atomic writes and rollback, public visibility, family constraints, generated image metadata, seed idempotence, Merchant feed prices, per-unit calculations, and real SKU checkout routing across card and wallet methods. Storefront checks cover desktop and 320px/390px mobile layouts.
 

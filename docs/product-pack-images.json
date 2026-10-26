@@ -5,6 +5,14 @@
   "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
   "images": [
     {
+      "sku": "OPC3B-3",
+      "flavor": "David Rio Power Chai Matcha",
+      "size": "3 lb",
+      "count": 3,
+      "asset": "public/products/david-rio-packs/opc3b-3-pack.png",
+      "prompt": "Use case: precise-object-edit / product-mockup. Edit the supplied existing David Rio organic Power Chai Matcha single 3 lb bag catalog image into a matching THREE-bag product image. The input is the exact packaging reference/edit target. Preserve its tan bag, green and brown printed design, recognizable brand logo, flavor, package proportions and 3 lb net weight. Show exactly THREE identical sealed full-size bags arranged in a balanced slightly staggered row, all three tops, bases and front labels visible and clearly countable. White seamless studio background, soft natural contact shadows, realistic packaging folds, square composition and generous clean margins; complete bags not cropped. Match the restrained existing product photography. Preserve printed packaging artwork; no new ingredients, claims, badges or wording. No loose powder, cup, box, props, price, savings, watermark or pack-count overlay. The website provides the count label separately."
+    },
+    {
       "sku": "EV4B",
       "flavor": "David Rio Elephant Vanilla Chai",
       "size": "4 lb",
