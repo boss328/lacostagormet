@@ -1,6 +1,8 @@
 # Product pack options
 
-Each pack size is a separate purchasable product with its own SKU, total price, availability, image, shipping weight and fulfillment vendor. The catalog shows one card per configured product family, with links to its matching public pack sizes. Related products appear together in the product-page pack selector. Cards, cart, checkout and reorders retain the selected SKU and show a price per bag when configured.
+Each pack size is a separate purchasable product with its own SKU, total price, availability, image, shipping weight and fulfillment vendor. The catalog shows one card per configured product family. Size buttons on product cards and product pages change the displayed total, unit price, pack contents and photo immediately. Add to cart uses the selected size's SKU and price. Cards, cart, checkout and reorders retain that SKU and show a price per bag when configured.
+
+On product pages, changing size also updates the description, SKU and specifications, and resets quantity to one pack and the gallery to its primary image. Unavailable public sizes can be inspected but cannot be added. The page URL and search metadata stay tied to the originally requested product; a fresh visit starts with that product. Product-card detail links follow the currently selected size. Selecting a size does not publish drafts or change saved prices.
 
 Pack labels state the actual contents, such as **1 bag · 4 lb** or **4 bags · 4 lb each**. The size comes from the saved pack description, never the shipping weight. Dollar savings compare the case price with the same number of purchasable single bags in the same family, only when both net sizes are verified to match. Full product names remain in catalog data and order records; visible pack titles omit redundant packaging and promotional suffixes.
 

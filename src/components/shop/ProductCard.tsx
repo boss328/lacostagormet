@@ -1,10 +1,13 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import { ProductImage as FramedProductImage } from './ProductImage';
 import { ProductCardAdd } from './ProductCardAdd';
 import { bcImage } from '@/lib/bcImage';
 import { formatPackSize } from '@/lib/pack-size';
 import { isAvailableForPurchase } from '@/lib/product-availability';
-import { getPackPricing, packSavingsForOption, primaryProductImage, productCartItem, productDisplayName } from '@/lib/product-pack-options';
+import { getPackPricing, packSavingsForOption, primaryProductImage, productCartItem, productDisplayName, productPackOptions } from '@/lib/product-pack-options';
 type ProductImage = {
   url: string;
   alt_text: string | null;
@@ -22,45 +25,61 @@ export type ProductCardData = {
   pack_unit_label?: string | null;
   retail_price: number | string;
   stock_status?: string | null;
+  is_active?: boolean;
+  deleted_at?: string | null;
   brands?: { name: string; slug: string } | null;
   product_images?: ProductImage[] | null;
   pack_options?: ProductCardData[];
 };
-export function ProductCard({
-  product,
-  priority = false,
-  compact = false,
-}: {
+type ProductCardProps = {
   product: ProductCardData;
   showJustIn?: boolean;
   priority?: boolean;
   compact?: boolean;
-}) {
-  const img = primaryProductImage(product);
-  const price = Number(product.retail_price);
-  const pack = getPackPricing(product);
-  const displayName = pack ? productDisplayName(product, product.brands?.name) : product.name.split(/\s-\s/)[0];
+};
+
+export function ProductCard(props: ProductCardProps) {
+  return <SelectableProductCard key={props.product.id} {...props} />;
+}
+
+function SelectableProductCard({
+  product,
+  priority = false,
+  compact = false,
+}: ProductCardProps) {
+  const [selectedId, setSelectedId] = useState(product.id);
+  const options = productPackOptions(product, product.pack_options ?? [])
+    .filter(option => option.is_active !== false && !option.deleted_at);
+  // Resolve against current props so refreshed prices and removed options never
+  // leave stale product data attached to an Add to cart button.
+  const selected = selectedId === product.id
+    ? product
+    : options.find(option => option.id === selectedId) ?? product;
+  const img = primaryProductImage(selected);
+  const price = Number(selected.retail_price);
+  const pack = getPackPricing(selected);
+  const displayName = pack ? productDisplayName(selected, selected.brands?.name) : selected.name.split(/\s-\s/)[0];
   const image = img ? (
     <FramedProductImage
       src={bcImage(img.url, 'mid')}
-      alt={product.name}
+      alt={selected.name}
       sizes="(min-width: 1024px) 280px, 45vw"
       priority={priority}
       className="product-card-img"
     />
   ) : (
     <span className="image-placeholder">
-      {product.brands?.name ?? 'La Costa Gourmet'}
-      <small>{product.sku}</small>
+      {selected.brands?.name ?? 'La Costa Gourmet'}
+      <small>{selected.sku}</small>
     </span>
   );
   if (compact)
     return (
       <article className="catalog-card">
-        <Link href={`/product/${product.slug}`}>
+        <Link href={`/product/${selected.slug}`}>
           <div className="catalog-card-heading">
             <h2>{displayName}</h2>
-            <span>${price.toFixed(2)}</span>
+            <span aria-live="polite" aria-atomic="true">${price.toFixed(2)}</span>
             {pack && <p className="product-card-size">{pack.sizeLabel}</p>}
             {pack && <p className="pack-unit-price">${pack.unitPrice.toFixed(2)} per {pack.label}</p>}
           </div>
@@ -72,42 +91,42 @@ export function ProductCard({
             </span>
           </div>
         </Link>
-        <CardPackOptions product={product} />
+        <CardPackOptions product={selected} options={options} onSelect={setSelectedId} />
       </article>
     );
   return (
     <article className="product-card">
       <Link
-        href={`/product/${product.slug}`}
+        href={`/product/${selected.slug}`}
         className="product-picture"
-        aria-label={product.name}
+        aria-label={selected.name}
       >
         {image}
         {pack && <span className="product-pack-badge">{pack.badge}</span>}
       </Link>
       <div className="product-card-copy">
-        <p className="product-brand">{product.brands?.name}</p>
-        <Link href={`/product/${product.slug}`}>
+        <p className="product-brand">{selected.brands?.name}</p>
+        <Link href={`/product/${selected.slug}`}>
           <h3>{displayName}</h3>
         </Link>
         <p className="product-pack">
-          {pack?.sizeLabel ?? formatPackSize(product.pack_size) ?? 'See product for pack size'}
+          {pack?.sizeLabel ?? formatPackSize(selected.pack_size) ?? 'See product for pack size'}
         </p>
         <div className="product-purchase">
-          <div>
+          <div aria-live="polite" aria-atomic="true">
             <span className="type-price">${price.toFixed(2)}</span>
             {pack && <p className="pack-unit-price">${pack.unitPrice.toFixed(2)} per {pack.label}</p>}
           </div>
-          {!isAvailableForPurchase(product.stock_status) ? (
+          {!isAvailableForPurchase(selected.stock_status) ? (
             <span className="product-pack">Out of stock</span>
           ) : (
-            <ProductCardAdd item={productCartItem(product)} />
+            <ProductCardAdd key={selected.id} item={productCartItem(selected)} />
           )}
         </div>
-        <CardPackOptions product={product} />
+        <CardPackOptions product={selected} options={options} onSelect={setSelectedId} />
         <Link
           className="text-link product-details"
-          href={`/product/${product.slug}`}
+          href={`/product/${selected.slug}`}
         >
           Product details ›
         </Link>
@@ -116,25 +135,34 @@ export function ProductCard({
   );
 }
 
-function CardPackOptions({ product }: { product: ProductCardData }) {
-  const options = product.pack_options;
-  if (!options || options.length < 2) return null;
+function CardPackOptions({ product, options, onSelect }: {
+  product: ProductCardData;
+  options: ProductCardData[];
+  onSelect: (id: string) => void;
+}) {
+  if (options.length < 2) return null;
   return (
-    <nav className="product-card-packs" aria-label={`Choose size for ${productDisplayName(product, product.brands?.name)}`}>
+    <div className="product-card-packs" role="group" aria-label={`Choose size for ${productDisplayName(product, product.brands?.name)}`}>
       <p className="product-card-packs-title">Choose size</p>
       {options.map(option => {
         const pack = getPackPricing(option);
         if (!pack) return null;
         const savings = packSavingsForOption(option, options);
         return (
-          <Link key={option.id} href={`/product/${option.slug}/`} className={`product-card-pack-link${option.id === product.id ? ' is-shown' : ''}`}>
+          <button
+            key={option.id}
+            type="button"
+            aria-pressed={option.id === product.id}
+            onClick={() => onSelect(option.id)}
+            className={`product-card-pack-link${option.id === product.id ? ' is-shown' : ''}`}
+          >
             <span className="product-card-pack-line"><span>{pack.sizeLabel}</span><strong>${Number(option.retail_price).toFixed(2)}</strong></span>
             <span className="pack-unit-price">${pack.unitPrice.toFixed(2)} per {pack.label}</span>
             {savings !== null && <span className="pack-option-saving">Save ${savings.toFixed(2)} vs. {pack.units} single {pack.pluralLabel}</span>}
             {!isAvailableForPurchase(option.stock_status) && <span className="pack-option-unavailable">Out of stock</span>}
-          </Link>
+          </button>
         );
       })}
-    </nav>
+    </div>
   );
 }

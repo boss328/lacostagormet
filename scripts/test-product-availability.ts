@@ -195,6 +195,7 @@ test('older edit forms preserve availability; older create forms retain their in
 test('product cards and JSON-LD agree for all availability states', () => {
   const react = require('react');
   const card = evaluate('../src/components/shop/ProductCard.tsx', {
+    react,
     'react/jsx-runtime': require('react/jsx-runtime'), 'next/link': { default: (props: any) => react.createElement('a', props) },
     './ProductImage': { ProductImage: () => null }, './ProductCardAdd': { ProductCardAdd: () => react.createElement('button', {}, 'Add to cart') },
     '@/lib/bcImage': { bcImage: (value: string) => value }, '@/lib/pack-size': { formatPackSize: () => 'Case' },
