@@ -96,6 +96,28 @@ test('unclear packaging falls back to count without inferring net contents from 
   assert.equal(packUnitSize('Four 4 lb. Bags', 1), null);
 });
 
+test('size buttons identify bags and cans without inferring missing net contents', () => {
+  assert.equal(getPackPricing(single)?.selectionLabel, '4 lb bag');
+  assert.equal(getPackPricing(fourPack)?.selectionLabel, '4 × 4 lb bags');
+  assert.equal(getPackPricing({ ...single, pack_unit_label: 'can', pack_size: '14 oz can' })?.selectionLabel, '14 oz can');
+  assert.equal(getPackPricing({ ...single, units_per_pack: 6, pack_unit_label: 'can', pack_size: '6 × 14 oz cans' })?.selectionLabel, '6 × 14 oz cans');
+  assert.equal(getPackPricing({ ...single, pack_unit_label: 'can', pack_size: null })?.selectionLabel, '1 can');
+  assert.equal(getPackPricing({ ...fourPack, pack_size: 'Three 4 lb. Bags' })?.selectionLabel, '4 bags');
+});
+
+test('a mixed-format family keeps each can and bag identity through cart selection', () => {
+  const can: PackProduct = {
+    ...single, id: 'can-id', sku: 'DR-TIGER-CAN', slug: 'tiger-spice-can', name: 'Tiger Spice Chai · 14 oz Can',
+    pack_unit_label: 'can', pack_size: '14 oz can', retail_price: 15,
+    product_images: [{ url: '/test-can.jpg', alt_text: 'One can', is_primary: true, display_order: 1 }],
+  };
+  const options = productPackOptions(can, [fourPack, single, can]);
+  assert.deepEqual(new Set(options.map(product => product.id)), new Set(['case-id', 'single-id', 'can-id']));
+  const item = productCartItem(can);
+  assert.deepEqual([item.product_id, item.sku, item.price, item.image_url, item.units_per_pack, item.pack_unit_label], ['can-id', 'DR-TIGER-CAN', 15, '/test-can.jpg', 1, 'can']);
+  assert.equal(productDisplayName(can), 'Tiger Spice Chai');
+});
+
 test('visible configured pack names preserve flavors and dietary claims while omitting repeated packaging', () => {
   const cases: [string, string][] = [
     ['David Rio Elephant Vanilla Chai Mix, 4 lb Foodservice Bag (Case of 4) - ~65 Servings per Bag', 'Elephant Vanilla Chai Mix'],
@@ -135,4 +157,16 @@ test('savings compare purchasable public singles with matching units and net con
   }
   assert.equal(packSavingsForOption(fullCase, [fullCase]), null);
   assert.equal(packSavingsForOption({ ...fullCase, pack_size: null }, [fullCase, oneBag]), null);
+});
+
+test('mixed-format savings find the matching single regardless of option order', () => {
+  const can: PackProduct = { ...single, id: 'can-id', pack_unit_label: 'can', pack_size: '14 oz can', retail_price: 15 };
+  const canCase: PackProduct = { ...fourPack, id: 'can-case-id', pack_parent_id: fourPack.id, units_per_pack: 6, pack_unit_label: 'can', pack_size: '6 × 14 oz cans', retail_price: 80 };
+  const smallerBag: PackProduct = { ...single, id: 'smaller-bag-id', pack_size: 'One 3 lb. Bag', retail_price: 20 };
+  for (const options of [[single, can, smallerBag], [can, smallerBag, single], [smallerBag, single, can]]) {
+    assert.equal(packSavingsForOption(fourPack, options), 12);
+    assert.equal(packSavingsForOption(canCase, options), 10);
+  }
+  assert.equal(packSavingsForOption(fourPack, [can, smallerBag]), null, 'can and smaller bag prices cannot establish bag savings');
+  assert.equal(packSavingsForOption(canCase, [single, smallerBag]), null, 'bag prices cannot establish can savings');
 });

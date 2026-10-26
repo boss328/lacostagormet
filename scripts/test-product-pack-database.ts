@@ -39,6 +39,17 @@ async function main() {
       INSERT INTO product_categories(product_id,category_id) VALUES('${rootId}','44444444-4444-4444-8444-444444444444');
     `);
     await db.exec(await readFile('supabase/migrations/20261025214603_product_pack_options.sql', 'utf8'));
+    const existingRootId = '55555555-5555-4555-8555-555555555555';
+    await db.exec(`
+      INSERT INTO products(id,sku,name,slug,retail_price,units_per_pack,pack_unit_label,pack_size)
+      VALUES('${existingRootId}','EXISTING-CASE','Existing case','existing-case',170,4,'bag','Four 4 lb Bags');
+      INSERT INTO products(sku,name,slug,retail_price,units_per_pack,pack_unit_label,pack_size,pack_parent_id)
+      VALUES('EXISTING-SINGLE','Existing single','existing-single',47,1,'bag','One 4 lb Bag','${existingRootId}');
+    `);
+    const upgradeBefore = (await db.query('SELECT * FROM products ORDER BY id')).rows;
+    await db.exec(await readFile('supabase/migrations/20261026213813_mixed_product_pack_formats.sql', 'utf8'));
+    assert.deepEqual((await db.query('SELECT * FROM products ORDER BY id')).rows, upgradeBefore);
+    console.log('PASS: migration preserves every existing product, price, package identity and publication state');
     await db.exec('SET ROLE service_role');
     const input = (override: Record<string, unknown> = {}) => ({
       sku: `PACK-${++sequence}`, slug: `chai-pack-${sequence}`, name: 'Chai single bag', description: 'One bag of chai mix.',
@@ -49,7 +60,7 @@ async function main() {
       'SELECT public.create_product_pack_option($1::uuid,$2::jsonb) AS id', [id, JSON.stringify(values)],
     )).rows[0].id;
     const product = async (id: string) => (await db.query<Record<string, unknown>>('SELECT * FROM products WHERE id=$1', [id])).rows[0];
-    const count = async () => (await db.query<{ count: number }>('SELECT count(*)::integer AS count FROM products')).rows[0].count;
+    const count = async () => (await db.query<{ count: number }>('SELECT count(*)::integer AS count FROM products WHERE id=$1 OR pack_parent_id=$1', [rootId])).rows[0].count;
 
     // A failure after original-pack configuration must roll that update back too.
     await assert.rejects(create(input({ primary_image_url: 'https://other.example/unapproved.jpg' })), /uploaded image/);
@@ -76,34 +87,76 @@ async function main() {
     assert.equal((await db.query('SELECT * FROM product_images WHERE product_id=$1', [childId])).rows.length, 0);
     console.log('PASS: safe draft creation, explicit fulfillment and weights, categories copied, case claims excluded');
 
-    await assert.rejects(create(input()), /unique constraint/);
-    await assert.rejects(create(input({ units_per_pack: 4 })), /already belongs/);
-    await assert.rejects(create(input({ units_per_pack: 2, parent_units_per_pack: 6 })), /cannot change/);
+    await assert.rejects(create(input()), /already exists/);
+    await assert.rejects(create(input({ units_per_pack: 4 })), /already exists/);
+    await assert.rejects(create(input({ units_per_pack: 2, parent_units_per_pack: 6 })), /configuration changed/);
     for (const override of [
       { units_per_pack: 1.5 }, { units_per_pack: 1001 }, { retail_price: 0 }, { retail_price: 1.005 },
       { weight_lb: 0 }, { weight_lb: 10000 }, { stock_status: 'anything' }, { vendor_id: null },
       { is_active: true }, { is_active: 'true' }, { pack_unit_label: '<b>bag</b>' },
     ]) await assert.rejects(create(input({ units_per_pack: 2, ...override })));
     assert.equal(await count(), 2);
-    console.log('PASS: duplicate counts and invalid stock, pricing, weight, vendor and publication rejected atomically');
+    console.log('PASS: ambiguous duplicates and invalid stock, pricing, weight, vendor and publication rejected atomically');
 
     const publishedId = await create(input({ units_per_pack: 2, primary_image_url: 'https://images.example/chai.jpg', is_active: true }), childId);
     assert.equal((await product(publishedId)).pack_parent_id, rootId, 'creating through a child still targets the root');
     assert.equal((await db.query('SELECT * FROM product_images WHERE product_id=$1', [publishedId])).rows.length, 1);
     await db.query('SELECT configure_product_pack($1,4,$2)', [childId, 'pouch']);
     assert.equal((await product(rootId)).pack_unit_label, 'pouch');
-    assert.equal((await product(childId)).pack_unit_label, 'pouch');
+    assert.equal((await product(childId)).pack_unit_label, 'bag');
+    assert.equal((await product(publishedId)).pack_unit_label, 'bag');
     await assert.rejects(db.query('SELECT configure_product_pack($1,6,$2)', [rootId, 'bag']), /cannot change/);
     await assert.rejects(db.query('UPDATE products SET units_per_pack=6 WHERE id=$1', [rootId]), /cannot change/);
     await assert.rejects(db.query('UPDATE products SET pack_parent_id=$1 WHERE id=$2', [childId, rootId]), /original product/);
     await assert.rejects(db.query('UPDATE products SET pack_parent_id=id WHERE id=$1', [childId]), /itself/);
     await assert.rejects(db.query('UPDATE products SET pack_unit_label=NULL WHERE id=$1', [rootId]), /retain its unit label/);
-    console.log('PASS: child lookup resolves root, labels stay consistent, group chains/cycles are rejected');
+    await db.query('SELECT configure_product_pack($1,4,$2)', [rootId, 'bag']);
+    console.log('PASS: child lookup resolves root, each SKU retains its label, group chains/cycles are rejected');
+
+    const canId = await create(input({ pack_unit_label: 'can', parent_pack_unit_label: 'bag', pack_size: '1 × 14 oz can', retail_price: 18, weight_lb: 1.1 }));
+    const can = await product(canId);
+    assert.equal(can.pack_parent_id, rootId);
+    assert.equal(can.pack_unit_label, 'can');
+    assert.equal(can.pack_size, '1 × 14 oz can');
+    assert.equal(can.units_per_pack, 1);
+    assert.equal(can.retail_price, '18.00');
+    assert.equal(can.weight_lb, '1.10');
+    assert.equal((await product(childId)).pack_unit_label, 'bag');
+    assert.equal((await product(rootId)).pack_unit_label, 'bag');
+    assert.equal((await product(rootId)).units_per_pack, 4);
+    const largerCan = await create(input({ pack_unit_label: 'can', pack_size: 'One 20 oz Can' }));
+    assert.equal((await product(largerCan)).units_per_pack, 1);
+    assert.equal((await product(largerCan)).pack_size, 'One 20 oz Can');
+    const fourCans = await create(input({ units_per_pack: 4, pack_unit_label: 'can', pack_size: 'Four 14 oz Cans' }), canId);
+    assert.equal((await product(fourCans)).pack_parent_id, rootId);
+    assert.equal((await product(fourCans)).pack_unit_label, 'can');
+    await assert.rejects(create(input({ pack_unit_label: 'CAN', pack_size: 'One 14.00 OZ. Can' })), /unique constraint/);
+    await assert.rejects(create(input({ pack_unit_label: 'can', pack_size: '14oz Can' })), /unique constraint/);
+    await assert.rejects(create(input({ pack_unit_label: 'can' })), /already exists/);
+    await assert.rejects(create(input({ pack_unit_label: 'can', parent_pack_unit_label: 'can', pack_size: 'One 30 oz Can' })), /configuration changed/);
+    for (const override of [{ pack_size: '' }, { pack_size: 14 }, { pack_size: 'x'.repeat(201) }, { parent_pack_unit_label: '<img>' }]) {
+      await assert.rejects(create(input({ pack_unit_label: 'can', pack_size: 'One 30 oz Can', ...override })));
+    }
+    await db.query('SELECT configure_product_pack($1,4,$2)', [rootId, 'pouch']);
+    assert.equal((await product(canId)).pack_unit_label, 'can');
+    assert.equal((await product(childId)).pack_unit_label, 'bag');
+    await db.query('SELECT configure_product_pack($1,4,$2)', [rootId, 'bag']);
+    console.log('PASS: single bag plus two can sizes and four-can pack coexist; normalized duplicates and stale parent configuration fail');
+
+    const unconfiguredId = '66666666-6666-4666-8666-666666666666';
+    await db.query('INSERT INTO products(id,sku,name,slug,retail_price,pack_size) VALUES($1,$2,$3,$4,47,$5)', [unconfiguredId, 'NEW-SINGLE', 'New single bag', 'new-single-bag', 'One 4 lb Bag']);
+    const initialCanId = await create(input({ parent_units_per_pack: 1, parent_pack_unit_label: 'bag', pack_unit_label: 'can', pack_size: 'One 14 oz Can' }), unconfiguredId);
+    assert.equal((await product(unconfiguredId)).pack_unit_label, 'bag');
+    assert.equal((await product(unconfiguredId)).units_per_pack, 1);
+    assert.equal((await product(initialCanId)).pack_unit_label, 'can');
+    assert.equal((await product(initialCanId)).units_per_pack, 1);
+    console.log('PASS: first same-count can option configures an unconfigured single-bag parent independently');
 
     // Force a late image insert failure and verify both the SKU and its M2M rows roll back.
     await db.exec('RESET ROLE; ALTER TABLE product_images ADD CONSTRAINT synthetic_fail_image CHECK (alt_text IS DISTINCT FROM \'Fail image fixture\'); SET ROLE service_role');
+    const beforeFailedInsert = await count();
     await assert.rejects(create(input({ units_per_pack: 3, name: 'Fail image fixture', primary_image_url: 'https://images.example/chai.jpg' })), /synthetic_fail_image/);
-    assert.equal(await count(), 3);
+    assert.equal(await count(), beforeFailedInsert);
     assert.equal((await db.query("SELECT * FROM products WHERE name='Fail image fixture'")).rows.length, 0);
     console.log('PASS: late write failures roll back product, categories and original configuration');
 
@@ -118,9 +171,9 @@ async function main() {
     const routines = (await db.query<{ prosecdef: boolean; proconfig: string[]; callable: boolean }>(`
       SELECT prosecdef,proconfig,has_function_privilege('anon',p.oid,'EXECUTE') AS callable
       FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-      WHERE n.nspname='public' AND p.proname IN ('create_product_pack_option','configure_product_pack','validate_product_pack_group')
+      WHERE n.nspname='public' AND p.proname IN ('create_product_pack_option','configure_product_pack','validate_product_pack_group','product_pack_size_key')
     `)).rows;
-    assert.equal(routines.length, 3);
+    assert.equal(routines.length, 4);
     for (const routine of routines) {
       assert.equal(routine.prosecdef, false);
       assert.equal(routine.callable, false);

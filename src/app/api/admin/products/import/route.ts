@@ -290,6 +290,16 @@ export async function POST(req: NextRequest) {
         case 'short_description':
         case 'meta_description':
         case 'pack_size': {
+          // Configured net contents participate in a pack option's identity.
+          // Reject edits before ANY rows are applied, rather than discovering
+          // a duplicate format halfway through a multi-product import.
+          if (col === 'pack_size' && (current.pack_unit_label || current.pack_parent_id)) {
+            const normalizedSize = (value: string) => value.trim().replace(/\r\n?/g, '\n');
+            if (isClear || normalizedSize(raw) !== normalizedSize(current.pack_size ?? '')) {
+              rowErr('Pack sizes for configured products cannot be changed or CLEARed through CSV. Create a new size from Pack options on the product edit page.');
+            }
+            break;
+          }
           const max = col === 'description' ? 5000 : 2000;
           if (isClear) {
             if (current[col] !== null) update[col] = null;

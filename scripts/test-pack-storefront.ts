@@ -9,6 +9,7 @@ import * as packOptions from '../src/lib/product-pack-options';
 import * as availability from '../src/lib/product-availability';
 import { groupCatalogPacks } from '../src/lib/catalog-pack-groups';
 import type { ProductCardData } from '../src/components/shop/ProductCard';
+import type { ProductDetailData } from '../src/components/shop/ProductDetails';
 
 const require = createRequire(import.meta.url);
 const caseProduct: ProductCardData = {
@@ -25,6 +26,28 @@ const singleProduct: ProductCardData = {
   pack_size: 'One 4 lb. Bag', units_per_pack: 1, pack_parent_id: caseProduct.id, retail_price: 47,
   product_images: [{ url: '/one-bag.jpg', alt_text: 'One bag', is_primary: true, display_order: 0 }],
 };
+// Synthetic can data verifies mixed-format behavior; it is not catalog pricing.
+const canProduct: ProductCardData = {
+  ...singleProduct, id: 'can-id', slug: 'elephant-vanilla-one-can', sku: 'FIXTURE-CAN',
+  name: 'David Rio Elephant Vanilla Chai — One 14 oz. Can',
+  pack_size: 'One 14 oz. Can', pack_unit_label: 'can', retail_price: 19,
+  product_images: [{ url: '/one-can.jpg', alt_text: 'One can', is_primary: true, display_order: 0 }],
+};
+
+function detailProduct(product: ProductCardData): ProductDetailData {
+  return {
+    ...product,
+    units_per_pack: product.units_per_pack ?? null,
+    pack_parent_id: product.pack_parent_id ?? null,
+    pack_unit_label: product.pack_unit_label ?? null,
+    stock_status: product.stock_status ?? null,
+    description: `${product.sku} product description`, short_description: null,
+    weight_lb: null, upc: null, brand_id: 'brand-id', primary_category_id: null,
+    brands: product.brands ? { ...product.brands, id: 'brand-id' } : null,
+    primary_category: null, product_images: product.product_images ?? null,
+    product_categories: [],
+  };
+}
 
 function components() {
   const added: ReturnType<typeof packOptions.productCartItem>[] = [];
@@ -37,6 +60,13 @@ function components() {
       added.push(item);
       return React.createElement('button', { 'data-product-id': item.product_id }, 'Add');
     } },
+    './ProductGallery': { ProductGallery: ({ images, sku }: { images: Array<{ url: string }>; sku: string }) =>
+      React.createElement('img', { src: images[0]?.url, alt: sku }) },
+    './ProductAddPanel': { ProductAddPanel: ({ item, available }: { item: ReturnType<typeof packOptions.productCartItem>; available: boolean }) => {
+      if (available) added.push(item);
+      return React.createElement('button', { disabled: !available, 'data-product-id': item.product_id }, available ? 'Add' : 'Out of stock');
+    } },
+    './ProductDescription': { ProductDescription: ({ html }: { html: string | null }) => React.createElement('p', {}, html) },
     '@/lib/bcImage': { bcImage: (url: string) => url },
     '@/lib/pack-size': { formatPackSize: (pack: string | null) => pack },
     '@/lib/product-availability': availability,
@@ -53,10 +83,13 @@ function components() {
     }, target, target.exports);
     return target.exports;
   }
+  const ProductPackOptions = evaluate('../src/components/shop/ProductPackOptions.tsx').ProductPackOptions;
+  modules['./ProductPackOptions'] = { ProductPackOptions };
   return {
     added,
     ProductCard: evaluate('../src/components/shop/ProductCard.tsx').ProductCard,
-    ProductPackOptions: evaluate('../src/components/shop/ProductPackOptions.tsx').ProductPackOptions,
+    ProductPackOptions,
+    ProductDetails: evaluate('../src/components/shop/ProductDetails.tsx').ProductDetails,
   };
 }
 
@@ -70,17 +103,17 @@ test('grouped card initially displays and adds the selected actual SKU at its ow
     const h = components();
     const [product] = groupCatalogPacks([caseProduct, singleProduct], { search });
     const html = renderToStaticMarkup(React.createElement(h.ProductCard, { product }));
-    assert.match(html, /1 bag · 4 lb/);
-    assert.match(html, /4 bags · 4 lb each/);
     const expected = search ? caseProduct : singleProduct;
-    assert.match(html, /Save \$18\.00 vs\. 4 single bags/);
+    if (search) assert.match(html, /Save \$18\.00 vs\. 4 single bags/);
+    else assert.doesNotMatch(html, /Save \$/);
     assert.match(html, new RegExp(`class="type-price">\\$${Number(expected.retail_price).toFixed(2).replace('.', '\\.')}</span>`));
     assert.match(html, new RegExp(`href="/product/${expected.slug}"`));
     assert.match(html, new RegExp(`src="${expected.product_images![0].url}"`));
     const options = sizeButtons(html);
     assert.equal(options.length, 2);
     const selectedOption = options.find(option => option.includes('aria-pressed="true"'))!;
-    assert.match(selectedOption, search ? /4 bags · 4 lb each/ : /1 bag · 4 lb/);
+    assert.match(selectedOption, search ? /4 × 4 lb bags/ : /4 lb bag/);
+    assert.ok(options.every(option => !/\$|per bag|<img/.test(option)), 'size buttons contain no competing prices or imagery');
     assert.ok(options.every(option => !option.includes('href=')), 'size changes stay on the current page');
     assert.equal(h.added.length, 1);
     assert.deepEqual(h.added[0], packOptions.productCartItem(expected));
@@ -103,7 +136,7 @@ test('compact card size controls are accessible buttons outside the product link
   assert.equal(h.added.length, 0);
 });
 
-test('detail options mark the selected size without route links and show precise comparisons', () => {
+test('detail size pills mark the selected format without route links or competing prices', () => {
   const h = components();
   const html = renderToStaticMarkup(React.createElement(h.ProductPackOptions, {
     options: [singleProduct, caseProduct], selectedId: caseProduct.id, onSelect: () => undefined,
@@ -113,18 +146,16 @@ test('detail options mark the selected size without route links and show precise
   assert.match(options[0], /aria-pressed="false"/);
   assert.match(options[1], /aria-pressed="true"/);
   assert.doesNotMatch(html, /<a\b|href=|aria-current=/);
-  assert.match(html, /4 bags · 4 lb each/);
-  assert.match(options[0], /\$47\.00/);
-  assert.match(options[1], /\$170\.00/);
-  assert.match(html, /\$42\.50 per bag/);
-  assert.match(html, /Save \$18\.00 vs\. 4 single bags/);
+  assert.match(options[0], /4 lb bag/);
+  assert.match(options[1], /4 × 4 lb bags/);
+  assert.doesNotMatch(html, /\$|per bag|Save |<img/);
 });
 
 test('detail size buttons report the selected product ID, not its count or parent ID', () => {
   const h = components();
   const selected: string[] = [];
   const root = (h.ProductPackOptions as (props: Record<string, unknown>) => React.ReactNode)({
-    options: [singleProduct, caseProduct], selectedId: caseProduct.id,
+    options: [singleProduct, canProduct, caseProduct], selectedId: caseProduct.id,
     onSelect: (id: string) => selected.push(id),
   });
   const buttons: Array<React.ReactElement<{ onClick: () => void }>> = [];
@@ -136,10 +167,69 @@ test('detail size buttons report the selected product ID, not its count or paren
     });
   }
   visit(root);
-  assert.equal(buttons.length, 2);
+  assert.equal(buttons.length, 3);
   buttons[0].props.onClick();
   buttons[1].props.onClick();
-  assert.deepEqual(selected, [singleProduct.id, caseProduct.id]);
+  buttons[2].props.onClick();
+  assert.deepEqual(selected, [singleProduct.id, canProduct.id, caseProduct.id]);
+});
+
+test('mixed single bag and single can remain distinct selections with their own price and cart identity', () => {
+  const options = [singleProduct, canProduct, caseProduct];
+  for (const selected of [singleProduct, canProduct]) {
+    for (const compact of [false, true]) {
+      const h = components();
+      const html = renderToStaticMarkup(React.createElement(h.ProductCard, {
+        product: { ...selected, pack_options: options }, compact,
+      }));
+      const buttons = sizeButtons(html);
+      assert.equal(buttons.length, 3);
+      assert.equal(buttons.filter(button => button.includes('aria-pressed="true"')).length, 1);
+      const active = buttons.find(button => button.includes('aria-pressed="true"'))!;
+      assert.match(active, selected.id === canProduct.id ? /14 oz can/ : /4 lb bag/);
+      assert.match(html, new RegExp(`\\$${Number(selected.retail_price).toFixed(2).replace('.', '\\.')}`));
+      assert.match(html, new RegExp(`href="/product/${selected.slug}"`));
+      assert.match(html, new RegExp(`src="${selected.product_images![0].url}"`));
+      assert.doesNotMatch(html, /Save \$/);
+      assert.deepEqual(h.added, compact ? [] : [packOptions.productCartItem(selected)]);
+    }
+  }
+});
+
+test('product details present one selected price before size pills and keep gallery, details and cart coherent', () => {
+  const options = [singleProduct, canProduct, caseProduct].map(detailProduct);
+  for (const selected of options) {
+    const h = components();
+    const html = renderToStaticMarkup(React.createElement(h.ProductDetails, { product: selected, options }));
+    const priceStart = html.indexOf('class="product-selected-price"');
+    const selectorStart = html.indexOf('class="pack-options"');
+    assert.ok(priceStart >= 0 && priceStart < selectorStart, 'main price precedes the size selector');
+    const priceBlock = html.slice(priceStart, selectorStart);
+    assert.match(priceBlock, new RegExp(`\\$${Number(selected.retail_price).toFixed(2).replace('.', '\\.')}`));
+    assert.match(priceBlock, new RegExp(`per ${selected.pack_unit_label}`));
+    assert.match(html, new RegExp(`SKU · ${selected.sku}`));
+    assert.match(html, new RegExp(`src="${selected.product_images![0].url}"`));
+    assert.match(html, new RegExp(`${selected.sku} product description`));
+    assert.deepEqual(h.added, [packOptions.productCartItem(selected)]);
+    assert.equal(sizeButtons(html).filter(button => button.includes('aria-pressed="true"')).length, 1);
+    assert.ok(sizeButtons(html).every(button => !/\$|per bag|per can|Save /.test(button)));
+    if (selected.id === caseProduct.id) {
+      assert.equal((html.match(/Save \$18\.00 vs\. 4 single bags/g) ?? []).length, 1);
+    } else assert.doesNotMatch(html, /Save \$/);
+  }
+});
+
+test('unavailable product detail selection shows price but cannot add to cart or advertise savings', () => {
+  const selected = detailProduct({ ...caseProduct, stock_status: 'out_of_stock' });
+  const h = components();
+  const html = renderToStaticMarkup(React.createElement(h.ProductDetails, {
+    product: selected, options: [detailProduct(singleProduct), selected],
+  }));
+  assert.match(html, /\$170\.00/);
+  assert.match(html, /Out of stock/);
+  assert.match(html, /<button disabled="" data-product-id="case-id">Out of stock/);
+  assert.deepEqual(h.added, []);
+  assert.doesNotMatch(html, /Save \$/);
 });
 
 test('draft sizes and unavailable single comparisons do not leak into cards', () => {

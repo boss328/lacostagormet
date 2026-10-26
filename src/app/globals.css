@@ -919,7 +919,7 @@ a:hover .product-card-img {
 .product-card-packs {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 9px;
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid #e5ebe6;
@@ -930,21 +930,29 @@ a:hover .product-card-img {
   color: #617268;
 }
 .product-card-pack-link {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
-  width: 100%;
-  text-align: left;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  min-height: 44px;
+  text-align: center;
   font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
   background: #fff;
   cursor: pointer;
-  padding: 9px 10px;
-  border: 1px solid #dce3de;
-  border-radius: 9px;
+  padding: 10px 13px;
+  border: 1px solid #bfcac4;
+  border-radius: 999px;
   color: #28544c;
   transition: border-color 160ms ease, background-color 160ms ease;
 }
 .product-card-pack-link.is-shown {
-  background: #f1f6f2;
+  background: #28544c;
+  border-color: #28544c;
+  color: #fff;
 }
 .product-card-pack-link:hover {
   border-color: #28544c;
@@ -953,19 +961,12 @@ a:hover .product-card-img {
   outline: 2px solid #477466;
   outline-offset: 2px;
 }
-.product-card-pack-line {
+.product-card-pack-options {
   display: flex;
-  width: 100%;
   flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 3px 8px;
-  font-size: 12px;
-  line-height: 1.5;
+  gap: 7px;
 }
-.product-card-pack-line strong {
-  font-weight: 600;
-}
-.product-card-packs .pack-option-saving {
+.product-card-selected-saving {
   line-height: 1.5;
 }
 .pack-options-heading {
@@ -975,24 +976,29 @@ a:hover .product-card-img {
   font-weight: 600;
 }
 .pack-options-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 .pack-option {
-  position: relative;
-  display: flex;
+  display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
   min-width: 0;
-  width: 100%;
-  text-align: left;
+  max-width: 100%;
+  min-height: 48px;
+  text-align: center;
   font: inherit;
-  color: inherit;
-  padding: 14px;
-  border: 1px solid #dce3de;
-  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #28544c;
+  padding: 13px 22px;
+  border: 1px solid #bfcac4;
+  border-radius: 999px;
   background: #fff;
+  cursor: pointer;
   transition: border-color 160ms ease, background-color 160ms ease;
 }
 .pack-option:hover,
@@ -1005,33 +1011,8 @@ a:hover .product-card-img {
 }
 .pack-option.is-selected {
   border-color: #28544c;
-  background: #f1f6f2;
-  box-shadow: inset 0 0 0 1px #28544c;
-}
-.pack-option-image {
-  display: block;
-  position: relative;
-  flex: 0 0 56px;
-  height: 64px;
-  overflow: hidden;
-  border-radius: 6px;
-}
-.pack-option-copy {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  padding-right: 10px;
-}
-.pack-option-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-ink);
-}
-.pack-option-total {
-  margin-top: 3px;
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--color-ink);
+  background: #28544c;
+  color: #fff;
 }
 .pack-option-saving {
   margin-top: 5px;
@@ -1040,39 +1021,21 @@ a:hover .product-card-img {
   font-weight: 600;
 }
 .pack-option-unavailable {
-  margin-top: 4px;
+  margin-top: 2px;
   font-size: 11px;
-  color: #737d77;
+  color: inherit;
+  font-weight: 400;
 }
-.pack-option-check {
-  position: absolute;
-  right: 9px;
-  top: 9px;
-  display: grid;
-  place-items: center;
-  width: 15px;
-  height: 15px;
-  border: 1px solid #c5d3c9;
-  border-radius: 50%;
-  font-size: 10px;
-  line-height: 1;
+.product-selected-unit-price {
+  margin-top: 10px;
+  font-size: 14px;
 }
-.pack-option.is-selected .pack-option-check {
-  background: #28544c;
-  border-color: #28544c;
-  color: #fff;
+.product-selected-saving {
+  font-size: 13px;
 }
 @media (max-width: 640px) {
   .pack-option {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 12px;
-  }
-  .pack-option-image {
-    flex-basis: auto;
-    width: 52px;
-    height: 56px;
+    padding: 12px 18px;
   }
 }
 .catalog-card {

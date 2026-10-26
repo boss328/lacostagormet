@@ -6,6 +6,7 @@ import { packUnitPrice, type PackOptionsResponse } from '@/lib/product-packs';
 import { STOCK_STATUS_OPTIONS } from '@/lib/product-availability';
 import { slugify } from '@/lib/admin/slug';
 import { suggestPackPrice } from './pack-options-input';
+import { packUnitSize } from '@/lib/product-pack-options';
 
 type ApiError = { errorMessage?: string; error?: string; fieldErrors?: Record<string, string> };
 const money = (value: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
@@ -25,6 +26,9 @@ export function ProductPackOptions({ productId }: { productId: string }) {
   const [createdId, setCreatedId] = useState('');
   const [parentUnits, setParentUnits] = useState('');
   const [unitLabel, setUnitLabel] = useState('');
+  const [optionUnitLabel, setOptionUnitLabel] = useState('bag');
+  const [netAmount, setNetAmount] = useState('');
+  const [netMeasure, setNetMeasure] = useState('oz');
   const [showCreate, setShowCreate] = useState(false);
   const [sku, setSku] = useState('');
   const [name, setName] = useState('');
@@ -62,7 +66,11 @@ export function ProductPackOptions({ productId }: { productId: string }) {
   const basePrice = Number(parent?.retail_price ?? 0);
   const baseUnitPrice = packUnitPrice(basePrice, Number(parentUnits));
   const newUnitPrice = packUnitPrice(Number(price), Number(units));
-  const suggestedPrice = suggestPackPrice(basePrice, Number(parentUnits), Number(units), Number(markup));
+  const optionPackSize = `${Number(units)} × ${Number(netAmount)} ${netMeasure}`;
+  const sameContents = parent && optionUnitLabel.trim().toLowerCase() === parent.pack_unit_label?.toLowerCase()
+    && packUnitSize(parent.pack_size, parent.units_per_pack ?? 0) !== null
+    && packUnitSize(parent.pack_size, parent.units_per_pack ?? 0) === packUnitSize(optionPackSize, Number(units));
+  const suggestedPrice = sameContents ? suggestPackPrice(basePrice, Number(parentUnits), Number(units), Number(markup)) : null;
   const hasChildren = (data?.options.length ?? 0) > 1;
   const selectedVendor = data?.vendors.find(vendor => vendor.id === vendorId);
 
@@ -101,7 +109,8 @@ export function ProductPackOptions({ productId }: { productId: string }) {
         body: JSON.stringify({
           sku: sku.trim(), name: name.trim(), slug: slugify(name),
           retail_price: Number(price), units_per_pack: Number(units),
-          parent_units_per_pack: Number(parentUnits), pack_unit_label: unitLabel.trim(),
+          parent_units_per_pack: Number(parentUnits), parent_pack_unit_label: unitLabel.trim(),
+          pack_unit_label: optionUnitLabel.trim(), pack_size: optionPackSize,
           weight_lb: Number(weight), vendor_id: vendorId, description: description.trim(),
           ...(imageUrl ? { primary_image_url: imageUrl } : {}),
           stock_status: stockStatus, is_active: isActive,
@@ -112,7 +121,7 @@ export function ProductPackOptions({ productId }: { productId: string }) {
       setMessage(`${name.trim()} created. Open its product editor to upload a pack-specific photo and finish setup.`);
       setCreatedId(result.product?.id ?? '');
       setShowCreate(false);
-      setSku(''); setName(''); setPrice(''); setWeight(''); setDescription(''); setImageUrl('');
+      setSku(''); setName(''); setPrice(''); setWeight(''); setDescription(''); setImageUrl(''); setNetAmount('');
       setStockStatus('out_of_stock'); setIsActive(false);
       await load();
     } catch (caught) {
@@ -126,10 +135,10 @@ export function ProductPackOptions({ productId }: { productId: string }) {
         <div className="max-w-2xl">
           <h2 id="pack-options-title" className="font-display text-2xl tracking-tight text-ink">Pack options</h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-            Offer singles and cases with a clear price per unit. Each pack has its own SKU, price, photo, availability and shipping weight.
+            Offer bags, cans and cases together. Each size has its own SKU, net contents, price, photo, availability and shipping details.
           </p>
         </div>
-        {data && !showCreate && <button type="button" className="btn btn-solid" disabled={busy} onClick={() => { setShowCreate(true); setError(''); setMessage(''); }}>Add pack option <span aria-hidden="true">＋</span></button>}
+        {data && !showCreate && <button type="button" className="btn btn-solid" disabled={busy} onClick={() => { setOptionUnitLabel(unitLabel || 'bag'); setShowCreate(true); setError(''); setMessage(''); }}>Add pack option <span aria-hidden="true">＋</span></button>}
       </div>
 
       {error && <div role="alert" className="mb-5 rounded-md border border-accent p-4 text-sm text-accent">{error}</div>}
@@ -146,7 +155,7 @@ export function ProductPackOptions({ productId }: { productId: string }) {
                 return <li key={option.id} className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
                   <div className="min-w-0">
                     <Link href={`/admin/products/${option.id}/`} className="font-display text-base text-ink hover:text-brand-deep">{option.name}</Link>
-                    <p className="mt-1 text-xs text-ink-muted">{option.sku} · {option.units_per_pack ? `${option.units_per_pack}-pack` : 'Pack count not set'} · {option.is_active ? STOCK_STATUS_OPTIONS.find(status => status.value === option.stock_status)?.label ?? option.stock_status : 'Hidden from storefront'}{option.id === data.parentId ? ' · Base product' : ''}</p>
+                    <p className="mt-1 text-xs text-ink-muted">{option.sku} · {option.pack_size || (option.units_per_pack ? `${option.units_per_pack}-pack` : 'Pack count not set')} · {option.is_active ? STOCK_STATUS_OPTIONS.find(status => status.value === option.stock_status)?.label ?? option.stock_status : 'Hidden from storefront'}{option.id === data.parentId ? ' · Base product' : ''}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-ink">{money(Number(option.retail_price))}</p>
@@ -163,7 +172,7 @@ export function ProductPackOptions({ productId }: { productId: string }) {
             <Field label="Units in the base pack" id="pack-parent-units" hint={hasChildren ? 'The count is fixed once another pack option exists.' : 'Enter the number of individual bags, bottles or units in this SKU.'}>
               <input id="pack-parent-units" type="number" min="1" max="1000" step="1" required value={parentUnits} disabled={hasChildren || busy} onChange={event => setParentUnits(event.target.value)} className={inputClass} />
             </Field>
-            <Field label="Unit name (singular)" id="pack-unit-label" hint="For example: bag, bottle or carton.">
+            <Field label="Base unit name (singular)" id="pack-unit-label" hint="For example: bag, can or bottle. Applies only to the base product.">
               <input id="pack-unit-label" required pattern="[a-zA-Z][a-zA-Z -]*" maxLength={30} value={unitLabel} disabled={busy} onChange={event => setUnitLabel(event.target.value)} className={inputClass} />
             </Field>
             <p className="text-sm text-ink">{baseUnitPrice === null ? 'Enter a pack count to compare pricing.' : `${money(baseUnitPrice)} per ${unitLabel || 'unit'}`}</p>
@@ -179,13 +188,16 @@ export function ProductPackOptions({ productId }: { productId: string }) {
               <Field label="Product name" id="pack-name" hint="Include the correct pack size, such as “Vanilla Latte Mix — 1 bag”."><input id="pack-name" required minLength={2} maxLength={200} value={name} onChange={event => setName(event.target.value)} className={inputClass} /></Field>
               <Field label="Unique SKU" id="pack-sku"><input id="pack-sku" required pattern="[a-zA-Z0-9_-]{2,50}" maxLength={50} value={sku} onChange={event => setSku(event.target.value)} className={inputClass} /></Field>
               <Field label="Units in this pack" id="pack-units"><input id="pack-units" type="number" min="1" max="1000" step="1" required value={units} onChange={event => setUnits(event.target.value)} className={inputClass} /></Field>
-              <Field label="Pack price (USD)" id="pack-price" hint={newUnitPrice === null ? 'The total price customers pay for this pack.' : `${money(newUnitPrice)} per ${unitLabel || 'unit'}`}><input id="pack-price" type="number" min="0.01" step="0.01" required value={price} onChange={event => setPrice(event.target.value)} className={inputClass} /></Field>
+              <Field label="Packaging for this option" id="pack-option-label" hint="Singular name, such as bag, can or bottle."><input id="pack-option-label" required pattern="[a-zA-Z][a-zA-Z -]*" maxLength={30} value={optionUnitLabel} onChange={event => setOptionUnitLabel(event.target.value)} className={inputClass} /></Field>
+              <Field label="Net contents per unit" id="pack-net-amount" hint="Contents of one bag or can, excluding the packaging."><input id="pack-net-amount" type="number" min="0.001" step="any" required value={netAmount} onChange={event => setNetAmount(event.target.value)} className={inputClass} /></Field>
+              <Field label="Net contents measurement" id="pack-net-measure"><select id="pack-net-measure" value={netMeasure} onChange={event => setNetMeasure(event.target.value)} className={inputClass}>{['oz', 'lb', 'fl oz', 'g', 'kg', 'ml', 'l'].map(measure => <option key={measure} value={measure}>{measure}</option>)}</select></Field>
+              <Field label="Pack price (USD)" id="pack-price" hint={newUnitPrice === null ? 'The total price customers pay for this pack.' : `${money(newUnitPrice)} per ${optionUnitLabel || 'unit'}`}><input id="pack-price" type="number" min="0.01" step="0.01" required value={price} onChange={event => setPrice(event.target.value)} className={inputClass} /></Field>
             </div>
             <div className="flex flex-wrap items-end gap-4 rounded-md bg-cream p-4">
               <div className="min-w-[160px] flex-1"><label htmlFor="pack-markup" className="mb-2 block text-sm text-ink">Optional premium over base unit price</label><div className="flex items-center gap-2"><input id="pack-markup" type="number" min="0" max="1000" step="0.1" value={markup} onChange={event => setMarkup(event.target.value)} className={`${inputClass} max-w-[100px]`} /><span className="text-sm">%</span></div></div>
               <p className="text-sm text-ink-muted">Suggested pack price: <strong className="font-medium text-ink">{suggestedPrice === null ? '—' : money(suggestedPrice)}</strong></p>
               <button type="button" className="btn btn-outline" disabled={suggestedPrice === null} onClick={() => { if (suggestedPrice !== null) setPrice(suggestedPrice.toFixed(2)); }}>Use suggested price</button>
-              <p className="w-full text-xs text-ink-muted">The suggestion only fills this pack’s price. Review it before saving.</p>
+              <p className="w-full text-xs text-ink-muted">{sameContents ? 'The suggestion only fills this pack’s price. Review it before saving.' : 'Enter a price for this size. Suggestions apply only when packaging and net contents per unit match the base product.'}</p>
             </div>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="Shipping weight (lb)" id="pack-weight" hint="Weigh this pack; do not reuse the full case weight for a single."><input id="pack-weight" type="number" min="0.01" step="0.01" required value={weight} onChange={event => setWeight(event.target.value)} className={inputClass} /></Field>

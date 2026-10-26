@@ -53,12 +53,32 @@ test('invalid prices, weights, counts, routing and visibility fail before a writ
   for (const value of [0, -1, 1.5, 1001, '1', null]) {
     assert.throws(() => parsePackOptionInput({ ...input, units_per_pack: value }));
   }
-  assert.throws(() => parsePackOptionInput({ ...input, units_per_pack: 4 }), /already belongs/);
   assert.throws(() => parsePackOptionInput({ ...input, vendor_id: null }), /fulfills/);
   assert.throws(() => parsePackOptionInput({ ...input, is_active: 'false' }), /visibility/);
   assert.throws(() => parsePackOptionInput({ ...input, is_active: true }), /image/);
   assert.throws(() => parsePackOptionInput({ ...input, stock_status: 'available' }), /stock/);
   assert.throws(() => parsePackOptionInput({ ...input, slug: '../checkout' }), /slug/);
+});
+
+test('same-count formats retain their own label and net contents without changing the original package', () => {
+  const parsed = parsePackOptionInput({
+    ...input, units_per_pack: 1, parent_units_per_pack: 1,
+    parent_pack_unit_label: ' Bag ', pack_unit_label: ' Can ', pack_size: ' 1 × 14 oz can ',
+  });
+  assert.equal(parsed.parent_pack_unit_label, 'bag');
+  assert.equal(parsed.pack_unit_label, 'can');
+  assert.equal(parsed.pack_size, '1 × 14 oz can');
+  assert.equal(parsed.units_per_pack, 1);
+  const legacy = parsePackOptionInput(input);
+  assert.equal('pack_size' in legacy, false, 'omitted net contents must not be invented');
+  assert.equal('parent_pack_unit_label' in legacy, false);
+  assert.equal(parsePackOptionInput({ ...input, pack_size: null }).pack_size, null);
+  for (const value of ['', ' '.repeat(4), 14, {}, 'x'.repeat(201)]) {
+    assert.throws(() => parsePackOptionInput({ ...input, pack_size: value }), /Net contents/);
+  }
+  for (const value of [null, '', '<img>', 'x'.repeat(31)]) {
+    assert.throws(() => parsePackOptionInput({ ...input, parent_pack_unit_label: value }));
+  }
 });
 
 test('pack configuration normalizes labels without accepting markup or ambiguous counts', () => {
