@@ -26,7 +26,7 @@ Requested by email on October 24, 2026. Customer prices were confirmed on Octobe
 
 All five singles remain hidden and out of stock, routed to the existing Home/Garage fulfillment vendor. Before publishing, confirm receipt of warehouse stock and actual packaged shipping weights. The listed single shipping weights are quarter-case estimates. UPCs and case wholesale costs are deliberately not copied onto singles.
 
-The three-bag offer is a distinct hidden `OPC3B-3` option with its own image and URL. Its fulfillment vendor and packaged shipping weight remain unset pending confirmation. The existing supplier-shipped `OPC3B` four-bag case stays at $189 with its original identity; changing that SKU to three bags would alter what existing carts and reorders request. Do not publish the three-bag option until its shipping setup and availability are confirmed.
+The three-bag offer is a distinct hidden `OPC3B-3` option with its own image and URL. Jeff confirmed that he packs only the singles; the three-bag option is assigned to David Rio for supplier fulfillment. Its packaged shipping weight remains unset pending confirmation. The existing supplier-shipped `OPC3B` four-bag case stays at $189 with its original identity; changing that SKU to three bags would alter what existing carts and reorders request. Do not publish the three-bag option until its packaged weight and availability are confirmed.
 
 EV4B/TS4B save $18 per four-pack compared with four singles; FV4B/OS4B save $10. OPC3B-3 has no quantity discount at $147 = 3 × $49. Savings are displayed only when the matching single is publicly purchasable.
 
@@ -51,6 +51,8 @@ Generated pack compositions preserve the product/flavor and stated net weight. T
 Apply only `supabase/migrations/20261025214603_product_pack_options.sql` before deploying code that queries its columns. Upload the ten assets to `product-images/david-rio-packs-20261025/`, then run `scripts/sql/seed-david-rio-packs.sql`. The guarded transaction preserves existing case pricing and skips already-created singles on reruns. Do not use a blanket migration push against this project's legacy migration history.
 
 The original seed is historical. For the October 25 approved prices, upload `opc3b-3-pack.png`, then run `scripts/sql/apply-approved-david-rio-prices.sql` after taking a catalog backup. This separate guarded transaction changes only approved prices and creates the hidden three-bag draft. Its regression test is `pnpm exec tsx scripts/test-approved-david-rio-prices.ts`. Do not rerun the original seed against the newly approved prices.
+
+After that pricing update, `scripts/sql/assign-opc-three-pack-supplier.sql` records the confirmed David Rio assignment for the three-bag draft. It changes only the fulfillment vendor and leaves the option hidden with its shipping weight unset. The pricing script intentionally rejects reruns after subsequent merchant configuration changes, including this assignment.
 
 Tests cover API authorization, atomic writes and rollback, public visibility, family constraints, generated image metadata, seed idempotence, Merchant feed prices, per-unit calculations, and real SKU checkout routing across card and wallet methods. Storefront checks cover desktop and 320px/390px mobile layouts.
 
