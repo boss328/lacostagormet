@@ -252,6 +252,9 @@ export async function POST(req: NextRequest) {
   if (itemsErr) {
     console.error('[admin/orders/create] line items insert', itemsErr);
     await admin.from('orders').delete().eq('id', order.id);
+    if (itemsErr.code === 'P0001' && itemsErr.message?.startsWith('Inventory:')) {
+      return bad('There is not enough available stock for this order. Reduce the quantity or update inventory first.', undefined, 409);
+    }
     return bad(itemsErr.message ?? 'Could not save line items.', undefined, 500);
   }
 

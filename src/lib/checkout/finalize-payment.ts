@@ -100,13 +100,14 @@ export async function finalizeOrderPayment(opts: {
       error_detail: tx.responseReason ?? `responseCode=${tx.responseCode}`,
       source,
     });
-    // Cancel only from pending — never claw back an order another
-    // (successful) transaction already finalised.
-    await admin
-      .from('orders')
-      .update({ status: 'cancelled' })
-      .eq('id', order.id)
-      .eq('status', 'pending');
+    // One declined transaction does not close every hosted token issued for
+    // this order. Keep reserved stock until payment succeeds or the admin
+    // confirms all provider payment sessions are closed before cancelling.
+    const allocations = await admin.from('inventory_order_allocations')
+      .select('order_item_id').eq('order_id', order.id).eq('state', 'reserved').limit(1);
+    if (!allocations.error && !allocations.data?.length) {
+      await admin.from('orders').update({ status: 'cancelled' }).eq('id', order.id).eq('status', 'pending');
+    }
     return { outcome: 'declined' };
   }
 

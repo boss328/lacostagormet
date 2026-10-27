@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { slugify } from '@/lib/admin/slug';
@@ -115,6 +115,18 @@ export function EditProductForm({ product, brands, categories }: Props) {
   const [isActive, setIsActive] = useState(product.isActive);
   const [isFeatured, setIsFeatured] = useState(product.isFeatured);
   const [stockStatus, setStockStatus] = useState(product.stockStatus);
+  const [tracksInventory, setTracksInventory] = useState(false);
+  useEffect(() => {
+    function syncInventory(event: Event) {
+      const detail = (event as CustomEvent<{ productId: string; tracked: boolean; stockStatus?: string; weightLb?: number | null }>).detail;
+      if (detail?.productId !== product.id) return;
+      setTracksInventory(detail.tracked);
+      if (detail.stockStatus) setStockStatus(detail.stockStatus);
+      if (detail.weightLb !== undefined) setWeightLb(detail.weightLb == null ? '' : String(detail.weightLb));
+    }
+    window.addEventListener('product-inventory-updated', syncInventory);
+    return () => window.removeEventListener('product-inventory-updated', syncInventory);
+  }, [product.id]);
 
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -460,7 +472,7 @@ export function EditProductForm({ product, brands, categories }: Props) {
             </fieldset>
             <Field
               label="Stock status"
-              hint="Update this when availability changes. Quantities are not synced automatically."
+              hint={tracksInventory ? 'Stock counts update automatically. You can pause sales here; stock cannot be enabled without units and shipping details.' : 'Update availability here, or start exact quantity tracking in Inventory above.'}
               input={
                 <select
                   aria-label="Stock status"

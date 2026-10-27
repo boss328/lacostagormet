@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ADMIN_COOKIE, expectedSessionToken } from '@/lib/admin/session';
 import { sendGa4RefundEvent } from '@/lib/analytics/ga-measurement-protocol';
+import { isReadOnlyPreview } from '@/lib/preview-mode';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -39,9 +40,15 @@ export async function POST(
   if (cookie !== expected) {
     return NextResponse.json({ ok: false, errorMessage: 'Not authenticated.' }, { status: 401 });
   }
+  if (req.headers.get('origin') !== req.nextUrl.origin) {
+    return NextResponse.json({ ok: false, errorMessage: 'Invalid request origin.' }, { status: 403 });
+  }
+  if (isReadOnlyPreview()) {
+    return NextResponse.json({ ok: false, errorMessage: 'Order changes are disabled in preview.' }, { status: 409 });
+  }
 
-  const body = (await req.json().catch(() => ({}))) as { reason?: string };
-  const reason = (body.reason ?? '').trim().slice(0, 500) || null;
+  const body = ((await req.json().catch(() => null)) ?? {}) as { reason?: string; paymentClosed?: boolean };
+  const reason = (typeof body.reason === 'string' ? body.reason : '').trim().slice(0, 500) || null;
 
   const admin = createAdminClient();
   const orderNumber = params.orderNumber;
@@ -81,15 +88,20 @@ export async function POST(
       { status: 400 },
     );
   }
+  if (row.source !== 'manual' && body.paymentClosed !== true) {
+    return NextResponse.json({ ok: false, errorMessage: 'First confirm in the payment provider that payment is voided or closed and cannot complete. Then cancel this order to release pending stock.' }, { status: 409 });
+  }
 
   const now = new Date().toISOString();
-  const noteLine = `[${now}] Cancelled by admin${reason ? ` · ${reason}` : ''}`;
+  const noteLine = `[${now}] Cancelled by admin${body.paymentClosed ? ' · Admin confirmed provider payment is closed' : ''}${reason ? ` · ${reason}` : ''}`;
   const notes = row.admin_notes ? `${row.admin_notes}\n${noteLine}` : noteLine;
 
-  const { error: updErr } = await admin
+  const { data: cancelled, error: updErr } = await admin
     .from('orders')
     .update({ status: 'cancelled', admin_notes: notes })
-    .eq('id', row.id);
+    .eq('id', row.id)
+    .eq('status', row.status)
+    .select('id');
 
   if (updErr) {
     console.error('[admin cancel] update failed', updErr);
@@ -97,6 +109,9 @@ export async function POST(
       { ok: false, errorMessage: updErr.message ?? 'Update failed.' },
       { status: 500 },
     );
+  }
+  if (!cancelled?.length) {
+    return NextResponse.json({ ok: false, errorMessage: 'This order changed while you were cancelling it. Refresh and check its payment status.' }, { status: 409 });
   }
 
   // A storefront 'payment_held' order fired a purchase conversion when it was

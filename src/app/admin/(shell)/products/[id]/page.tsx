@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { bcImage } from '@/lib/bcImage';
 import { ProductPackOptions } from '@/components/admin/ProductPackOptions';
+import { ProductInventory } from '@/components/admin/ProductInventory';
 import {
   EditProductForm,
   type EditProductExistingImage,
@@ -145,6 +146,7 @@ export default async function AdminProductEditPage({
         </p>
       </header>
 
+      <ProductInventory key={p.id} productId={p.id} sku={p.sku} />
       <EditProductForm
         product={{
           id: p.id,

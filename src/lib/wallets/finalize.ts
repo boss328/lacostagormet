@@ -7,6 +7,11 @@ import { getPayPalOrder, capturePayPalOrder } from './paypal';
 import { getAmazonSession, getAmazonCharge, completeAmazonPayment } from './amazon';
 import { verifyPayPalOrder, verifyPayPalCapture, verifyAmazonSession, verifyAmazonCharge, type WalletAttempt } from './verification';
 
+async function assertPayable(orderId: string) {
+  const { data, error } = await createAdminClient().from('orders').select('status').eq('id', orderId).maybeSingle();
+  if (error || data?.status !== 'pending') throw new Error('This order is no longer awaiting payment. Refresh before continuing.');
+}
+
 export async function reconcileWalletPayment(a: WalletAttempt, buyerReturned = false): Promise<'paid' | 'pending'> {
   if (a.environment !== walletConfig().environment) throw new Error('Checkout environment mismatch');
   if (a.status === 'paid') return 'paid';
@@ -16,6 +21,7 @@ export async function reconcileWalletPayment(a: WalletAttempt, buyerReturned = f
     let session = await getAmazonSession(a.provider_order_id);
     verifyAmazonSession(session, a);
     if (buyerReturned && session.statusDetails?.state === 'Open') {
+      await assertPayable(a.order_id);
       await completeAmazonPayment(a);
       session = await getAmazonSession(a.provider_order_id);
     }
@@ -25,6 +31,7 @@ export async function reconcileWalletPayment(a: WalletAttempt, buyerReturned = f
     let order = await getPayPalOrder(a.provider_order_id);
     verifyPayPalOrder(order, a, process.env.PAYPAL_MERCHANT_ID!);
     if (buyerReturned && order.status === 'APPROVED') {
+      await assertPayable(a.order_id);
       try { await capturePayPalOrder(a); } catch {
         // A timed-out capture can still have succeeded. Re-fetch instead of creating another order.
       }

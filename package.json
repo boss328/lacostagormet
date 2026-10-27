@@ -8,6 +8,7 @@
     "start": "next start -p 3001",
     "lint": "next lint",
     "smoke": "node scripts/smoke-test.mjs",
+    "test:inventory": "tsx --test scripts/test-inventory-routes.ts scripts/test-inventory-checkout.ts scripts/test-inventory-ui.ts && tsx scripts/test-inventory-database.ts",
     "test:shipping": "tsx --test src/lib/shipping/*.test.ts src/lib/admin/order-documents.test.ts src/components/admin/shipping/shipping-input.test.ts scripts/test-shipping-route.ts scripts/test-supplier-po-routes.ts scripts/test-shipping-box-templates.ts && tsx scripts/test-shipping-database.ts && tsx scripts/test-supplier-send-database.ts && tsx scripts/test-shipping-box-template-database.ts && tsx scripts/test-local-fulfillment-lifecycle.ts",
     "check:shipping": "tsx scripts/check-shipping-config.ts"
   },

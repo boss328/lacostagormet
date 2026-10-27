@@ -28,7 +28,10 @@ export async function POST(req: NextRequest) {
       path: '/api/checkout/wallet', maxAge: 86400 });
     res.headers.set('Cache-Control', 'no-store');
     return res;
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('There is not enough stock')) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
     return NextResponse.json({ error: 'Unable to start this payment. Keep this checkout open and try again, or contact us.' }, { status: 400 });
   }
 }
