@@ -26,7 +26,9 @@ Requested by email on October 24, 2026. Customer prices were confirmed on Octobe
 | OPC3B-3 (draft) | OPC3B-1 | 3 lb | $147 / 3 bags | $49 | 3.25 lb |
 | TS4B | TS4B-1 | 4 lb | $170 / 4 bags | $47 | 4.25 lb |
 
-All five singles remain hidden and out of stock, routed to the existing Home/Garage fulfillment vendor. Before publishing, confirm receipt of warehouse stock and actual packaged shipping weights. The listed single shipping weights are quarter-case estimates. UPCs and case wholesale costs are deliberately not copied onto singles.
+All five single bags are now visible but out of stock, routed to the existing Home/Garage fulfillment vendor. Before enabling purchases, confirm receipt of stock and actual packaged shipping weights. The listed single shipping weights are quarter-case estimates. UPCs and case wholesale costs are deliberately not copied onto singles.
+
+Jeff's October 26 email also approved single canisters: EV14-1 and TS14-1 (14 oz, $18); FV14-1 and OS14-1 (11.9 oz, $19); DTS14-1 (14 oz, $19). They are visible but out of stock. The first four sit beside their single-bag and four-bag options. Tiger Decaf has a separate canister-only family. Canister stock, fulfillment and packaged shipping weights still require confirmation. Existing six-canister cases remain intact.
 
 The three-bag offer is a distinct hidden `OPC3B-3` option with its own image and URL. Jeff confirmed that he packs only the singles; the three-bag option is assigned to David Rio for supplier fulfillment. Its packaged shipping weight remains unset pending confirmation. The existing supplier-shipped `OPC3B` four-bag case stays at $189 with its original identity; changing that SKU to three bags would alter what existing carts and reorders request. Do not publish the three-bag option until its packaged weight and availability are confirmed.
 
@@ -40,7 +42,7 @@ EV4B/TS4B save $18 per four-pack compared with four singles; FV4B/OS4B save $10.
 4. Write a description for the actual pack. Select a photo only if it shows the correct number of units, or leave it blank and upload from the new product's editor.
 5. Leave it hidden until its photo, pricing, stock and fulfillment details are ready. Edit the new SKU to upload its photo and publish it when ready.
 
-The optional premium calculator fills a suggested price only when clicked. Existing case prices are never changed by creating a single. Pack quantities are units sold per SKU: ordering two four-packs means eight bags, charged at two case prices. Stock is tracked per SKU; splitting warehouse cases into singles is not an automatic shared-stock conversion.
+The optional premium calculator fills a suggested price only when clicked. Existing case prices are never changed by creating a single. Pack quantities are units sold per SKU: ordering two four-packs means eight bags, charged at two case prices. [Exact inventory tracking](product-inventory.md) is enabled per SKU with an explicit starting count. Each size has Add/Remove stock controls and its own order deductions; splitting warehouse cases into singles is not an automatic shared-stock conversion.
 
 ## Images
 

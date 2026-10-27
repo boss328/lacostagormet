@@ -47,6 +47,9 @@ export async function prepareWalletAttempt(body: unknown, clientIp: string, owne
       shipping_address: address, billing_address: address, business_name: a.company || null,
       is_business: !!a.company, client_ip: clientIp }, p_items: lines,
   });
+  if (rpcError?.code === 'P0001' && rpcError.message?.startsWith('Inventory:')) {
+    throw new Error('There is not enough stock for this quantity. Please reduce the quantity in your cart and try again.');
+  }
   if (rpcError || !attempt) throw new Error('Unable to prepare checkout. Please keep this checkout open and try again.');
   return attempt as WalletAttempt;
 }

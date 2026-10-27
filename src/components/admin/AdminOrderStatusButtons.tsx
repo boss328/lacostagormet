@@ -72,7 +72,7 @@ export function AdminOrderStatusButtons({ orderNumber, status, fulfillmentStatus
   async function cancelOrder() {
     if (cancelling) return;
     const ok = window.confirm(
-      `Cancel order #${orderNumber}? This is for orders that never completed payment — paid orders should be refunded instead.`,
+      `Cancel order #${orderNumber}? First confirm in the payment provider that payment is voided or closed and cannot still complete. Cancelling releases stock reserved by pending orders. Stock already deducted for a held payment must be returned manually after checking it. Confirm only after checking the payment.`,
     );
     if (!ok) return;
     setCancelling(true);
@@ -83,7 +83,7 @@ export function AdminOrderStatusButtons({ orderNumber, status, fulfillmentStatus
         {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({}),
+          body: JSON.stringify({ paymentClosed: true }),
         },
       );
       const body = (await res.json().catch(() => ({}))) as {

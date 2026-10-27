@@ -156,6 +156,7 @@ export function ProductPackOptions({ productId }: { productId: string }) {
                   <div className="min-w-0">
                     <Link href={`/admin/products/${option.id}/`} className="font-display text-base text-ink hover:text-brand-deep">{option.name}</Link>
                     <p className="mt-1 text-xs text-ink-muted">{option.sku} · {option.pack_size || (option.units_per_pack ? `${option.units_per_pack}-pack` : 'Pack count not set')} · {option.is_active ? STOCK_STATUS_OPTIONS.find(status => status.value === option.stock_status)?.label ?? option.stock_status : 'Hidden from storefront'}{option.id === data.parentId ? ' · Base product' : ''}</p>
+                    <Link href={`/admin/products/${option.id}/#inventory`} aria-label={`Manage stock for ${option.sku}`} className="mt-2 inline-block text-xs text-brand-deep underline underline-offset-4">Manage stock →</Link>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-ink">{money(Number(option.retail_price))}</p>

@@ -256,6 +256,9 @@ export async function POST(req: NextRequest) {
       if (itemsErr) {
         console.error('[checkout/create] order_items insert', itemsErr);
         await admin.from('orders').delete().eq('id', order.id);
+        if (itemsErr.code === 'P0001' && itemsErr.message?.startsWith('Inventory:')) {
+          return json(409, { success: false, errorMessage: 'There is not enough stock for this quantity. Please reduce the quantity in your cart and try again.' });
+        }
         return json(500, { success: false, errorMessage: GENERIC_SERVER_ERROR });
       }
     }

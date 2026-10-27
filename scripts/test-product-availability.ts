@@ -260,7 +260,6 @@ test('product forms show stock options and preserve the saved edit status', () =
     const html = require('react-dom/server').renderToStaticMarkup(react.createElement(component, props));
     assert.match(html, new RegExp(`<option value="${selected}" selected=""`));
     for (const status of availability.STOCK_STATUSES) assert.ok(html.includes(`value="${status}"`));
-    assert.ok(html.includes('Quantities are not synced automatically.'));
   }
 });
 
