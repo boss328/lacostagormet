@@ -18,6 +18,14 @@ function byPackSize(a: PublicProduct, b: PublicProduct): number {
     || a.id.localeCompare(b.id);
 }
 
+/** Lead with one bag's photo, or one canister when the family has no pictured bag. */
+function picturedSingle<T extends PublicProduct>(options: readonly T[]): T | undefined {
+  const singles = options.filter(option => option.units_per_pack === 1
+    && option.product_images?.some(image => image.url.trim()));
+  return singles.find(option => option.pack_unit_label?.trim().toLowerCase() === 'bag')
+    ?? singles.find(option => ['can', 'canister'].includes(option.pack_unit_label?.trim().toLowerCase() ?? ''));
+}
+
 /**
  * Call after category, brand and search filtering, before sorting/pagination.
  * The representative is an actual SKU with its own unchanged price and ID.
@@ -39,6 +47,7 @@ export function groupCatalogPacks<T extends PublicProduct>(
   return [...groups.values()].map(members => {
     const options = [...members].sort(byPackSize);
     const representative = (exactSku ? options.find(option => option.sku.toLocaleLowerCase('en-US') === exactSku) : undefined)
+      ?? picturedSingle(options)
       ?? options.find(option => isAvailableForPurchase(option.stock_status))
       ?? options[0];
     const selected = { ...representative } as CatalogPackGroup<T>;
@@ -52,19 +61,28 @@ export function catalogGroupCreatedAt<T extends PublicProduct & { created_at: st
   return (product.pack_options ?? [product]).reduce((latest, option) => option.created_at > latest ? option.created_at : latest, product.created_at);
 }
 
-/** Preserve pinned SKUs while exposing public sibling sizes within that flavor. */
+/** Preserve featured family ranking while showing its preferred photographed single. */
 export function featuredCatalogProducts<T extends PublicProduct & { created_at: string; is_featured: boolean }>(
   products: readonly T[],
   limit = 8,
 ): CatalogPackGroup<T>[] {
   const allGroups = groupCatalogPacks(products);
   const optionsByFamily = new Map(allGroups.map(product => [catalogPackKey(product), product.pack_options]));
+  const featuredRankProduct = (product: CatalogPackGroup<T>) => {
+    const options = product.pack_options ?? [product];
+    return options.find(option => isAvailableForPurchase(option.stock_status)) ?? options[0];
+  };
   const pinned = groupCatalogPacks(products.filter(product => product.is_featured))
+    .sort((a, b) => {
+      const previousA = featuredRankProduct(a);
+      const previousB = featuredRankProduct(b);
+      return previousB.created_at.localeCompare(previousA.created_at) || previousA.id.localeCompare(previousB.id);
+    })
     .map(product => {
       const options = optionsByFamily.get(catalogPackKey(product));
-      return options ? { ...product, pack_options: options } : product;
-    })
-    .sort((a, b) => b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id));
+      const representative = options ? picturedSingle(options) ?? product : product;
+      return options ? { ...representative, pack_options: options } : representative;
+    });
   const pinnedKeys = new Set(pinned.map(catalogPackKey));
   const fallback = allGroups.filter(product => !pinnedKeys.has(catalogPackKey(product)))
     .sort((a, b) => catalogGroupCreatedAt(b).localeCompare(catalogGroupCreatedAt(a)) || a.id.localeCompare(b.id));

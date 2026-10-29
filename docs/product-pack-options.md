@@ -6,7 +6,7 @@ On product pages, changing size also updates the description, SKU and specificat
 
 Pack labels state the actual contents, such as **1 bag · 4 lb** or **4 bags · 4 lb each**. The size comes from the saved pack description, never the shipping weight. Dollar savings compare the case price with the same number of purchasable single bags in the same family, only when both net sizes are verified to match. Full product names remain in catalog data and order records; visible pack titles omit redundant packaging and promotional suffixes.
 
-Catalog filters and exact SKU searches select matching products before grouping. A normal browse prefers the smallest available pack; an exact SKU search keeps that SKU. Homepage favorites retain Jeff's featured SKU and offer the other public sizes in the same family. Hidden drafts never appear as options.
+Catalog filters and exact SKU searches select matching products before grouping. A normal browse leads with a photographed single bag, then a photographed single canister when no bag photo is available, then the smallest available pack. This preference applies even when the pictured single is out of stock, with its real availability still shown. An exact SKU search keeps that SKU. Homepage favorites retain Jeff's featured families and their ranking while showing the same preferred single. Every displayed image, price, link and add-to-cart choice belongs to that selected SKU. Hidden drafts never appear as options.
 
 ## Local fulfillment
 
