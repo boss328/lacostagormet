@@ -1,0 +1,30 @@
+{
+  "asset": "public/products/monin-boosts/mixed-three-pack.png",
+  "mode": "built-in image_gen",
+  "useCase": "compositing",
+  "transparentBackground": true,
+  "sources": [
+    {
+      "path": ".local/image-audit/monin-immunity-official.png",
+      "url": "https://monin.us/cdn/shop/files/1L-TotalImmunityBoost.png?v=1739202528&width=1024",
+      "role": "Total Immunity Boost 1L bottle"
+    },
+    {
+      "path": ".local/image-audit/monin-hydration-official.png",
+      "url": "https://monin.us/cdn/shop/files/1L-HydrationBoost.png?v=1755203019&width=1024",
+      "role": "Hydration Boost 1L bottle"
+    },
+    {
+      "path": ".local/image-audit/monin-energy-official.png",
+      "url": "https://monin.us/cdn/shop/files/1L-Energy_Boost_2048x2048_319d6700-c0ff-49fe-a765-1e3afb7ad82c.png?v=1785329658&width=1024",
+      "role": "Energy Boost 1L bottle"
+    }
+  ],
+  "prompt": "Use case: compositing. Asset type: square ecommerce product photo for a Monin mixed three-pack. Inputs: image 1 is the exact Monin Total Immunity Boost 1L bottle; image 2 is the exact Monin Hydration Boost 1L bottle; image 3 is the exact Monin Energy Boost 1L bottle. Compose exactly one of each bottle in a neat straight row, standing upright with front labels fully visible, same scale and same baseline. Immunity on left, Hydration center, Energy on right. Use the original products' identical bottle proportions, liquid colors, white caps, branding, and label designs. Preserve all original label text exactly; do not replace or embellish text. Keep the entire cap and base of all three bottles in frame, generous but balanced breathing room, bottles large enough to read at a product-card size. Realistic clean studio product photography, matched lighting, subtle natural contact shadow only. Genuine transparent background, preserve alpha and clean edges; no white or checkerboard backdrop rendered into the image. No extra products, props, pumps, drinks, people, price text, pack-count badge, added text or watermark. Preserve product identity and packaging; change only arrangement and shared lighting/shadow.",
+  "correctionPrompt": "Use case: precise-object-edit. Image 1 is the mixed three-bottle composite to edit. Image 2 is the exact source Energy Boost label for reference. Make ONLY a precise correction to the small green ingredient list on the rightmost Energy Boost bottle. The first line currently has incorrect lettering. It must read exactly \"COFFEEBERRY®\" (C O F F E E B E R R Y), matching source image 2. The complete five lines are \"COFFEEBERRY®\", \"GINSENG\", \"ASHWAGANDHA\", \"GUARANA\", \"GREEN COFFEE\". Retain every other pixel and design feature as closely as possible: exactly three bottles with unchanged arrangement, bottle proportions, liquid colors, caps, front product names, all other label words, lighting and subtle base shadow. Preserve the genuine transparent background and alpha channel. Do not add objects, text, badges or a backdrop.",
+  "notes": [
+    "Exactly one of each bottle; no pump included in photograph.",
+    "Original manufacturer images remain the product-information reference; generated label details are not authoritative.",
+    "IPTC DigitalSourceType tagged as trainedAlgorithmicMedia using metadata-only PNG chunk insertion; alpha and pixels preserved."
+  ]
+}

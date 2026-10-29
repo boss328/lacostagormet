@@ -1,0 +1,52 @@
+{
+  "emailMessageId": "1a185c564be4a437",
+  "baseImageUrl": "https://yrlopskyvkdqxmmlxnat.supabase.co/storage/v1/object/public/product-images/monin-boosts-20261029/",
+  "singles": [
+    {
+      "parentSku": "M-FX325FP",
+      "sku": "M-FX325FP-1",
+      "name": "Monin Total Immunity Boost — One 1 Liter Bottle",
+      "slug": "monin-total-immunity-boost-one-1-liter-bottle",
+      "image": "immunity-single.png",
+      "description": "One 1 liter bottle of Monin Total Immunity Boost, a beverage concentrate with vitamins C, D and B3, zinc, and elderberry. Mix into coffee, tea, lemonade, smoothies, or still or sparkling water. This listing contains one bottle.",
+      "id": "d65c554a-8600-4b29-a186-1a52659bcff4",
+      "parentId": "54d7c9d4-fa1c-4bf3-8213-40ae4c4769be",
+      "price": 27,
+      "units": 1
+    },
+    {
+      "parentSku": "M-FX356FP",
+      "sku": "M-FX356FP-1",
+      "name": "Monin Hydration Boost — One 1 Liter Bottle",
+      "slug": "monin-hydration-boost-one-1-liter-bottle",
+      "image": "hydration-single.png",
+      "description": "One 1 liter bottle of Monin Hydration Boost, a liquid electrolyte concentrate with magnesium, potassium, and sodium. Made without added sugar or sweeteners, it mixes into hot or cold beverages. This listing contains one bottle.",
+      "id": "8d401006-fd6d-4573-a637-3becdedda3e1",
+      "parentId": "032a655b-a3f7-4429-9de9-ea0b151b10a9",
+      "price": 27,
+      "units": 1
+    },
+    {
+      "parentSku": "M-FX326FP",
+      "sku": "M-FX326FP-1",
+      "name": "Monin Energy Boost — One 1 Liter Bottle",
+      "slug": "monin-energy-boost-one-1-liter-bottle",
+      "image": "energy-single.png",
+      "description": "One 1 liter bottle of Monin Energy Boost, a caffeinated beverage concentrate with plant extracts. Mix into iced tea, lemonade, smoothies, or still or sparkling water. Contains caffeine. This listing contains one bottle.",
+      "id": "c38fd62e-1b12-4ffd-b1d3-10d66bcbed36",
+      "parentId": "9eda58fd-debd-4833-b330-061238bfb3ad",
+      "price": 27,
+      "units": 1
+    }
+  ],
+  "mixed": {
+    "id": "25856099-4c80-409c-9c38-d872f671af63",
+    "sku": "M-BOOST-MIX3",
+    "name": "Monin Beverage Boosts — Mixed 3-Pack",
+    "slug": "monin-beverage-boosts-mixed-three-pack",
+    "price": 84,
+    "units": 3,
+    "image": "mixed-three-pack.png",
+    "description": "Three 1 liter bottles of Monin Beverage Boosts: one Total Immunity Boost, one Hydration Boost, and one Energy Boost. Try each concentrate in your favorite drinks. The Energy Boost bottle contains caffeine. This listing contains three bottles, one of each variety."
+  }
+}
