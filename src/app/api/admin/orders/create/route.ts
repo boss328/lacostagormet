@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
   const expected = await expectedSessionToken();
   if (!expected) return bad('Server misconfigured.', undefined, 503);
   if (cookie !== expected) return bad('Not authenticated.', undefined, 401);
+  if (req.headers.get('origin') !== req.nextUrl.origin) return bad('Invalid request origin.', undefined, 403);
 
   let payload: Payload;
   try {

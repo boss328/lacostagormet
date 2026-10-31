@@ -195,7 +195,10 @@ export function NewOrderForm({ products, hiAkSurcharge }: Props) {
       };
 
       if (!res.ok || !data.ok) {
-        if (data.fieldErrors) setErrors(data.fieldErrors);
+        if (data.fieldErrors) {
+          setErrors(data.fieldErrors);
+          setReviewing(false);
+        }
         else setErrors({ general: data.errorMessage ?? 'Could not create order.' });
         setSubmitting(false);
         return;

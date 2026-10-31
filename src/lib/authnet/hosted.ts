@@ -289,6 +289,10 @@ export type TransactionDetails = {
   transId: string;
   refId: string | null;
   invoiceNumber: string | null;
+  transactionType: string | null;
+  transactionStatus: string | null;
+  authAmount: number | null;
+  settleAmount: number | null;
   responseCode: string;
   authCode: string | null;
   amount: number | null;
@@ -303,6 +307,14 @@ export type TransactionDetails = {
 export type FetchTxResult =
   | { ok: true; details: TransactionDetails }
   | { ok: false; errorMessage: string; raw?: unknown };
+
+function gatewayAmount(value: unknown): number | null {
+  if (typeof value !== 'number' && typeof value !== 'string') return null;
+  if (!/^\d+(?:\.\d{1,2}0*)?$/.test(String(value))) return null;
+  const amount = Number(value);
+  const cents = Math.round(amount * 100);
+  return Number.isSafeInteger(cents) && cents / 100 === amount ? amount : null;
+}
 
 export async function fetchTransactionDetails(transId: string): Promise<FetchTxResult> {
   const env = resolveAuthnetEnv(process.env.AUTHNET_ENVIRONMENT);
@@ -349,6 +361,8 @@ export async function fetchTransactionDetails(transId: string): Promise<FetchTxR
         refTransId?: string;
         refId?: string;
         order?: { invoiceNumber?: string };
+        transactionType?: string;
+        transactionStatus?: string;
         responseCode?: number | string;
         authCode?: string;
         authAmount?: number | string;
@@ -373,6 +387,10 @@ export async function fetchTransactionDetails(transId: string): Promise<FetchTxR
       transId: tx.transId,
       refId: tx.order?.invoiceNumber ?? tx.refId ?? null,
       invoiceNumber: tx.order?.invoiceNumber ?? null,
+      transactionType: tx.transactionType ?? null,
+      transactionStatus: tx.transactionStatus ?? null,
+      authAmount: gatewayAmount(tx.authAmount),
+      settleAmount: gatewayAmount(tx.settleAmount),
       responseCode: String(tx.responseCode ?? ''),
       authCode: tx.authCode ?? null,
       amount,

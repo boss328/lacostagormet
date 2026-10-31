@@ -150,6 +150,8 @@ async function handle(req: NextRequest): Promise<NextResponse> {
         return paymentError('callback-refid-mismatch', order);
       case 'amount_mismatch':
         return paymentError('callback-amount-mismatch', order);
+      case 'transaction_unconfirmed':
+        return paymentError('verification', order);
       case 'declined':
         return paymentError('declined', order);
       case 'finalized':
@@ -210,6 +212,8 @@ async function handle(req: NextRequest): Promise<NextResponse> {
       return paymentError('callback-refid-mismatch');
     case 'amount_mismatch':
       return paymentError('callback-amount-mismatch');
+    case 'transaction_unconfirmed':
+      return paymentError('verification');
     case 'lookup_failed':
       if (order.source === 'manual') return paymentError('callback-lookup-failed');
       return confirmation(order);

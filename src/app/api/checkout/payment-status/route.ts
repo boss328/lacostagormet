@@ -89,6 +89,7 @@ export async function POST(req: NextRequest) {
     // waiting — an admin or the webhook resolves them.
     case 'refid_mismatch':
     case 'amount_mismatch':
+    case 'transaction_unconfirmed':
     case 'lookup_failed':
       if (order.source === 'manual') return json(200, { status: 'pending', manualPaymentError: 'verification' });
       return json(200, { status: 'pending' });
