@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { AdminOrderStatusButtons } from '@/components/admin/AdminOrderStatusButtons';
 import { OrderVendorPos } from '@/components/admin/orders/OrderVendorPos';
 import { OrderShippingPanel } from '@/components/admin/shipping/OrderShippingPanel';
+import { ManualPaymentLink } from '@/components/admin/orders/ManualPaymentLink';
 import {
   STATUS_LABEL,
   STATUS_COLOR,
@@ -231,10 +232,14 @@ export default async function AdminOrderDetailPage({
         </section>
       )}
 
+      {o.source === 'manual' && o.status === 'pending' && Number(o.total) > 0 && (
+        <ManualPaymentLink orderNumber={o.order_number} total={fmtMoney(o.total)} />
+      )}
       <AdminOrderStatusButtons
         orderNumber={o.order_number}
         status={o.status}
         fulfillmentStatus={o.fulfillment_status}
+        showReorder={!(o.source === 'manual' && o.status === 'pending')}
       />
 
       <OrderShippingPanel orderNumber={o.order_number} />

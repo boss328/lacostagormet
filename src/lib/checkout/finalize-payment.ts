@@ -28,6 +28,7 @@ import { notifyOrderPlaced } from '@/lib/email/notify-order-placed';
 export type FinalizableOrder = {
   id: string;
   order_number: string;
+  source: string | null;
   status: string;
   total: number | string;
 };
@@ -36,12 +37,23 @@ export type FinalizeResult =
   | { outcome: 'already_final' }
   | { outcome: 'refid_mismatch' }
   | { outcome: 'amount_mismatch' }
+  | { outcome: 'transaction_unconfirmed' }
   | { outcome: 'declined' }
   | {
       outcome: 'finalized';
       orderStatus: 'paid' | 'payment_held';
       paymentRecordFailed: boolean;
     };
+
+function matchingManualStatus(tx: TransactionDetails): boolean {
+  if (tx.transactionType !== 'authCaptureTransaction') return false;
+  switch (tx.responseCode) {
+    case '1': return tx.transactionStatus === 'capturedPendingSettlement' || tx.transactionStatus === 'settledSuccessfully';
+    case '4': return tx.transactionStatus === 'FDSPendingReview' || tx.transactionStatus === 'FDSAuthorizedPendingReview';
+    case '2': return tx.transactionStatus === 'declined';
+    default: return false;
+  }
+}
 
 export async function finalizeOrderPayment(opts: {
   admin: SupabaseClient;
@@ -59,36 +71,56 @@ export async function finalizeOrderPayment(opts: {
   const expectedTotal = Number(order.total);
   const amountCents = Math.round(expectedTotal * 100);
 
-  // Spoof checks — the transaction must be the one we created for this order.
-  if (tx.refId && tx.refId !== order.order_number) {
+  const manual = order.source === 'manual';
+  const approved = tx.responseCode === '1';
+  const held = tx.responseCode === '4';
+  const declined = tx.responseCode === '2';
+  const reference = manual ? tx.invoiceNumber : tx.refId;
+  if ((manual || reference) && reference !== order.order_number) {
     await admin.from('payment_audit_log').insert({
       order_id: order.id,
       event_type: 'callback_refid_mismatch',
       transaction_id: tx.transId,
       amount_cents: amountCents,
       raw_response: safeJson(tx.raw),
-      error_detail: `refId=${tx.refId} order_number=${order.order_number}`,
+      error_detail: `reference=${reference ?? '(absent)'} order_number=${order.order_number}`,
       source,
     });
     return { outcome: 'refid_mismatch' };
   }
 
-  if (tx.amount !== null && Math.abs(tx.amount - expectedTotal) > 0.01) {
+  if (manual && !matchingManualStatus(tx)) {
+    await admin.from('payment_audit_log').insert({
+      order_id: order.id,
+      event_type: 'callback_transaction_unconfirmed',
+      transaction_id: tx.transId,
+      amount_cents: amountCents,
+      raw_response: safeJson(tx.raw),
+      error_detail: `type=${tx.transactionType}, status=${tx.transactionStatus}, responseCode=${tx.responseCode}`,
+      source,
+    });
+    return { outcome: 'transaction_unconfirmed' };
+  }
+
+  // A saved manual order has a fixed balance. Accept only that exact amount
+  // in whole cents, including when the gateway omits a field or sends NaN.
+  const verifiedAmount = manual ? (held ? tx.authAmount : tx.settleAmount) : tx.amount;
+  const amountMismatch = manual
+    ? !declined && (!Number.isSafeInteger(amountCents) || amountCents <= 0
+      || expectedTotal !== amountCents / 100 || verifiedAmount !== amountCents / 100)
+    : tx.amount !== null && Math.abs(tx.amount - expectedTotal) > 0.01;
+  if (amountMismatch) {
     await admin.from('payment_audit_log').insert({
       order_id: order.id,
       event_type: 'callback_amount_mismatch',
       transaction_id: tx.transId,
       amount_cents: amountCents,
       raw_response: safeJson(tx.raw),
-      error_detail: `authnet=${tx.amount} expected=${expectedTotal}`,
+      error_detail: `authnet=${verifiedAmount} expected=${expectedTotal}`,
       source,
     });
     return { outcome: 'amount_mismatch' };
   }
-
-  const approved = tx.responseCode === '1';
-  const held = tx.responseCode === '4';
-  const declined = tx.responseCode === '2';
 
   if (!approved && !held) {
     await admin.from('payment_audit_log').insert({
@@ -100,6 +132,8 @@ export async function finalizeOrderPayment(opts: {
       error_detail: tx.responseReason ?? `responseCode=${tx.responseCode}`,
       source,
     });
+    // An admin-created order can still be collected or reconciled by staff.
+    if (manual) return { outcome: 'declined' };
     // One declined transaction does not close every hosted token issued for
     // this order. Keep reserved stock until payment succeeds or the admin
     // confirms all provider payment sessions are closed before cancelling.

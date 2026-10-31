@@ -39,10 +39,17 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return data as T;
 }
 
-export function WalletPayments({ payload, disabled, onActiveChange }: {
-  payload: CheckoutCreatePayload; disabled: boolean; onActiveChange(active: boolean): void;
+export function CheckoutPaymentMethods({ payload, total, canContinue, readOnly, submittingCard, onPayByCard, onActiveChange }: {
+  payload: CheckoutCreatePayload;
+  total: number;
+  canContinue: boolean;
+  readOnly: boolean;
+  submittingCard: boolean;
+  onPayByCard(): void;
+  onActiveChange(active: boolean): void;
 }) {
   const [config, setConfig] = useState<Config | null>(null);
+  const [selection, setSelection] = useState<'card' | WalletMethod>('card');
   const [method, setMethod] = useState<WalletMethod | null>(null);
   const [prepared, setPrepared] = useState<Prepared | null>(null);
   const [busy, setBusy] = useState(false);
@@ -54,10 +61,11 @@ export function WalletPayments({ payload, disabled, onActiveChange }: {
   const requestIds = useRef(new Map<string, string>());
 
   useEffect(() => {
+    if (readOnly) return;
     let current = true;
     fetch('/api/checkout/wallet/config/', { cache: 'no-store' }).then(r => r.json()).then(c => { if (current) setConfig(c); }).catch(() => {});
     return () => { current = false; };
-  }, []);
+  }, [readOnly]);
 
   useEffect(() => {
     if (!config?.applePay) return;
@@ -74,7 +82,7 @@ export function WalletPayments({ payload, disabled, onActiveChange }: {
   }, [config]);
 
   async function choose(selected: WalletMethod) {
-    if (disabled || busy) return;
+    if (!canContinue || busy) return;
     setBusy(true); setError(''); setMethod(selected); onActiveChange(true);
     try {
       const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify({ selected, payload })));
@@ -176,14 +184,44 @@ export function WalletPayments({ payload, disabled, onActiveChange }: {
     setBusy(true); session.begin();
   }
 
-  if (!config || !(config.paypal || config.applePay || config.amazonPay)) return null;
-  return <div className="mt-5 border-t border-rule pt-5">
-    <p className="type-label-sm mb-3">Or pay with a wallet</p>
-    {!method ? <div className="flex flex-wrap gap-3">
-      {([['paypal', 'PayPal', config.paypal], ['apple_pay', 'Apple Pay', appleEligible], ['amazon_pay', 'Amazon Pay', config.amazonPay]] as const)
-        .filter(([, , enabled]) => enabled).map(([value, label]) => <button key={value} type="button" disabled={disabled || busy}
-          className="btn btn-outline disabled:opacity-50" onClick={() => void choose(value)}>{label}</button>)}
-      {disabled && <p className="type-data-mono text-ink-muted">Complete your contact and shipping details to continue.</p>}
+  const options = ([
+    { value: 'card', label: 'Credit or debit card', enabled: true },
+    { value: 'paypal', label: 'PayPal', enabled: config?.paypal },
+    { value: 'apple_pay', label: 'Apple Pay', enabled: config?.applePay && appleEligible },
+    { value: 'amazon_pay', label: 'Amazon Pay', enabled: config?.amazonPay },
+  ] as const).filter(option => option.enabled);
+  const selected = options.find(option => option.value === selection) ?? options[0];
+
+  return <div className="mt-6 border-t border-rule pt-5">
+    {!method ? <div>
+      <fieldset disabled={submittingCard || readOnly} className="grid gap-2">
+        <legend className="type-label text-ink mb-3">Payment method</legend>
+        {options.map(({ value, label }) => (
+          <label key={value} className="flex items-start gap-3 rounded-lg border border-rule bg-paper px-4 py-3 cursor-pointer">
+            <input type="radio" name="paymentMethod" value={value} checked={selected.value === value}
+              onChange={() => setSelection(value)} className="mt-1 accent-brand-deep" />
+            <span>
+              <span className="font-display text-ink">{label}</span>
+              {value === 'card' && <span className="block type-data-mono text-ink-muted mt-1">
+                Visa, Mastercard, American Express or Discover
+              </span>}
+            </span>
+          </label>
+        ))}
+      </fieldset>
+      <p className="type-data-mono text-ink-muted my-3" aria-live="polite">
+        {readOnly ? 'Preview only. Payments are disabled.'
+          : !canContinue && !submittingCard ? 'Enter your contact and shipping details to continue.'
+          : selected.value === 'card' ? 'Enter your card details on the next secure page.'
+          : `Continue to pay with ${selected.label}.`}
+      </p>
+      <button type="button" disabled={!canContinue || busy || readOnly} aria-busy={submittingCard || busy}
+        className="btn btn-solid w-full justify-center disabled:opacity-60"
+        onClick={() => selected.value === 'card' ? onPayByCard() : void choose(selected.value)}>
+        {submittingCard ? 'Opening secure card entry…'
+          : `Continue with ${selected.value === 'card' ? 'card' : selected.label} · $${total.toFixed(2)}`}
+        <span className="btn-arrow" aria-hidden="true">→</span>
+      </button>
     </div> : <div>
       {prepared && <p className="type-body mb-3">Your total is ${prepared.total}. Complete payment below.</p>}
       <div ref={target} hidden={approved} style={{ maxWidth: 340, minHeight: prepared ? 45 : 0 }} />

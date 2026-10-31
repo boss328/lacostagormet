@@ -94,6 +94,20 @@ export async function POST(
 
   const now = new Date().toISOString();
   const noteLine = `[${now}] Cancelled by admin${body.paymentClosed ? ' · Admin confirmed provider payment is closed' : ''}${reason ? ` · ${reason}` : ''}`;
+  if (row.source === 'manual') {
+    const { data: cancelled, error } = await admin.rpc('cancel_manual_payment_order', {
+      p_order_id: row.id,
+      p_expected_status: row.status,
+      p_payment_closed: body.paymentClosed === true,
+      p_note: noteLine,
+    });
+    if (error || cancelled !== true) {
+      const conflict = !error || error.code === 'P0001';
+      return NextResponse.json({ ok: false, errorMessage: error?.code === 'P0001'
+        ? error.message : 'Could not cancel this order. Refresh and check the payment status.' }, { status: conflict ? 409 : 500 });
+    }
+    return NextResponse.json({ ok: true, order: { id: row.id, order_number: row.order_number, status: 'cancelled' } });
+  }
   const notes = row.admin_notes ? `${row.admin_notes}\n${noteLine}` : noteLine;
 
   const { data: cancelled, error: updErr } = await admin

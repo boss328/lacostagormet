@@ -5,6 +5,7 @@ import { fetchTransactionDetails } from '@/lib/authnet/hosted';
 import { safeJson } from '@/lib/authnet/safe-json';
 import { finalizeOrderPayment, type FinalizableOrder } from '@/lib/checkout/finalize-payment';
 import { verifyPendingOrderPayment } from '@/lib/checkout/verify-pending-payment';
+import { MANUAL_PAYMENT_COOKIE, verifyManualPaymentGrant } from '@/lib/checkout/manual-payment-grant';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,7 +63,7 @@ function originOf(req: NextRequest): string {
   return `${proto}://${host}`;
 }
 
-const ORDER_SELECT = 'id, order_number, status, total, customer_email';
+const ORDER_SELECT = 'id, order_number, status, total, source';
 
 async function handle(req: NextRequest): Promise<NextResponse> {
   const origin = originOf(req);
@@ -79,6 +80,28 @@ async function handle(req: NextRequest): Promise<NextResponse> {
 
   const transId = extractTransId(form);
   const admin = createAdminClient();
+  async function lookupOrder(number: string | null): Promise<FinalizableOrder | null> {
+    if (!number) return null;
+    const { data } = await admin.from('orders').select(ORDER_SELECT).eq('order_number', number).maybeSingle();
+    return data as FinalizableOrder | null;
+  }
+  const hintedOrder = await lookupOrder(orderNumberHint);
+  function manualReturn(order: FinalizableOrder, params: Record<string, string>) {
+    const grant = verifyManualPaymentGrant(req.cookies.get(MANUAL_PAYMENT_COOKIE)?.value ?? '');
+    if (grant?.orderId !== order.id || grant.amountCents !== Math.round(Number(order.total) * 100)) {
+      // The webhook can also confirm payment. Reveal no result to an unrelated browser.
+      return redirectTo(origin, '/pay/', { error: 'link', ...(orderNumberHint ? { order: orderNumberHint } : {}) });
+    }
+    return redirectTo(origin, '/pay/', { ...params, order: order.order_number });
+  }
+  function paymentError(error: string, order = hintedOrder) {
+    if (order?.source === 'manual') return manualReturn(order, { error });
+    return redirectTo(origin, '/checkout', { error });
+  }
+  function confirmation(order: FinalizableOrder, paymentRecordFailed = false) {
+    if (order.source === 'manual') return manualReturn(order, { returned: '1' });
+    return redirectTo(origin, `/order/${order.order_number}`, paymentRecordFailed ? { warning: 'payment_record_failed' } : {});
+  }
 
   // ---- Path 1: a transId arrived. Verify it authoritatively. -------------
   if (transId) {
@@ -92,32 +115,14 @@ async function handle(req: NextRequest): Promise<NextResponse> {
         raw_response: safeJson((fetchRes as { raw?: unknown }).raw),
         source: 'hosted_callback',
       });
-      return redirectTo(origin, '/checkout', { error: 'callback-lookup-failed' });
+      return paymentError('callback-lookup-failed');
     }
 
     const tx = fetchRes.details;
 
     // Resolve the order: query-param hint first, else the invoice number
     // the transaction itself carries.
-    const lookupNumber = orderNumberHint ?? tx.refId;
-    let order: FinalizableOrder | null = null;
-    if (lookupNumber) {
-      const { data } = await admin
-        .from('orders')
-        .select(ORDER_SELECT)
-        .eq('order_number', lookupNumber)
-        .maybeSingle();
-      order = (data as FinalizableOrder | null) ?? null;
-    }
-    // Hint present but stale/wrong? Fall back to the transaction's invoice.
-    if (!order && orderNumberHint && tx.refId && tx.refId !== orderNumberHint) {
-      const { data } = await admin
-        .from('orders')
-        .select(ORDER_SELECT)
-        .eq('order_number', tx.refId)
-        .maybeSingle();
-      order = (data as FinalizableOrder | null) ?? null;
-    }
+    const order = hintedOrder ?? (tx.refId !== orderNumberHint ? await lookupOrder(tx.refId) : null);
 
     if (!order) {
       await admin.from('payment_audit_log').insert({
@@ -128,7 +133,7 @@ async function handle(req: NextRequest): Promise<NextResponse> {
         error_detail: `No order matches refId=${tx.refId ?? '(none)'} orderNumber=${orderNumberHint ?? '(absent)'}`,
         source: 'hosted_callback',
       });
-      return redirectTo(origin, '/checkout', { error: 'callback-order-missing' });
+      return paymentError('callback-order-missing');
     }
 
     const result = await finalizeOrderPayment({
@@ -140,19 +145,17 @@ async function handle(req: NextRequest): Promise<NextResponse> {
 
     switch (result.outcome) {
       case 'already_final':
-        return redirectTo(origin, `/order/${order.order_number}`);
+        return confirmation(order);
       case 'refid_mismatch':
-        return redirectTo(origin, '/checkout', { error: 'callback-refid-mismatch' });
+        return paymentError('callback-refid-mismatch', order);
       case 'amount_mismatch':
-        return redirectTo(origin, '/checkout', { error: 'callback-amount-mismatch' });
+        return paymentError('callback-amount-mismatch', order);
+      case 'transaction_unconfirmed':
+        return paymentError('verification', order);
       case 'declined':
-        return redirectTo(origin, '/checkout', { error: 'declined' });
+        return paymentError('declined', order);
       case 'finalized':
-        return redirectTo(
-          origin,
-          `/order/${order.order_number}`,
-          result.paymentRecordFailed ? { warning: 'payment_record_failed' } : {},
-        );
+        return confirmation(order, result.paymentRecordFailed);
     }
   }
 
@@ -166,15 +169,10 @@ async function handle(req: NextRequest): Promise<NextResponse> {
       source: 'hosted_callback',
       error_detail: 'return carried no transId and no orderNumber hint',
     });
-    return redirectTo(origin, '/checkout', { error: 'callback-missing-order' });
+    return paymentError('callback-missing-order');
   }
 
-  const { data } = await admin
-    .from('orders')
-    .select(ORDER_SELECT)
-    .eq('order_number', orderNumberHint)
-    .maybeSingle();
-  const order = (data as FinalizableOrder | null) ?? null;
+  const order = hintedOrder;
 
   if (!order) {
     await admin.from('payment_audit_log').insert({
@@ -183,18 +181,18 @@ async function handle(req: NextRequest): Promise<NextResponse> {
       source: 'hosted_callback',
       error_detail: `data-less return; no order matches orderNumber=${orderNumberHint}`,
     });
-    return redirectTo(origin, '/checkout', { error: 'callback-order-missing' });
+    return paymentError('callback-order-missing');
   }
 
   if (order.status === 'paid' || order.status === 'payment_held') {
     // Webhook (or an earlier arrival) already finalised — straight to the
     // thank-you page.
-    return redirectTo(origin, `/order/${order.order_number}`);
+    return confirmation(order);
   }
 
   if (order.status !== 'pending') {
     // 'cancelled' etc. — a previous decline closed this order.
-    return redirectTo(origin, '/checkout', { error: 'declined' });
+    return paymentError('declined');
   }
 
   const verify = await verifyPendingOrderPayment({
@@ -207,18 +205,22 @@ async function handle(req: NextRequest): Promise<NextResponse> {
   switch (verify.outcome) {
     case 'finalized':
     case 'already_final':
-      return redirectTo(origin, `/order/${order.order_number}`);
+      return confirmation(order);
     case 'declined':
-      return redirectTo(origin, '/checkout', { error: 'declined' });
+      return paymentError('declined');
     case 'refid_mismatch':
-      return redirectTo(origin, '/checkout', { error: 'callback-refid-mismatch' });
+      return paymentError('callback-refid-mismatch');
     case 'amount_mismatch':
-      return redirectTo(origin, '/checkout', { error: 'callback-amount-mismatch' });
-    case 'no_transaction':
+      return paymentError('callback-amount-mismatch');
+    case 'transaction_unconfirmed':
+      return paymentError('verification');
     case 'lookup_failed':
+      if (order.source === 'manual') return paymentError('callback-lookup-failed');
+      return confirmation(order);
+    case 'no_transaction':
       // Can't confirm (yet). The order page's pending state says so
       // honestly and keeps polling; the webhook may land any second.
-      return redirectTo(origin, `/order/${order.order_number}`);
+      return confirmation(order);
   }
 }
 

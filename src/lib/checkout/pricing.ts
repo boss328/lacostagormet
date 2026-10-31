@@ -1,6 +1,6 @@
 import 'server-only';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { calculateShipping, SHIPPING_TIERS } from '@/lib/checkout/shipping';
+import { calculateShippingForState, SHIPPING_TIERS } from '@/lib/checkout/shipping';
 
 /**
  * Canonical money math for checkout. Shipping rules use the 3-tier
@@ -69,15 +69,7 @@ export function computeShipping(
   state: string,
   settings: ShippingSettings = DEFAULT_SHIPPING,
 ): number {
-  const s = state.trim().toUpperCase();
-  const base = calculateShipping(subtotal);
-  // HI/AK surcharge is added on top of whatever the tier rate is, so
-  // those orders still pay something even when subtotal qualifies for
-  // continental-US free shipping. The owner spec says HI/AK is "contact
-  // for quote", but until that's wired we keep the surcharge so we
-  // don't accidentally undercharge a Hawaiian order.
-  if (s === 'HI' || s === 'AK') return round2(base + settings.hiAkSurcharge);
-  return base;
+  return calculateShippingForState(subtotal, state, settings.hiAkSurcharge);
 }
 
 export function round2(n: number): number {

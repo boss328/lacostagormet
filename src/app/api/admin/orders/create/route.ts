@@ -17,15 +17,13 @@ export const dynamic = 'force-dynamic';
  *
  * Admin places an order on behalf of a customer — phone order, repeat
  * customer, or any path that doesn't run through the public hosted
- * checkout. Payment is handled offline (Auth.net portal, invoice, or
- * marked as already received); this endpoint never touches Auth.net.
+ * checkout. Customer payments use a separate link for the saved order.
  *
  * Order is written with source='manual'. status is 'paid' if the admin
- * confirms payment was captured outside the site (toggle), otherwise
- * 'pending' so it shows up in the same backlog as customer-abandoned
- * orders until the admin flips it.
+ * confirms payment was collected offline or the order has a zero balance.
+ * Orders awaiting payment are 'pending'.
  *
- * Per-line price overrides: each item.unitPrice (if positive) wins over
+ * Per-line price overrides: each item.unitPrice (including zero) wins over
  * the product's retail_price. Used for negotiated B2B pricing, comp'd
  * lines, or rounding favours.
  */
@@ -53,6 +51,7 @@ type Payload = {
   shippingAddress: AddressInput;
   items: ItemInput[];
   shippingCostOverride?: number;
+  reviewedTotal?: number;
   markAsPaid: boolean;
   adminNote?: string;
   sendCustomerEmail: boolean;
@@ -74,6 +73,7 @@ export async function POST(req: NextRequest) {
   const expected = await expectedSessionToken();
   if (!expected) return bad('Server misconfigured.', undefined, 503);
   if (cookie !== expected) return bad('Not authenticated.', undefined, 401);
+  if (req.headers.get('origin') !== req.nextUrl.origin) return bad('Invalid request origin.', undefined, 403);
 
   let payload: Payload;
   try {
@@ -110,11 +110,18 @@ export async function POST(req: NextRequest) {
       if (it.unitPrice != null) {
         if (!Number.isFinite(it.unitPrice) || it.unitPrice < 0) {
           fieldErrors[`items.${idx}.unitPrice`] = 'Override price must be ≥ 0.';
-        } else if (Math.round(it.unitPrice * 100) !== it.unitPrice * 100) {
+        } else if (round2(it.unitPrice) !== it.unitPrice) {
           fieldErrors[`items.${idx}.unitPrice`] = 'At most two decimals.';
         }
       }
     });
+  }
+
+  if (payload.shippingCostOverride != null && (
+    !Number.isFinite(payload.shippingCostOverride) || payload.shippingCostOverride < 0 ||
+    round2(payload.shippingCostOverride) !== payload.shippingCostOverride
+  )) {
+    fieldErrors.shippingCostOverride = 'Enter a nonnegative shipping amount with at most two decimals.';
   }
 
   if (Object.keys(fieldErrors).length > 0) {
@@ -176,6 +183,9 @@ export async function POST(req: NextRequest) {
       : computeShipping(subtotal, addr.state, shippingSettings);
   const tax = 0;
   const total = round2(subtotal + shippingCost + tax);
+  if (payload.reviewedTotal != null && total !== payload.reviewedTotal) {
+    return bad('The total has changed. Refresh the page to review the current prices and shipping before placing the order.', undefined, 409);
+  }
 
   // ── Look up existing customer_id (optional) ────────────────────────
   const { data: existingCustomer } = await admin
@@ -199,7 +209,7 @@ export async function POST(req: NextRequest) {
     phone: addr.phone.trim(),
   };
 
-  const status: 'paid' | 'pending' = payload.markAsPaid ? 'paid' : 'pending';
+  const status: 'paid' | 'pending' = total === 0 || payload.markAsPaid === true ? 'paid' : 'pending';
   const now = new Date().toISOString();
   const noteLines = [
     `[${now}] Manually placed by admin · status=${status}`,
@@ -271,6 +281,7 @@ export async function POST(req: NextRequest) {
       id: order.id,
       order_number: order.order_number,
       status: order.status,
+      total,
     },
   });
 }

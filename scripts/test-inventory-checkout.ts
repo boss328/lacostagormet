@@ -84,6 +84,7 @@ function harness() {
     },
     async rpc(name: string, args: Row) {
       state.rpcCalls.push({ name, args });
+      if (name === 'cancel_manual_payment_order') return { error: state.rpcError, data: !state.cancelRace && !state.rpcError };
       return { error: state.rpcError, data: state.rpcError ? null : { id: requestId, order_id: orderId, order_number: order.order_number,
         status: 'pending', method: args.p_method, environment: 'sandbox', total: 36, created_at: new Date().toISOString(), provider_order_id: null } };
     },
@@ -144,8 +145,8 @@ function harness() {
     card: () => card.POST(request('/api/checkout/create/', payload)),
     wallet: (method = 'paypal') => walletRoute.POST(request('/api/checkout/wallet/create/', { ...payload, method, requestId })),
     prepare: (method = 'paypal') => wallet.prepareWalletAttempt({ ...payload, method, requestId }, '127.0.0.1', 'a'.repeat(64)),
-    manual: (paid = true) => manual.POST(request('/api/admin/orders/create/', { customerEmail: payload.email, shippingAddress: address,
-      items: [{ productId, quantity: 2 }], markAsPaid: paid, sendCustomerEmail: true })),
+    manual: (paid = true, patch: Row = {}) => manual.POST(request('/api/admin/orders/create/', { customerEmail: payload.email, shippingAddress: address,
+      items: [{ productId, quantity: 2 }], markAsPaid: paid, sendCustomerEmail: true, ...patch })),
     capture: (method: string) => finalizer.reconcileWalletPayment({ id: requestId, order_id: orderId,
       order_number: order.order_number, method, environment: 'sandbox', total: 36, provider_order_id: 'provider-order',
       status: 'pending', created_at: new Date().toISOString() }, true),
@@ -282,6 +283,45 @@ for (const paid of [false, true]) {
   });
 }
 
+test('a manual quote saves the reviewed unit price, line extension and shipping on the pending order', async () => {
+  const h = harness();
+  h.state.itemError = null;
+  const response = await h.manual(false, {
+    items: [{ productId, quantity: 3, unitPrice: 16.49 }], shippingCostOverride: 9.95, reviewedTotal: 59.42,
+  });
+  assert.equal(response.status, 200);
+  const item = (h.state.writes.find(write => write.table === 'order_items')!.values as Row[])[0];
+  const order = h.state.writes.find(write => write.table === 'orders')!.values as Row;
+  assert.equal(item.unit_price, 16.49);
+  assert.equal(item.line_subtotal, 49.47);
+  assert.equal(order.subtotal, 49.47);
+  assert.equal(order.shipping_cost, 9.95);
+  assert.equal(order.total, 59.42);
+  assert.equal(order.status, 'pending');
+  assert.equal(h.state.emails, 0);
+});
+
+test('a free manual order has a zero balance and needs no customer payment', async () => {
+  const h = harness();
+  h.state.itemError = null;
+  const response = await h.manual(false, {
+    items: [{ productId, quantity: 2, unitPrice: 0 }], shippingCostOverride: 0, reviewedTotal: 0,
+  });
+  assert.equal(response.status, 200);
+  const order = h.state.writes.find(write => write.table === 'orders')!.values as Row;
+  assert.equal(order.total, 0);
+  assert.equal(order.status, 'paid');
+  assert.equal(h.state.providerCalls, 0);
+});
+
+test('manual orders reject fractional cents and changed reviewed totals before saving', async () => {
+  const h = harness();
+  assert.equal((await h.manual(false, { items: [{ productId, quantity: 1, unitPrice: 1.234 }] })).status, 400);
+  assert.equal((await h.manual(false, { shippingCostOverride: 2.055 })).status, 400);
+  assert.equal((await h.manual(false, { reviewedTotal: 35.99 })).status, 409);
+  assert.equal(h.state.writes.length, 0);
+});
+
 test('cancellation requires admin access, same origin and a writable environment', async () => {
   const h = harness();
   assert.equal((await h.cancel({}, { token: 'wrong' })).status, 401);
@@ -309,8 +349,11 @@ test('storefront stock is not released by admin cancellation without explicit pa
 test('manual pending orders can be cancelled without a payment-provider step', async () => {
   const h = harness();
   h.order.source = 'manual';
+  h.state.rpcError = null;
   assert.equal((await h.cancel({})).status, 200);
-  assert.equal(h.state.writes.length, 1);
+  assert.equal(h.state.rpcCalls.length, 1);
+  assert.equal(h.state.rpcCalls[0].name, 'cancel_manual_payment_order');
+  assert.equal(h.state.rpcCalls[0].args.p_payment_closed, false);
 });
 
 test('a concurrent payment transition prevents cancellation and preserves the paid order', async () => {

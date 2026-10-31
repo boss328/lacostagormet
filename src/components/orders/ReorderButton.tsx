@@ -32,6 +32,7 @@ type Props = {
   variant?: 'solid' | 'outline';
   /** Optional class override for layout context. */
   className?: string;
+  label?: string;
 };
 
 /**
@@ -40,7 +41,7 @@ type Props = {
  * cart → redirect to /cart/confirm-address. Shared by customer
  * /account/orders/[orderNumber] and admin /admin/orders/[orderNumber].
  */
-export function ReorderButton({ orderNumber, variant = 'outline', className = '' }: Props) {
+export function ReorderButton({ orderNumber, variant = 'outline', className = '', label = 'Reorder' }: Props) {
   const router = useRouter();
   const hydrate = useCartStore((s) => s.hydrateFromReorder);
   const cartItemCount = useCartStore((s) => s.items.length);
@@ -128,7 +129,7 @@ export function ReorderButton({ orderNumber, variant = 'outline', className = ''
           className={`${buttonClasses} ${state !== 'idle' ? 'opacity-70 cursor-not-allowed' : ''}`}
           style={{ padding: '14px 22px', minHeight: 44 }}
         >
-          <span>{state === 'fetching' ? 'Loading…' : state === 'submitting' ? 'Adding to cart…' : 'Reorder'}</span>
+          <span>{state === 'fetching' ? 'Loading…' : state === 'submitting' ? 'Adding to cart…' : label}</span>
           <span className="btn-arrow" aria-hidden="true">→</span>
         </button>
         {error && (

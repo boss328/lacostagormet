@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
 
   const { data: orderRow } = await admin
     .from('orders')
-    .select('id, order_number, status, total')
+    .select('id, order_number, status, total, source')
     .eq('order_number', tx.refId)
     .maybeSingle();
 

@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { ProductImage } from '@/components/shop/ProductImage';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
+import { MANUAL_PAYMENT_COOKIE, verifyManualPaymentGrant } from '@/lib/checkout/manual-payment-grant';
 import type { Metadata } from 'next';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { Button } from '@/components/design-system/Button';
@@ -81,12 +83,16 @@ async function fetchOrder(orderNumber: string): Promise<{
   const { data: order, error: orderErr } = await admin
     .from('orders')
     .select(
-      'id, order_number, status, customer_email, subtotal, shipping_cost, tax, total, shipping_address, created_at',
+      'id, order_number, source, status, customer_email, subtotal, shipping_cost, tax, total, shipping_address, created_at',
     )
     .eq('order_number', orderNumber)
     .maybeSingle();
 
   if (orderErr || !order) return null;
+  if (order.source === 'manual') {
+    const grant = verifyManualPaymentGrant(cookies().get(MANUAL_PAYMENT_COOKIE)?.value || '');
+    redirect(grant?.orderId === order.id ? '/pay/?returned=1' : `/account/orders/${encodeURIComponent(orderNumber)}/`);
+  }
   if (!VIEWABLE_STATUSES.has((order as OrderRow).status)) return null;
 
   const { data: items } = await admin

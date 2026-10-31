@@ -8,6 +8,7 @@ type Props = {
   orderNumber: string;
   status: string;
   fulfillmentStatus: string;
+  showReorder?: boolean;
 };
 
 /**
@@ -20,7 +21,7 @@ type Props = {
  * Authorize.Net merchant portal; this UI does NOT call the Auth.net
  * refund API. POSTs to /api/admin/orders/[orderNumber]/refund.
  */
-export function AdminOrderStatusButtons({ orderNumber, status, fulfillmentStatus }: Props) {
+export function AdminOrderStatusButtons({ orderNumber, status, fulfillmentStatus, showReorder = true }: Props) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [refunding, setRefunding] = useState(false);
@@ -225,7 +226,7 @@ export function AdminOrderStatusButtons({ orderNumber, status, fulfillmentStatus
             into the admin user's own session cart, redirects to
             /cart/confirm-address. Customer doesn't see this; the rep
             walks the order through checkout themselves. */}
-        <ReorderButton orderNumber={orderNumber} variant="outline" />
+        {showReorder && <ReorderButton orderNumber={orderNumber} variant="outline" label="New order at current prices" />}
       </div>
 
       {showShipForm && (
