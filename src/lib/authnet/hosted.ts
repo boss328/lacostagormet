@@ -204,7 +204,7 @@ export async function getHostedPaymentToken(
 
   if (response.messages?.resultCode !== 'Ok' || !response.token) {
     const msg = response.messages?.message?.[0]?.text ?? 'Could not create payment page.';
-    console.error('[authnet-hosted] token request failed', response);
+    console.error('[authnet-hosted] token request failed', response.messages?.message?.[0]?.code ?? 'unknown');
     return { ok: false, errorMessage: msg };
   }
 
@@ -288,6 +288,7 @@ export async function findUnsettledTransactionByInvoice(
 export type TransactionDetails = {
   transId: string;
   refId: string | null;
+  invoiceNumber: string | null;
   responseCode: string;
   authCode: string | null;
   amount: number | null;
@@ -371,6 +372,7 @@ export async function fetchTransactionDetails(transId: string): Promise<FetchTxR
     details: {
       transId: tx.transId,
       refId: tx.order?.invoiceNumber ?? tx.refId ?? null,
+      invoiceNumber: tx.order?.invoiceNumber ?? null,
       responseCode: String(tx.responseCode ?? ''),
       authCode: tx.authCode ?? null,
       amount,

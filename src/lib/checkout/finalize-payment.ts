@@ -28,6 +28,7 @@ import { notifyOrderPlaced } from '@/lib/email/notify-order-placed';
 export type FinalizableOrder = {
   id: string;
   order_number: string;
+  source: string | null;
   status: string;
   total: number | string;
 };
@@ -59,21 +60,28 @@ export async function finalizeOrderPayment(opts: {
   const expectedTotal = Number(order.total);
   const amountCents = Math.round(expectedTotal * 100);
 
-  // Spoof checks — the transaction must be the one we created for this order.
-  if (tx.refId && tx.refId !== order.order_number) {
+  const manual = order.source === 'manual';
+  const reference = manual ? tx.invoiceNumber : tx.refId;
+  if ((manual || reference) && reference !== order.order_number) {
     await admin.from('payment_audit_log').insert({
       order_id: order.id,
       event_type: 'callback_refid_mismatch',
       transaction_id: tx.transId,
       amount_cents: amountCents,
       raw_response: safeJson(tx.raw),
-      error_detail: `refId=${tx.refId} order_number=${order.order_number}`,
+      error_detail: `reference=${reference ?? '(absent)'} order_number=${order.order_number}`,
       source,
     });
     return { outcome: 'refid_mismatch' };
   }
 
-  if (tx.amount !== null && Math.abs(tx.amount - expectedTotal) > 0.01) {
+  // A saved manual order has a fixed balance. Accept only that exact amount
+  // in whole cents, including when the gateway omits a field or sends NaN.
+  const amountMismatch = manual
+    ? !Number.isSafeInteger(amountCents) || amountCents <= 0
+      || expectedTotal !== amountCents / 100 || tx.amount !== amountCents / 100
+    : tx.amount !== null && Math.abs(tx.amount - expectedTotal) > 0.01;
+  if (amountMismatch) {
     await admin.from('payment_audit_log').insert({
       order_id: order.id,
       event_type: 'callback_amount_mismatch',
@@ -100,6 +108,8 @@ export async function finalizeOrderPayment(opts: {
       error_detail: tx.responseReason ?? `responseCode=${tx.responseCode}`,
       source,
     });
+    // An admin-created order can still be collected or reconciled by staff.
+    if (manual) return { outcome: 'declined' };
     // One declined transaction does not close every hosted token issued for
     // this order. Keep reserved stock until payment succeeds or the admin
     // confirms all provider payment sessions are closed before cancelling.

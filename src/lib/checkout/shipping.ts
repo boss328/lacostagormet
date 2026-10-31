@@ -6,8 +6,7 @@
  *   Subtotal $80 +         →  free (continental US)
  *
  * Money handled in dollars to match the rest of the codebase. Edge
- * surcharges (HI/AK, international) are layered on top in
- * pricing.ts on the server side.
+ * Alaska and Hawaii add the configured destination surcharge.
  */
 
 export const SHIPPING_TIERS = {
@@ -21,4 +20,12 @@ export function calculateShipping(subtotal: number): number {
   if (subtotal >= SHIPPING_TIERS.freeThreshold) return 0;
   if (subtotal >= SHIPPING_TIERS.midThreshold) return SHIPPING_TIERS.midRate;
   return SHIPPING_TIERS.lowRate;
+}
+
+export function calculateShippingForState(subtotal: number, state: string, hiAkSurcharge: number): number {
+  const base = calculateShipping(subtotal);
+  const destination = state.trim().toUpperCase();
+  return destination === 'HI' || destination === 'AK'
+    ? Math.round((base + hiAkSurcharge) * 100) / 100
+    : base;
 }

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { loadShippingSettings } from '@/lib/checkout/pricing';
 import { NewOrderForm, type NewOrderProductOption } from '@/components/admin/NewOrderForm';
 
 export const dynamic = 'force-dynamic';
@@ -19,11 +20,13 @@ export const metadata = {
 export default async function NewOrderPage() {
   const admin = createAdminClient();
 
-  const { data: productData } = await admin
-    .from('products')
-    .select('id, sku, name, retail_price, brand:brands(name)')
-    .eq('is_active', true)
-    .order('name');
+  const [{ data: productData }, shipping] = await Promise.all([
+    admin.from('products')
+      .select('id, sku, name, retail_price, brand:brands(name)')
+      .eq('is_active', true)
+      .order('name'),
+    loadShippingSettings(),
+  ]);
 
   const products: NewOrderProductOption[] = (productData ?? []).map((p) => ({
     id: p.id as string,
@@ -53,14 +56,12 @@ export default async function NewOrderPage() {
           </Link>
         </div>
         <p className="type-data-mono text-ink-muted mt-3 max-w-[640px]">
-          Manual / phone order on behalf of a customer. Payment is handled
-          offline — toggle &ldquo;Mark as paid&rdquo; once you&rsquo;ve captured
-          it in the Auth.net portal or invoiced. Line-item prices can be
-          overridden for negotiated B2B quotes.
+          Set the unit price for each item, then review the order total.
+          For an unpaid order, share the Customer payment link from the order details.
         </p>
       </header>
 
-      <NewOrderForm products={products} />
+      <NewOrderForm products={products} hiAkSurcharge={shipping.hiAkSurcharge} />
     </>
   );
 }

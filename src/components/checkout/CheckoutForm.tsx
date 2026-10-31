@@ -15,7 +15,8 @@ import {
 import { US_STATES, type AddressPayload } from '@/lib/checkout/validate';
 import { formatPackSize } from '@/lib/pack-size';
 import { getPackPricing, productDisplayName } from '@/lib/product-pack-options';
-import { WalletPayments } from './WalletPayments';
+import { CheckoutPaymentMethods } from './CheckoutPaymentMethods';
+import { submitToHostedPage } from './submit-hosted-payment';
 import { calculateShipping } from '@/lib/checkout/shipping';
 
 const CREAM_BG =
@@ -83,27 +84,6 @@ const ERROR_MESSAGES: Record<string, string> = {
   'callback-refid-mismatch': 'Security check failed — payment was not applied. Please retry.',
   'callback-amount-mismatch': 'Amount mismatch on the return trip. Please retry.',
 };
-
-/**
- * Redirects the browser to Auth.net's hosted payment page by building a
- * form element, appending it to the document, and submitting. Must POST
- * (not GET) because the token is a form field, not a query param.
- */
-function submitToHostedPage(hostedUrl: string, formToken: string): void {
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = hostedUrl;
-  form.style.display = 'none';
-
-  const tokenInput = document.createElement('input');
-  tokenInput.type = 'hidden';
-  tokenInput.name = 'token';
-  tokenInput.value = formToken;
-  form.appendChild(tokenInput);
-
-  document.body.appendChild(form);
-  form.submit();
-}
 
 export function CheckoutForm({ readOnly = false }: { readOnly?: boolean }) {
   const router = useRouter();
@@ -275,7 +255,7 @@ export function CheckoutForm({ readOnly = false }: { readOnly?: boolean }) {
               </div>
             )}
 
-            <fieldset disabled={walletActive} className="contents">
+            <fieldset disabled={walletActive || submitting} className="contents">
             <FormSection roman="I" label="Contact">
               <div className="flex flex-col gap-2">
                 <label htmlFor="email" className="type-label-sm text-ink">
@@ -390,23 +370,6 @@ export function CheckoutForm({ readOnly = false }: { readOnly?: boolean }) {
             </FormSection>
 
             </fieldset>
-            <FormSection roman="III" label="Payment">
-              <p
-                className="font-display text-ink-2 mb-3"
-                style={{ fontSize: '15px', lineHeight: 1.55 }}
-              >
-                You&rsquo;ll enter your card on Authorize.net&rsquo;s secure page on the next
-                step. Card details never reach our server.
-              </p>
-              <p className="type-data-mono text-ink-muted">
-                Credit and debit cards are processed securely by Authorize.net.
-              </p>
-              {!readOnly && <WalletPayments disabled={!canContinue} onActiveChange={setWalletActive} payload={{
-                email, shippingAddress: address, clientSubtotal: subtotal,
-                items: items.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
-              }} />}
-              {readOnly && <p className="type-body mt-4">Review preview: payments are disabled. No order will be placed.</p>}
-            </FormSection>
           </div>
 
           {/* Right — sticky summary */}
@@ -464,27 +427,18 @@ export function CheckoutForm({ readOnly = false }: { readOnly?: boolean }) {
                 <Price amount={total} size={26} />
               </div>
 
-              <div className="mt-6">
-                <button
-                  type="button"
-                  onClick={handleContinue}
-                  disabled={!canContinue || walletActive}
-                  className={`btn btn-solid w-full justify-center ${!canContinue || walletActive ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  style={{ padding: '18px 26px' }}
-                  aria-busy={submitting}
-                >
-                  <span>
-                    {submitting
-                      ? 'Redirecting to payment…'
-                      : `Pay by card — $${total.toFixed(2)}`}
-                  </span>
-                  <span className="btn-arrow" aria-hidden="true">→</span>
-                </button>
-              </div>
-
-              <p className="type-data-mono text-ink-muted mt-4 text-center">
-                Next step: Authorize.net&rsquo;s secure card entry
-              </p>
+              <CheckoutPaymentMethods
+                payload={{
+                  email, shippingAddress: address, clientSubtotal: subtotal,
+                  items: items.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
+                }}
+                total={total}
+                canContinue={canContinue}
+                readOnly={readOnly}
+                submittingCard={submitting}
+                onPayByCard={handleContinue}
+                onActiveChange={setWalletActive}
+              />
             </div>
           </aside>
         </div>

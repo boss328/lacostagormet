@@ -3,6 +3,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { calculateShippingForState } from '@/lib/checkout/shipping';
 
 export type NewOrderProductOption = {
   id: string;
@@ -22,6 +23,7 @@ type LineItem = {
 
 type Props = {
   products: NewOrderProductOption[];
+  hiAkSurcharge: number;
 };
 
 type FieldErrors = Record<string, string>;
@@ -44,7 +46,11 @@ function blankLine(): LineItem {
   };
 }
 
-export function NewOrderForm({ products }: Props) {
+function priceForLine(line: LineItem, product: NewOrderProductOption): number {
+  return line.unitPriceOverride.trim() ? Number(line.unitPriceOverride) : product.retailPrice;
+}
+
+export function NewOrderForm({ products, hiAkSurcharge }: Props) {
   const router = useRouter();
 
   const [customerEmail, setCustomerEmail] = useState('');
@@ -62,11 +68,12 @@ export function NewOrderForm({ products }: Props) {
   const [items, setItems] = useState<LineItem[]>(() => [blankLine()]);
 
   const [shippingOverride, setShippingOverride] = useState('');
-  const [markAsPaid, setMarkAsPaid] = useState(true);
+  const [markAsPaid, setMarkAsPaid] = useState(false);
   const [sendCustomerEmail, setSendCustomerEmail] = useState(true);
   const [adminNote, setAdminNote] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [message, setMessage] = useState<string | null>(null);
 
@@ -87,20 +94,20 @@ export function NewOrderForm({ products }: Props) {
   }
 
   // ── Totals preview ────────────────────────────────────────────────
-  const subtotal = items.reduce((s, l) => {
-    const p = productsById.get(l.productId);
-    if (!p) return s;
-    const override = parseFloat(l.unitPriceOverride);
-    const unit = Number.isFinite(override) && override >= 0 ? override : p.retailPrice;
-    return s + unit * l.quantity;
-  }, 0);
-  const shippingPreview = parseFloat(shippingOverride);
-  const shippingDisplay =
-    Number.isFinite(shippingPreview) && shippingPreview >= 0
-      ? shippingPreview
-      : null; // server computes if blank
-  const totalPreview =
-    shippingDisplay != null ? subtotal + shippingDisplay : subtotal;
+  const pricedItems = items.flatMap((line) => {
+    const product = productsById.get(line.productId);
+    if (!product) return [];
+    const unitPrice = priceForLine(line, product);
+    return [{ line, product, unitPrice, lineCents: Math.round(unitPrice * 100) * line.quantity }];
+  });
+  const subtotal = pricedItems.reduce((cents, item) => cents + item.lineCents, 0) / 100;
+  const shippingDisplay = shippingOverride.trim()
+    ? Number(shippingOverride)
+    : pricedItems.length ? calculateShippingForState(subtotal, stateCode, hiAkSurcharge) : 0;
+  const totalPreview = Math.round((subtotal + shippingDisplay) * 100) / 100;
+  const noPaymentDue = pricedItems.length > 0 && totalPreview === 0;
+  const paymentLabel = noPaymentDue ? 'No payment due'
+    : markAsPaid ? 'Payment already collected offline' : 'Awaiting customer payment';
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -120,20 +127,29 @@ export function NewOrderForm({ products }: Props) {
 
     const cleanItems = items.filter((l) => l.productId);
     if (cleanItems.length === 0) next.items = 'Add at least one line item.';
-    cleanItems.forEach((l, idx) => {
+    items.forEach((l, idx) => {
+      if (!l.productId) return;
       if (!Number.isInteger(l.quantity) || l.quantity <= 0) {
         next[`items.${idx}.quantity`] = 'Positive integer.';
       }
       if (l.unitPriceOverride.trim()) {
         const v = Number(l.unitPriceOverride);
-        if (!Number.isFinite(v) || v < 0) {
-          next[`items.${idx}.unitPrice`] = 'Must be ≥ 0.';
+        if (!Number.isFinite(v) || v < 0 || Math.round(v * 100) / 100 !== v) {
+          next[`items.${idx}.unitPrice`] = 'Enter a nonnegative unit price with at most two decimals.';
         }
       }
     });
+    if (shippingOverride.trim() && (!Number.isFinite(shippingDisplay) || shippingDisplay < 0 ||
+      Math.round(shippingDisplay * 100) / 100 !== shippingDisplay)) {
+      next.shippingCostOverride = 'Enter a nonnegative shipping amount with at most two decimals.';
+    }
 
     setErrors(next);
     if (Object.keys(next).length > 0) return;
+    if (!reviewing) {
+      setReviewing(true);
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -161,7 +177,8 @@ export function NewOrderForm({ products }: Props) {
           ? Number(shippingOverride)
           : undefined,
         markAsPaid,
-        sendCustomerEmail: markAsPaid && sendCustomerEmail,
+        reviewedTotal: totalPreview,
+        sendCustomerEmail: (markAsPaid || noPaymentDue) && sendCustomerEmail,
         adminNote: adminNote.trim() || undefined,
       };
 
@@ -174,7 +191,7 @@ export function NewOrderForm({ products }: Props) {
         ok?: boolean;
         errorMessage?: string;
         fieldErrors?: FieldErrors;
-        order?: { order_number: string };
+        order?: { order_number: string; total: number; status: string };
       };
 
       if (!res.ok || !data.ok) {
@@ -214,6 +231,31 @@ export function NewOrderForm({ products }: Props) {
           </div>
         )}
 
+        {reviewing ? (
+          <Section title="Review order">
+            <div>
+              <p className="font-display text-ink">{firstName} {lastName} · {customerEmail}</p>
+              <p className="type-data-mono text-ink-muted">{[company, address1, address2, city, stateCode, zip].filter(Boolean).join(', ')}</p>
+            </div>
+            <ul className="divide-y border-y" style={{ borderColor: 'var(--rule)' }}>
+              {pricedItems.map(({ line, product, unitPrice, lineCents }) => (
+                <li key={line.key} className="flex items-baseline justify-between gap-3 py-3">
+                  <div>
+                    <p className="font-display text-ink">{product.name}</p>
+                    <p className="type-data-mono text-ink-muted">{product.sku} · {line.quantity} × ${unitPrice.toFixed(2)}</p>
+                  </div>
+                  <strong className="shrink-0 font-mono">${(lineCents / 100).toFixed(2)}</strong>
+                </li>
+              ))}
+            </ul>
+            <p className="text-sm text-ink-2">{noPaymentDue
+              ? 'This order has a zero balance.'
+              : markAsPaid ? 'Creating this order records the payment you already received.'
+              : 'After creating the order, copy the Customer payment link from the order details and share it with the customer.'}</p>
+            <button type="button" disabled={submitting} onClick={() => { setReviewing(false); setErrors({}); }}
+              className="btn btn-ghost self-start">Edit order</button>
+          </Section>
+        ) : <>
         <Section title="Customer">
           <Field
             label="Email"
@@ -331,13 +373,8 @@ export function NewOrderForm({ products }: Props) {
                       );
                     })
                     .slice(0, 8);
-              const override = parseFloat(line.unitPriceOverride);
-              const unit = selected
-                ? Number.isFinite(override) && override >= 0
-                  ? override
-                  : selected.retailPrice
-                : 0;
-              const lineTotal = unit * line.quantity;
+              const unit = selected ? priceForLine(line, selected) : 0;
+              const lineTotal = Math.round(unit * 100) * line.quantity / 100;
 
               return (
                 <div
@@ -436,8 +473,8 @@ export function NewOrderForm({ products }: Props) {
                       }
                     />
                     <Field
-                      label="Price override"
-                      hint={selected ? `Default $${selected.retailPrice.toFixed(2)}` : ' '}
+                      label="Unit price for this order"
+                      hint={selected ? `Catalog price $${selected.retailPrice.toFixed(2)}` : ' '}
                       error={errors[`items.${idx}.unitPrice`]}
                       input={
                         <input
@@ -445,9 +482,10 @@ export function NewOrderForm({ products }: Props) {
                           inputMode="decimal"
                           step="0.01"
                           min="0"
+                          aria-label={`Unit price for line ${idx + 1}`}
                           value={line.unitPriceOverride}
                           onChange={(e) => updateLine(line.key, { unitPriceOverride: e.target.value })}
-                          placeholder="optional"
+                          placeholder={selected?.retailPrice.toFixed(2)}
                           className={inputClass}
                           style={inputStyle}
                           disabled={!selected}
@@ -477,6 +515,7 @@ export function NewOrderForm({ products }: Props) {
         <Section title="Shipping & totals">
           <Field
             label="Shipping cost (override)"
+            error={errors.shippingCostOverride}
             hint="Leave blank to auto-compute from subtotal + state."
             input={
               <input
@@ -495,24 +534,30 @@ export function NewOrderForm({ products }: Props) {
         </Section>
 
         <Section title="Payment">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input type="radio" name="payment-status" checked={!markAsPaid}
+              onChange={() => setMarkAsPaid(false)} className="accent-brand-deep" />
+            <span className="font-display text-ink-2 text-sm">Awaiting customer payment</span>
+          </label>
           <label className="flex items-center gap-3 cursor-pointer select-none">
             <input
-              type="checkbox"
+              type="radio"
+              name="payment-status"
               checked={markAsPaid}
-              onChange={(e) => setMarkAsPaid(e.target.checked)}
+              onChange={() => setMarkAsPaid(true)}
               className="accent-brand-deep"
               style={{ width: 16, height: 16 }}
             />
             <span className="font-display text-ink-2" style={{ fontSize: '14px' }}>
-              Mark as paid (capture handled offline in Auth.net or by invoice)
+              Payment already collected offline
             </span>
           </label>
-          <label className={`flex items-center gap-3 cursor-pointer select-none ${markAsPaid ? '' : 'opacity-60'}`}>
+          <label className={`flex items-center gap-3 cursor-pointer select-none ${markAsPaid || noPaymentDue ? '' : 'opacity-60'}`}>
             <input
               type="checkbox"
-              checked={sendCustomerEmail}
+              checked={(markAsPaid || noPaymentDue) && sendCustomerEmail}
               onChange={(e) => setSendCustomerEmail(e.target.checked)}
-              disabled={!markAsPaid}
+              disabled={!markAsPaid && !noPaymentDue}
               className="accent-brand-deep"
               style={{ width: 16, height: 16 }}
             />
@@ -539,6 +584,7 @@ export function NewOrderForm({ products }: Props) {
             }
           />
         </Section>
+        </>}
       </div>
 
       <aside className="flex flex-col gap-3 self-start lg:sticky lg:top-6">
@@ -550,10 +596,10 @@ export function NewOrderForm({ products }: Props) {
             <Stat label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
             <Stat
               label="Shipping"
-              value={shippingDisplay != null ? `$${shippingDisplay.toFixed(2)}` : 'auto on submit'}
+              value={`$${shippingDisplay.toFixed(2)}`}
             />
-            <Stat label="Total (est.)" value={`$${totalPreview.toFixed(2)}`} />
-            <Stat label="Status" value={markAsPaid ? 'paid' : 'pending'} mono />
+            <Stat label="Order total" value={`$${totalPreview.toFixed(2)}`} />
+            <Stat label="Payment" value={paymentLabel} />
           </dl>
         </div>
         <button
@@ -562,7 +608,7 @@ export function NewOrderForm({ products }: Props) {
           className={`btn btn-solid w-full justify-center ${submitting ? 'opacity-60 cursor-wait' : ''}`}
           style={{ padding: '16px 22px' }}
         >
-          <span>{submitting ? 'Placing…' : 'Place order'}</span>
+          <span>{submitting ? 'Creating order…' : reviewing ? `Create order · $${totalPreview.toFixed(2)}` : 'Review order'}</span>
           {!submitting && <span className="btn-arrow" aria-hidden="true">→</span>}
         </button>
         <Link

@@ -37,8 +37,12 @@ export function PendingPaymentPoller({ orderNumber }: { orderNumber: string }) {
           body: JSON.stringify({ orderNumber }),
           cache: 'no-store',
         });
-        const body = (await res.json()) as { status?: string };
+        const body = (await res.json()) as { status?: string; manualPaymentError?: string };
         if (stopped) return;
+        if (body.manualPaymentError) {
+          router.replace(`/pay/?error=${encodeURIComponent(body.manualPaymentError)}&order=${encodeURIComponent(orderNumber)}`);
+          return;
+        }
         if (body.status === 'paid' || body.status === 'payment_held') {
           router.refresh();
           return;
